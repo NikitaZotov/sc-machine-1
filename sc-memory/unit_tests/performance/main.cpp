@@ -16,6 +16,9 @@
 #include "units/template_search_complex.hpp"
 #include "units/template_search_smoke.hpp"
 
+#include "units/types_iterator.hpp"
+#include "units/types_set_iterator.hpp"
+
 #include <atomic>
 
 template <class BMType>
@@ -107,6 +110,155 @@ BENCHMARK_TEMPLATE(BM_MemoryThreaded, TestCreateLink)
 ->Iterations(kLinkIters / 128)
 ->Unit(benchmark::TimeUnit::kMicrosecond);
 
+template <class BMType>
+void BM_Iterator(benchmark::State & state)
+{
+  while (state.KeepRunning())
+  {
+    state.PauseTiming();
+    state.ResumeTiming();
+    state.PauseTiming();
+    state.ResumeTiming();
+  }
+
+  BMType test;
+  test.Initialize();
+
+  test.Run();
+  test.Shutdown();
+}
+
+int constexpr kConstrs = 100000;
+
+BENCHMARK_TEMPLATE(BM_Iterator, TestTypesSetIterator)
+      ->Threads(1)
+      ->Iterations(kConstrs)
+      ->Unit(benchmark::TimeUnit::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_Iterator, TestTypesSetIterator)
+      ->Threads(2)
+      ->Iterations(kConstrs / 2)
+      ->Unit(benchmark::TimeUnit::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_Iterator, TestTypesSetIterator)
+      ->Threads(4)
+      ->Iterations(kConstrs / 4)
+      ->Unit(benchmark::TimeUnit::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_Iterator, TestTypesSetIterator)
+      ->Threads(8)
+      ->Iterations(kConstrs / 8)
+      ->Unit(benchmark::TimeUnit::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_Iterator, TestTypesSetIterator)
+      ->Threads(16)
+      ->Iterations(kConstrs / 64)
+      ->Unit(benchmark::TimeUnit::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_Iterator, TestTypesSetIterator)
+      ->Threads(32)
+      ->Iterations(kConstrs / 128)
+      ->Unit(benchmark::TimeUnit::kMicrosecond);
+
+// sc-iterator
+BENCHMARK_TEMPLATE(BM_Iterator, TestTypesIterator)
+      ->Threads(1)
+      ->Iterations(kConstrs)
+      ->Unit(benchmark::TimeUnit::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_Iterator, TestTypesIterator)
+      ->Threads(2)
+      ->Iterations(kConstrs / 2)
+      ->Unit(benchmark::TimeUnit::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_Iterator, TestTypesIterator)
+      ->Threads(4)
+      ->Iterations(kConstrs / 4)
+      ->Unit(benchmark::TimeUnit::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_Iterator, TestTypesIterator)
+      ->Threads(8)
+      ->Iterations(kConstrs / 8)
+      ->Unit(benchmark::TimeUnit::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_Iterator, TestTypesIterator)
+      ->Threads(16)
+      ->Iterations(kConstrs / 64)
+      ->Unit(benchmark::TimeUnit::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_Iterator, TestTypesIterator)
+      ->Threads(32)
+      ->Iterations(kConstrs / 128)
+      ->Unit(benchmark::TimeUnit::kMicrosecond);
+
+
+static void BM_Iterator(benchmark::State & state)
+{
+  static std::atomic_int ctxNum = { 0 };
+  TestTypesIterator test;
+  if (state.thread_index() == 0)
+    test.Initialize();
+
+  state.PauseTiming();
+  if (!test.HasContext())
+  {
+    test.InitContext();
+    ctxNum.fetch_add(1);
+  }
+  state.ResumeTiming();
+  test.Run();
+
+  if (state.thread_index() == 0)
+  {
+    while (ctxNum.load() != 0);
+    test.Shutdown();
+  }
+  else
+  {
+    test.DestroyContext();
+    ctxNum.fetch_add(-1);
+  }
+
+  state.SetComplexityN(state.range(0));
+}
+
+BENCHMARK(BM_Iterator)
+  ->RangeMultiplier(2)->Range(1<<8, 1<<24)->Complexity();
+
+// sc-set-iterator
+
+static void BM_SetIterator(benchmark::State & state)
+{
+  static std::atomic_int ctxNum = { 0 };
+  TestTypesSetIterator test;
+  if (state.thread_index() == 0)
+    test.Initialize();
+
+  state.PauseTiming();
+  if (!test.HasContext())
+  {
+    test.InitContext();
+    ctxNum.fetch_add(1);
+  }
+  state.ResumeTiming();
+  test.Run();
+
+  if (state.thread_index() == 0)
+  {
+    while (ctxNum.load() != 0);
+    test.Shutdown();
+  }
+  else
+  {
+    test.DestroyContext();
+    ctxNum.fetch_add(-1);
+  }
+
+  state.SetComplexityN(state.range(0));
+}
+
+BENCHMARK(BM_SetIterator)
+  ->RangeMultiplier(2)->Range(1<<4, 1<<30)->Complexity();
 
 // ------------------------------------
 template <class BMType>

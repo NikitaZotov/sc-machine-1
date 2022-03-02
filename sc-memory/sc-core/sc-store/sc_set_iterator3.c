@@ -386,12 +386,12 @@ sc_bool _sc_set_iterator3_f_a_a_next(sc_set_iterator3 *it)
     arc_addr = next_out_arc;
   }
 
-  if (it->current_constr < it->params[0].addrs.size)
-  {
-    it->current_constr++;
-    SC_ADDR_MAKE_EMPTY(it->results[1]);
-    return _sc_set_iterator3_f_a_a_next(it);
-  }
+//  if (it->current_constr < it->params[0].addrs.size)
+//  {
+//    it->current_constr++;
+//    SC_ADDR_MAKE_EMPTY(it->results[1]);
+//    return _sc_set_iterator3_f_a_a_next(it);
+//  }
 
   it->finished = SC_TRUE;
 
