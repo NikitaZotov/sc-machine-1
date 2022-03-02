@@ -18,6 +18,8 @@ extern "C"
 #include "sc_stream.hpp"
 #include "sc_template.hpp"
 #include "sc_type.hpp"
+#include "sc_set_iterator.hpp"
+
 
 class ScMemoryContext;
 
@@ -154,6 +156,26 @@ public:
   {
     return std::shared_ptr<TIterator3<ParamType1, ParamType2, ParamType3>>(
       new TIterator3<ParamType1, ParamType2, ParamType3>(*this, param1, param2, param3));
+  }
+
+  template <typename ParamType1, typename ParamType2, typename ParamType3, typename ParamType4, typename ParamType5>
+  std::shared_ptr<TSetIterator5<ParamType1, ParamType2, ParamType3, ParamType4, ParamType5>> SetIterator5(ParamType1 const & param1,
+                                                                                                    ParamType2 const & param2,
+                                                                                                    ParamType3 const & param3,
+                                                                                                    ParamType4 const & param4,
+                                                                                                    ParamType5 const & param5)
+  {
+    return std::shared_ptr<TSetIterator5<ParamType1, ParamType2, ParamType3, ParamType4, ParamType5>>(
+          new TSetIterator5<ParamType1, ParamType2, ParamType3, ParamType4, ParamType5>(*this, param1, param2, param3, param4, param5));
+  }
+
+  template <typename ParamType1, typename ParamType2, typename ParamType3>
+  std::shared_ptr<TSetIterator3<ParamType1, ParamType2, ParamType3>> SetIterator3(ParamType1 const & param1,
+                                                                            ParamType2 const & param2,
+                                                                            ParamType3 const & param3)
+  {
+    return std::shared_ptr<TSetIterator3<ParamType1, ParamType2, ParamType3>>(
+          new TSetIterator3<ParamType1, ParamType2, ParamType3>(*this, param1, param2, param3));
   }
 
   /* Make iteration by triples, and call fn function for each result.

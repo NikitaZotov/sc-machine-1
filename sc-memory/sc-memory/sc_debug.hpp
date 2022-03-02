@@ -18,7 +18,7 @@ namespace utils
 class ScException : public std::exception
 {
 public:
-  _SC_EXTERN ScException(std::string const & description, std::string const & msg);
+  _SC_EXTERN ScException(std::string  description, std::string  msg);
   _SC_EXTERN virtual ~ScException() throw();
 
   _SC_EXTERN const char * Description() const throw();

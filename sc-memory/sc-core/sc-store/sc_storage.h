@@ -188,19 +188,27 @@ sc_result sc_storage_erase_element_from_segment(sc_addr addr);
 sc_element_meta* sc_storage_get_element_meta(sc_addr addr);
 //! Locks specified sc-element. Pointer to locked sc-element stores in el
 sc_result sc_storage_element_lock(sc_addr addr, sc_element **el);
+//! Locks specified sc-elements. Pointer to locked sc-elements stores in el
+sc_result sc_storage_elements_lock(sc_addrs addrs, sc_elements **elems);
 //! Try to lock sc-element by maximum attempts. If element wasn't locked and there are no errors, then el pointer will have null value.
 sc_result sc_storage_element_lock_try(sc_addr addr, sc_uint16 max_attempts, sc_element **el);
 //! Unlocks specified sc-element
 sc_result sc_storage_element_unlock(sc_addr addr);
+//! Unlocks specified sc-element
+sc_result sc_storage_elements_unlock(sc_addrs addrs);
 
 //! Adds reference to a specified sc-element
 void sc_storage_element_ref(sc_addr addr);
+
+void sc_storage_elements_ref(sc_addrs addrs);
 /*! Removes reference from a specified sc-element
  * @param addr sc_addr of element to remvoe reference
  * @return If last reference removed from sc-element, then elements cell frees and this function returns SC_TRUE;
  * otherwise - returns SC_FALSE and element is still alive. DO NOT work with this sc-element if function returns SC_TRUE
  */
 sc_bool sc_storage_element_unref(sc_addr addr);
+
+sc_bool sc_storage_elements_unref(sc_addrs addrs);
 
 sc_result sc_storage_save();
 

@@ -234,3 +234,5 @@ public:
   static ScType const NodeVarAbstract;
   static ScType const NodeVarMaterial;
 };
+
+using ScTypeVector = std::vector<sc_type>;

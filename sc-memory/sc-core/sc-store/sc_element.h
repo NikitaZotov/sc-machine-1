@@ -99,6 +99,12 @@ struct _sc_element
   };
 };
 
+struct _sc_elements
+{
+  sc_element ** elements;
+  sc_uint size;
+};
+
 /// All functions must be called for locked sc-elements
 void sc_element_set_type(sc_element *element, sc_type type);
 

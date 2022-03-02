@@ -75,6 +75,12 @@ struct _sc_addr
   sc_addr_offset offset;
 };
 
+struct _sc_addrs
+{
+  struct _sc_addr * addrs;
+  sc_uint8 size;
+};
+
 //! Make sc-addr empty
 #define SC_ADDR_MAKE_EMPTY(addr) { (addr).seg = 0; (addr).offset = 0; }
 //! Check if specified sc-addr is empty
@@ -92,6 +98,12 @@ struct _sc_addr
 #define SC_ADDR_LOCAL_SEG_FROM_INT(v) SC_ADDR_LOCAL_OFFSET_FROM_INT(v >> 16)
 
 typedef sc_uint16 sc_type;
+
+struct _sc_types
+{
+  sc_type * types;
+  sc_uint8 size;
+};
 
 // sc-element types
 #define sc_type_node        (sc_type)0x1
@@ -230,11 +242,16 @@ typedef struct _sc_element_refs sc_element_refs;
 typedef struct _sc_memory_context sc_memory_context;
 typedef struct _sc_element_meta sc_element_meta;
 typedef struct _sc_element sc_element;
+typedef struct _sc_elements sc_elements;
 typedef struct _sc_segment sc_segment;
+typedef struct _sc_types sc_types;
 typedef struct _sc_addr sc_addr;
+typedef struct _sc_addrs sc_addrs;
 typedef struct _sc_elements_stat sc_elements_stat;
 typedef struct _sc_iterator_param sc_iterator_param;
+typedef struct _sc_set_iterator_param sc_set_iterator_param;
 typedef struct _sc_iterator3 sc_iterator3;
+typedef struct _sc_set_iterator3 sc_set_iterator3;
 typedef struct _sc_iterator5 sc_iterator5;
 typedef struct _sc_event sc_event;
 typedef enum _sc_result sc_result;

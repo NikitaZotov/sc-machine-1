@@ -331,3 +331,341 @@ TEST_CASE("Iterators", "[test iterators]")
   ctx.Destroy();
   test::ScTestUnit::ShutdownMemory(false);
 }
+
+TEST_CASE("set-iterators", "[test iterators]")
+{
+  test::ScTestUnit::InitMemory("sc-memory.ini", "");
+  ScMemoryContext ctx(sc_access_lvl_make_min, "set-iterators");
+
+  try
+  {
+    ScAddr addr1 = ctx.CreateNode(ScType::Const);
+    ScAddr addr2 = ctx.CreateNode(ScType::Var);
+    ScAddr addr3 = ctx.CreateLink();
+    ScAddr arc1 = ctx.CreateEdge(ScType::EdgeAccessConstPosPerm, addr1, addr2);
+    ScAddr arc2 = ctx.CreateEdge(ScType::EdgeAccessConstPosPerm, addr1, addr3);
+
+    REQUIRE(addr1.IsValid());
+    REQUIRE(addr2.IsValid());
+    REQUIRE(addr3.IsValid());
+    REQUIRE(arc1.IsValid());
+    REQUIRE(arc2.IsValid());
+
+    REQUIRE(ctx.IsElement(addr1));
+    REQUIRE(ctx.IsElement(addr2));
+    REQUIRE(ctx.IsElement(arc1));
+
+    SECTION("set_iterator3_f_a_f")
+    {
+      SUBTEST_START("set_iterator3_f_a_f")
+      {
+        try
+        {
+          ScTypeVector const & param2 = { ScType::EdgeAccessConstPosPerm };
+          ScSetIterator3Ptr iter3 = ctx.SetIterator3(addr1, param2, addr2);
+          REQUIRE(iter3->Next());
+          REQUIRE(iter3->Get(0) == addr1);
+          REQUIRE(iter3->Get(1) == arc1);
+          REQUIRE(iter3->Get(2) == addr2);
+        } catch (...)
+        {
+          SC_LOG_ERROR("Test \"set_iterator3_f_a_f\" failed")
+        }
+      }
+      SUBTEST_END()
+    }
+
+    SECTION("set_iterator3_f_a_a")
+    {
+      SUBTEST_START("set_iterator3_f_a_a")
+      {
+        try
+        {
+          ScTypeVector const & param2 = { ScType::EdgeAccessConstPosPerm };
+          ScTypeVector const & param3 = { ScType::Node, ScType::Link };
+          ScSetIterator3Ptr iter3 = ctx.SetIterator3(addr1, param2, param3);
+          sc_uint8 i = 0;
+          while (iter3->Next())
+          {
+            REQUIRE(iter3->Get(0) == addr1);
+            bool isParamValid = iter3->Get(1) == arc1 || iter3->Get(1) == arc2;
+            REQUIRE(isParamValid);
+            isParamValid = iter3->Get(2) == addr2 || iter3->Get(2) == addr3;
+            REQUIRE(isParamValid);
+            i++;
+          }
+          REQUIRE(i == 2);
+        } catch (...)
+        {
+          SC_LOG_ERROR("Test \"set_iterator3_f_a_a\" failed")
+        }
+      }
+      SUBTEST_END()
+    }
+
+    SECTION("iterator3_a_a_f")
+    {
+      SUBTEST_START("iterator3_a_a_f")
+      {
+        try
+        {
+          ScIterator3Ptr iter3 = ctx.Iterator3(sc_type_node, sc_type_arc_pos_const_perm, addr2);
+          REQUIRE(iter3->Next());
+          REQUIRE(iter3->Get(0) == addr1);
+          REQUIRE(iter3->Get(1) == arc1);
+          REQUIRE(iter3->Get(2) == addr2);
+        } catch (...)
+        {
+          SC_LOG_ERROR("Test \"iterator3_a_a_f\" failed")
+        }
+      }
+      SUBTEST_END()
+    }
+
+    SECTION("iterator3_a_f_a")
+    {
+      SUBTEST_START("iterator3_a_f_a")
+      {
+        try
+        {
+          ScIterator3Ptr iter3 = ctx.Iterator3(sc_type_node, arc1, sc_type_node);
+          REQUIRE(iter3->Next());
+          REQUIRE(iter3->Get(0) == addr1);
+          REQUIRE(iter3->Get(1) == arc1);
+          REQUIRE(iter3->Get(2) == addr2);
+        } catch (...)
+        {
+          SC_LOG_ERROR("Test \"iterator3_a_f_a\" failed")
+        }
+      }
+      SUBTEST_END()
+    }
+
+    addr3 = ctx.CreateNode(ScType::Const);
+    arc2 = ctx.CreateEdge(ScType::EdgeAccessConstPosPerm, addr3, arc1);
+
+    REQUIRE(addr3.IsValid());
+    REQUIRE(arc2.IsValid());
+
+    REQUIRE(ctx.IsElement(addr3));
+    REQUIRE(ctx.IsElement(arc2));
+
+    SECTION("iterator5_a_a_f_a_a")
+    {
+      SUBTEST_START("iterator5_a_a_f_a_a")
+      {
+        try
+        {
+          ScIterator5Ptr iter5 = ctx.Iterator5(
+                ScType::Node,
+                ScType::EdgeAccessConstPosPerm,
+                addr2,
+                ScType::EdgeAccessConstPosPerm,
+                ScType::Node);
+
+          REQUIRE(iter5->Next());
+
+          REQUIRE(iter5->Get(0) == addr1);
+          REQUIRE(iter5->Get(1) == arc1);
+          REQUIRE(iter5->Get(2) == addr2);
+          REQUIRE(iter5->Get(3) == arc2);
+          REQUIRE(iter5->Get(4) == addr3);
+        } catch (...)
+        {
+          SC_LOG_ERROR("Test \"iterator5_a_a_f_a_a\" failed")
+        }
+      }
+      SUBTEST_END()
+    }
+
+    SECTION("iterator5_a_a_f_a_f")
+    {
+      SUBTEST_START("iterator5_a_a_f_a_f")
+      {
+        try
+        {
+          ScIterator5Ptr iter5 = ctx.Iterator5(
+                ScType::Node,
+                ScType::EdgeAccessConstPosPerm,
+                addr2,
+                ScType::EdgeAccessConstPosPerm,
+                addr3);
+
+          REQUIRE(iter5->Next());
+
+          REQUIRE(iter5->Get(0) == addr1);
+          REQUIRE(iter5->Get(1) == arc1);
+          REQUIRE(iter5->Get(2) == addr2);
+          REQUIRE(iter5->Get(3) == arc2);
+          REQUIRE(iter5->Get(4) == addr3);
+        } catch (...)
+        {
+          SC_LOG_ERROR("Test \"iterator5_a_a_f_a_f\" failed")
+        }
+      }
+      SUBTEST_END()
+    }
+
+    SECTION("iterator5_f_a_a_a_a")
+    {
+      SUBTEST_START("iterator5_f_a_a_a_a")
+      {
+        try
+        {
+          ScIterator5Ptr iter5 = ctx.Iterator5(
+                addr1,
+                ScType::EdgeAccessConstPosPerm,
+                ScType::Node,
+                ScType::EdgeAccessConstPosPerm,
+                ScType::Node);
+
+          REQUIRE(iter5->Next());
+
+          REQUIRE(iter5->Get(0) == addr1);
+          REQUIRE(iter5->Get(1) == arc1);
+          REQUIRE(iter5->Get(2) == addr2);
+          REQUIRE(iter5->Get(3) == arc2);
+          REQUIRE(iter5->Get(4) == addr3);
+        } catch (...)
+        {
+          SC_LOG_ERROR("Test \"iterator5_f_a_a_a_a\" failed")
+        }
+      }
+      SUBTEST_END()
+    }
+
+    SECTION("iterator5_f_a_a_a_f")
+    {
+      SUBTEST_START("iterator5_f_a_a_a_f")
+      {
+        try
+        {
+          ScIterator5Ptr iter5 = ctx.Iterator5(
+                addr1,
+                ScType::EdgeAccessConstPosPerm,
+                ScType::Node,
+                ScType::EdgeAccessConstPosPerm,
+                addr3);
+
+          REQUIRE(iter5->Next());
+
+          REQUIRE(iter5->Get(0) == addr1);
+          REQUIRE(iter5->Get(1) == arc1);
+          REQUIRE(iter5->Get(2) == addr2);
+          REQUIRE(iter5->Get(3) == arc2);
+          REQUIRE(iter5->Get(4) == addr3);
+        } catch (...)
+        {
+          SC_LOG_ERROR("Test \"iterator5_f_a_a_a_f\" failed")
+        }
+      }
+      SUBTEST_END()
+    }
+
+    SECTION("iterator5_f_a_f_a_a")
+    {
+      SUBTEST_START("iterator5_f_a_f_a_a")
+      {
+        try
+        {
+          ScIterator5Ptr iter5 = ctx.Iterator5(
+                addr1,
+                ScType::EdgeAccessConstPosPerm,
+                addr2,
+                ScType::EdgeAccessConstPosPerm,
+                ScType::Node);
+
+          REQUIRE(iter5->Next());
+
+          REQUIRE(iter5->Get(0) == addr1);
+          REQUIRE(iter5->Get(1) == arc1);
+          REQUIRE(iter5->Get(2) == addr2);
+          REQUIRE(iter5->Get(3) == arc2);
+          REQUIRE(iter5->Get(4) == addr3);
+        } catch (...)
+        {
+          SC_LOG_ERROR("Test \"iterator5_f_a_f_a_a\" failed")
+        }
+      }
+      SUBTEST_END()
+    }
+
+    SECTION("iterator5_f_a_f_a_f")
+    {
+      SUBTEST_START("iterator5_f_a_f_a_f")
+      {
+        try
+        {
+          ScIterator5Ptr iter5 = ctx.Iterator5(
+                addr1,
+                ScType::EdgeAccessConstPosPerm,
+                addr2,
+                ScType::EdgeAccessConstPosPerm,
+                addr3);
+
+          REQUIRE(iter5->Next());
+          REQUIRE(iter5->Get(0) == addr1);
+          REQUIRE(iter5->Get(1) == arc1);
+          REQUIRE(iter5->Get(2) == addr2);
+          REQUIRE(iter5->Get(3) == arc2);
+          REQUIRE(iter5->Get(4) == addr3);
+        } catch (...)
+        {
+          SC_LOG_ERROR("Test \"iterator5_f_a_f_a_f\" failed")
+        }
+      }
+      SUBTEST_END()
+    }
+
+    SECTION("content_string")
+    {
+      SUBTEST_START("content_string")
+      {
+        try
+        {
+          std::string str("test content string");
+          ScStreamPtr const stream = ScStreamMakeRead(str);
+          ScAddr link = ctx.CreateLink();
+
+          REQUIRE(link.IsValid());
+          REQUIRE(ctx.IsElement(link));
+          REQUIRE(ctx.SetLinkContent(link, stream));
+
+          ScStreamPtr stream2 = ctx.GetLinkContent(link);
+          REQUIRE(ctx.GetLinkContent(link));
+
+          REQUIRE(stream->Size()==stream2->Size());
+          REQUIRE(stream2->Seek(SC_STREAM_SEEK_SET, 0));
+
+          std::string str2;
+          str2.resize(stream2->Size());
+          for (sc_uint i = 0; i < stream2->Size(); ++i)
+          {
+            sc_char c;
+            size_t readBytes;
+            REQUIRE(stream2->Read(&c, sizeof(c), readBytes));
+            REQUIRE(readBytes == sizeof(c));
+
+            str2[i] = c;
+          }
+
+          REQUIRE(str == str2);
+
+          ScAddrVector result = ctx.FindLinksByContent(stream);
+          REQUIRE(result.size() == 1);
+          REQUIRE(result.front() == link);
+        } catch (...)
+        {
+          SC_LOG_ERROR("Test \"content_string\" failed")
+        }
+      }
+      SUBTEST_END()
+    }
+  } catch (...)
+  {
+    SC_LOG_ERROR("Test \"Iterators\" failed")
+  }
+
+  ctx.Destroy();
+  test::ScTestUnit::ShutdownMemory(false);
+}

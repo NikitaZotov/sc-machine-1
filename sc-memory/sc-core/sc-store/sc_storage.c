@@ -1219,6 +1219,20 @@ sc_result sc_storage_element_lock(sc_addr addr, sc_element **el)
   return SC_RESULT_OK;
 }
 
+sc_result sc_storage_elements_lock(sc_addrs addrs, sc_elements **elems)
+{
+  *elems = g_new0(sc_elements, addrs.size);
+
+  sc_uint i = 0;
+  for (; i < addrs.size; i++)
+  {
+    if (!sc_storage_element_lock(addrs.addrs[i], &(*elems)->elements[i]))
+      return SC_RESULT_ERROR;
+  }
+
+  return SC_RESULT_OK;
+}
+
 sc_result sc_storage_element_lock_try(sc_addr addr, sc_uint16 max_attempts, sc_element **el)
 {
   if (addr.seg >= SC_ADDR_SEG_MAX)
@@ -1250,6 +1264,18 @@ sc_result sc_storage_element_unlock(sc_addr addr)
     return SC_RESULT_ERROR;
 
   sc_segment_unlock_element(segment, addr.offset);
+  return SC_RESULT_OK;
+}
+
+sc_result sc_storage_elements_unlock(sc_addrs addrs)
+{
+  sc_uint i = 0;
+  for (; i < addrs.size; i++)
+  {
+    if (!sc_storage_element_unlock(addrs.addrs[i]))
+      return SC_RESULT_ERROR;
+  }
+
   return SC_RESULT_OK;
 }
 
@@ -1340,4 +1366,15 @@ sc_bool sc_storage_element_unref(sc_addr addr)
   }
 
   return no_refs;
+}
+
+sc_bool sc_storage_elements_unref(sc_addrs addrs)
+{
+  sc_uint8 i = 0;
+  for (; i < addrs.size; i++)
+  {
+    if (!sc_storage_element_unref(addrs.addrs[i]))
+      return SC_FALSE;
+  }
+  return SC_TRUE;
 }

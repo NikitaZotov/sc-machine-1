@@ -41,7 +41,7 @@ inline std::string DebugPrint(char const * t)
   }
   else
   {
-    return std::string("NULL string pointer");
+    return { "NULL string pointer" };
   }
 }
 
@@ -150,7 +150,7 @@ namespace impl
 {
 inline std::string Message()
 {
-  return std::string();
+  return {};
 }
 template <typename T> std::string Message(T const & t)
 {

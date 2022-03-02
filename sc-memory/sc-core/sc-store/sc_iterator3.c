@@ -13,7 +13,7 @@
 
 const sc_uint32 s_max_iterator_lock_attempts = 10;
 
-sc_iterator3* sc_iterator3_f_a_a_new(const sc_memory_context *ctx, sc_addr el, sc_type arc_type, sc_type end_type)
+sc_iterator3 *sc_iterator3_f_a_a_new(const sc_memory_context *ctx, sc_addr el, sc_type arc_type, sc_type end_type)
 {
   sc_access_levels levels;
   sc_iterator_param p1, p2, p3;
@@ -33,7 +33,7 @@ sc_iterator3* sc_iterator3_f_a_a_new(const sc_memory_context *ctx, sc_addr el, s
   return sc_iterator3_new(ctx, sc_iterator3_f_a_a, p1, p2, p3);
 }
 
-sc_iterator3* sc_iterator3_a_a_f_new(const sc_memory_context *ctx, sc_type beg_type, sc_type arc_type, sc_addr el)
+sc_iterator3 *sc_iterator3_a_a_f_new(const sc_memory_context *ctx, sc_type beg_type, sc_type arc_type, sc_addr el)
 {
   sc_access_levels levels;
   sc_iterator_param p1, p2, p3;
@@ -53,7 +53,7 @@ sc_iterator3* sc_iterator3_a_a_f_new(const sc_memory_context *ctx, sc_type beg_t
   return sc_iterator3_new(ctx, sc_iterator3_a_a_f, p1, p2, p3);
 }
 
-sc_iterator3* sc_iterator3_f_a_f_new(const sc_memory_context *ctx, sc_addr el_beg, sc_type arc_type, sc_addr el_end)
+sc_iterator3 * sc_iterator3_f_a_f_new(const sc_memory_context *ctx, sc_addr el_beg, sc_type arc_type, sc_addr el_end)
 {
   sc_access_levels levels;
   if (sc_storage_get_access_levels(ctx, el_beg, &levels) != SC_RESULT_OK || !sc_access_lvl_check_read(ctx->access_levels, levels) ||
