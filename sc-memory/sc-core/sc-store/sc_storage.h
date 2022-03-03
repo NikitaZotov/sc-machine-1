@@ -196,7 +196,7 @@ sc_result sc_storage_element_unlock(sc_addr addr);
 //! Adds reference to a specified sc-element
 void sc_storage_element_ref(sc_addr addr);
 /*! Removes reference from a specified sc-element
- * @param addr sc_addr of element to remvoe reference
+ * @param addr sc_addr of element to remove reference
  * @return If last reference removed from sc-element, then elements cell frees and this function returns SC_TRUE;
  * otherwise - returns SC_FALSE and element is still alive. DO NOT work with this sc-element if function returns SC_TRUE
  */

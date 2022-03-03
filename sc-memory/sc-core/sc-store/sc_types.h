@@ -34,7 +34,7 @@ typedef sc_uint32 sc_uint;
 typedef char sc_char;
 typedef unsigned char sc_uchar;
 
-typedef void* sc_pointer;
+typedef void volatile *sc_pointer;
 
 #define sc_min(a, b) ((a) < (b) ? (a) : (b))
 #define sc_max(a, b) ((a) > (b) ? (a) : (b))

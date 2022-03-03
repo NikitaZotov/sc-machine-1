@@ -476,8 +476,7 @@ sc_bool _sc_iterator3_f_a_f_next(sc_iterator3 *it)
 
       if (SC_ADDR_IS_EQUAL(it->params[0].addr, arc_begin) &&
           sc_iterator_compare_type(arc_type, it->params[1].type) &&
-          sc_access_lvl_check_read(it->ctx->access_levels, arc_access)
-          )
+          sc_access_lvl_check_read(it->ctx->access_levels, arc_access))
       {
         // store found result
         it->results[1] = arc_addr;

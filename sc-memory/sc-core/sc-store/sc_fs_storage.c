@@ -132,7 +132,7 @@ sc_bool sc_fs_storage_initialize(const gchar *path, sc_bool clear)
   
   sc_fm_init(repo_path);
 
-  // clear repository if needs
+  // clear repository if it needs
   if (clear == SC_TRUE)
   {
     g_message("Clear memory");

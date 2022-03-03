@@ -18,11 +18,11 @@
 //! Structure to store segment locks
 typedef struct _sc_segment_section
 {
-  volatile sc_pointer thread_lock;           // pointer to thread, that locked section
-  sc_int empty_count;                     // use 32-bit value for atomic operations
-  sc_int empty_offset;                    // use 32-bit value for atomic operations
-  sc_int internal_lock;                   //
-  sc_int lock_count;                      // count of recursive locks
+  sc_pointer thread_lock;           // pointer to thread, that locked section
+  sc_uint32 empty_count;                     // use 32-bit value for atomic operations
+  sc_uint32 empty_offset;                    // use 32-bit value for atomic operations
+  sc_uint32 internal_lock;                      //
+  sc_uint32 lock_count;                         // count of recursive locks
 } sc_segment_section;
 
 /*! Structure for segment storing
@@ -53,8 +53,8 @@ void sc_segment_erase_element(sc_segment *seg, sc_uint16 offset);
 sc_uint32 sc_segment_get_elements_count(sc_segment *seg);
 
 /*! Deletes garbage in specified segment
- * @param oldet_time_stamp Oldest timestamp, that can be used
- * @param seg Poitnet to segment to delete garbage
+ * @param oldest_time_stamp The oldest timestamp, that can be used
+ * @param seg Pointer to segment to delete garbage
  * @returns Returns number of freed cells
  */
 //sc_uint32 sc_segment_free_garbage(sc_segment *seg, sc_uint32 oldest_time_stamp);
@@ -96,7 +96,7 @@ sc_element* sc_segment_lock_element_try(sc_segment *seg, sc_addr_offset offset, 
  */
 void sc_segment_unlock_element(sc_segment *seg, sc_addr_offset offset);
 
-//! Locks segment section. This funciton doesn't returns control, while part wouldn't be locked.
+//! Locks segment section. This function doesn't returns control, while part wouldn't be locked.
 void sc_segment_section_lock(sc_segment_section *section);
 /*! Try to lock segment section. If section already locked, then this function returns false; otherwise it locks section and returns true
  * @params section Pointer to segment section to lock

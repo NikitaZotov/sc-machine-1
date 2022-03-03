@@ -13,7 +13,6 @@
 #include "sc_link_helpers.h"
 #include "sc_event.h"
 #include "sc_config.h"
-#include "sc_iterator.h"
 #include "sc_stream_memory.h"
 
 #include "sc_event/sc_event_private.h"
@@ -43,13 +42,13 @@ GMutex s_mutex_save;
 
 void _sc_segment_cache_lock(const sc_memory_context * ctx)
 {
-  while (g_atomic_pointer_compare_and_exchange(&segments_cache_lock_ctx, (sc_memory_context*) 0, ctx) == FALSE) {}
+  while (g_atomic_pointer_compare_and_exchange(&segments_cache_lock_ctx, null_ptr, ctx) == FALSE);
 }
 
 void _sc_segment_cache_unlock(const sc_memory_context *ctx)
 {
   g_assert(g_atomic_pointer_get(&segments_cache_lock_ctx) == ctx);
-  g_atomic_pointer_set(&segments_cache_lock_ctx, 0);
+  g_atomic_pointer_set(&segments_cache_lock_ctx, null_ptr);
 }
 
 void _sc_segment_cache_append(sc_segment * seg)
@@ -58,7 +57,7 @@ void _sc_segment_cache_append(sc_segment * seg)
   sc_int32 i, idx = CONCURRENCY_TO_CACHE_IDX(cidx);
   for (i = 0; i < SC_SEGMENT_CACHE_SIZE; ++i)
   {
-    if (g_atomic_pointer_compare_and_exchange(&segments_cache[(idx + i) % SC_SEGMENT_CACHE_SIZE], (sc_segment*) 0, seg) == TRUE)
+    if (g_atomic_pointer_compare_and_exchange(&segments_cache[(idx + i) % SC_SEGMENT_CACHE_SIZE], null_ptr, seg) == TRUE)
     {
       g_atomic_int_inc(&segments_cache_count);
       break;
@@ -146,8 +145,8 @@ result:
 
 sc_bool sc_storage_initialize(const char *path, sc_bool clear)
 {
-  g_assert( segments == (sc_segment**)0 );
-  g_assert( !is_initialized );
+  g_assert(segments == (sc_segment**) null_ptr);
+  g_assert(!is_initialized);
 
   segments = g_new0(sc_segment*, SC_ADDR_SEG_MAX);
 
@@ -210,9 +209,9 @@ sc_bool sc_storage_is_element(const sc_memory_context *ctx, sc_addr addr)
 
 sc_element* sc_storage_append_el_into_segments(const sc_memory_context *ctx, sc_addr *addr)
 {
-  sc_segment * seg = (sc_segment*)0x1;
+  sc_segment *seg = (sc_segment*)0x1;
 
-  g_assert( addr != 0 );
+  g_assert(addr != 0);
   SC_ADDR_MAKE_EMPTY(*addr);
 
   if (g_atomic_int_get(&segments_num) >= sc_config_get_max_loaded_segments())
@@ -222,7 +221,7 @@ sc_element* sc_storage_append_el_into_segments(const sc_memory_context *ctx, sc_
   // try to find segment with empty slots
   while (seg != 0)
   {
-    sc_segment *seg = _sc_segment_cache_get(ctx);
+    seg = _sc_segment_cache_get(ctx);
 
     if (seg == null_ptr)
       break;
@@ -233,7 +232,7 @@ sc_element* sc_storage_append_el_into_segments(const sc_memory_context *ctx, sc_
       addr->seg = seg->num;
       el->flags.access_levels = sc_access_lvl_min(ctx->access_levels, el->flags.access_levels);
 
-      sc_element_meta * meta = sc_segment_get_meta(seg, addr->offset);
+      sc_element_meta *meta = sc_segment_get_meta(seg, addr->offset);
       g_assert(meta != null_ptr);
       meta->ref_count = 1;
       return el;
@@ -275,7 +274,7 @@ sc_result sc_storage_element_free(sc_memory_context *ctx, sc_addr addr)
 
   g_mutex_lock(&s_mutex_free);
 
-  // first of all we need to collect and lock all elements
+  // the first we need to collect and lock all elements
   sc_element *el;
   if (sc_storage_element_lock(addr, &el) != SC_RESULT_OK)
   {
