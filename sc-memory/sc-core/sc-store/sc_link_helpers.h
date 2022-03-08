@@ -13,11 +13,12 @@
 
 /*! Caclulates checksum for data in stream
  * @param stream Pointer to data stream for checksum calculation
- * @param check_sum Pointer to stucture, that contains calculated checksum
+ * @param check_sum Pointer to structure, that contains calculated checksum
  * @return If checksum calculated, then return SC_TRUE; otherwise return SC_FALSE
  */
 sc_bool sc_link_calculate_checksum(const sc_stream *stream, sc_check_sum *check_sum);
 
+sc_bool sc_link_get_content(const sc_stream *stream, sc_char **content, sc_uint16 *size);
 
 /*! Calculates checksum for sc-link, when it is self container for it's data
  * @param el Pointer to sc-link

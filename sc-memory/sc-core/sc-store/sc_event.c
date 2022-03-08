@@ -38,7 +38,7 @@ sc_result insert_event_into_table(sc_event *event)
 
   EVENTS_TABLE_LOCK
 
-      // first of all, if table doesn't exist, then create it
+      // the first, if table doesn't exist, then create it
       if (events_table == null_ptr)
       events_table = g_hash_table_new(events_table_hash_func, events_table_equal_func);
 
@@ -213,7 +213,7 @@ unref:
     sc_event_unref(evt);
   }
 
-  // whait while will be available for a destroy
+  // wait while will be available for destroy
   while (SC_TRUE)
   {
     sc_event_lock(evt);
@@ -246,7 +246,7 @@ sc_result sc_event_notify_element_deleted(sc_addr element)
       if (events_table == null_ptr)
       goto result;
 
-  // lookup for all registered to specified sc-elemen events
+  // lookup for all registered to specified sc-element events
   element_events_list = (GSList*)g_hash_table_lookup(events_table, TABLE_KEY(element));
   if (element_events_list)
   {

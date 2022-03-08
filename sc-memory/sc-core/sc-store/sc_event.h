@@ -11,7 +11,7 @@
 
 /*! Event callback function type.
  * It takes 3 parameters:
- * - pointer to emited event description
+ * - pointer to emitted event description
  * - sc-addr of added/remove edge
  * - sc-addr of another end of added/remove edge
  * So it can be empty.

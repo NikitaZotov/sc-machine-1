@@ -158,6 +158,8 @@ sc_result sc_storage_get_link_content(sc_memory_context const * ctx, sc_addr add
  */
 sc_result sc_storage_find_links_with_content(sc_memory_context const * ctx, sc_stream const * stream, sc_addr ** result, sc_uint32 * result_count);
 
+sc_result sc_storage_find_link_with_content(const sc_memory_context *ctx, const sc_stream *stream, sc_addr *found);
+
 /*! Setup new access levels to sc-element. New access levels will be a minimum from context access levels and parameter \b access_levels
  * @param addr sc-addr of sc-element to change access levels
  * @param access_levels new access levels

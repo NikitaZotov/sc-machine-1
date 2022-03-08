@@ -36,7 +36,6 @@ sc_result sc_stream_memory_read(const sc_stream *stream, sc_char *data, sc_uint3
   memcpy(data, &(buffer->data[buffer->pos]), *bytes_read);
   buffer->pos += *bytes_read;
 
-
   return SC_RESULT_OK;
 }
 

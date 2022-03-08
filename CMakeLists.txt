@@ -12,7 +12,7 @@ option (SC_AUTO_TEST "Flag to build for automation testing" OFF)
 option (SC_KPM_SCP "Flag to build SCP module" OFF)
 option (SC_BUILD_SCTP "Flag to turn on/off sctp protocol support" ON)
 # Flag to build unit tests. Option is replaced with set because of option unpredictable behavior
-set(SC_BUILD_TESTS OFF)
+set(SC_BUILD_TESTS ON)
 
 # codegen
 if (${UNIX})
@@ -251,6 +251,6 @@ if (NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/log)
 			WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 endif ()
 set(LOG_DIR ${CMAKE_CURRENT_LIST_DIR}/log/)
-set(LOG_MODE Info)
+set(LOG_MODE Debug)
 set(LOG_OUTPUT_TYPE Console)
 configure_file(${CMAKE_CURRENT_LIST_DIR}/log_config.h.in ${CMAKE_CURRENT_LIST_DIR}/sc-memory/sc-memory/generated/log_config.hpp @ONLY)
