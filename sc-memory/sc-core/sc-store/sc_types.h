@@ -172,12 +172,12 @@ enum _sc_result
   // SC_RESULT_OK should be 1 anytime
   SC_RESULT_OK = 1,                   // no any error
   SC_RESULT_ERROR_INVALID_PARAMS,     // invalid function parameters error
-  SC_RESULT_ERROR_INVALID_TYPE,       // invalied type error
+  SC_RESULT_ERROR_INVALID_TYPE,       // invalid type error
   SC_RESULT_ERROR_IO,                 // input/output error
   SC_RESULT_ERROR_INVALID_STATE,      // invalid state of processed object
   SC_RESULT_ERROR_NOT_FOUND,          // item not found
-  SC_RESULT_ERROR_NO_WRITE_RIGHTS,    // no ritghs to change or delete object
-  SC_RESULT_ERROR_NO_READ_RIGHTS,     // no ritghs to read object
+  SC_RESULT_ERROR_NO_WRITE_RIGHTS,    // no rights to change or delete object
+  SC_RESULT_ERROR_NO_READ_RIGHTS,     // no rights to read object
   SC_RESULT_NO,                       // no any result
   SC_RESULT_UNKNOWN,                  // result unknown
 
@@ -188,7 +188,7 @@ enum _sc_result
 
 // contents
 #define SC_MAX_CHECKSUM_LEN     32
-//! Structure to store checksum informaiton
+//! Structure to store checksum information
 struct _sc_check_sum
 {
   char data[SC_MAX_CHECKSUM_LEN];  // maximum checksum length

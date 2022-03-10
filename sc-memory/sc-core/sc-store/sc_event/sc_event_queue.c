@@ -65,7 +65,7 @@ sc_event_queue * sc_event_queue_new()
 
 void sc_event_queue_stop_processing(sc_event_queue *queue)
 {
-  g_assert(queue != 0);
+  g_assert(queue != null_ptr);
 
   sc_bool is_running = SC_FALSE;
 
@@ -79,18 +79,17 @@ void sc_event_queue_stop_processing(sc_event_queue *queue)
     queue->running = SC_FALSE;
     g_mutex_unlock(&queue->mutex);
   }
-
 }
 
 void sc_event_queue_destroy_wait(sc_event_queue *queue)
 {
-  g_assert(queue != 0);
+  g_assert(queue != null_ptr);
 
   if (queue->thread_pool)
   {
     g_mutex_lock(&queue->mutex);
     g_thread_pool_free(queue->thread_pool, FALSE, TRUE);
-    queue->thread_pool = 0;
+    queue->thread_pool = null_ptr;
     g_mutex_unlock(&queue->mutex);
   }
 
@@ -99,7 +98,7 @@ void sc_event_queue_destroy_wait(sc_event_queue *queue)
 
 void sc_event_queue_append(sc_event_queue * queue, sc_event * evt, sc_addr edge, sc_addr other_el)
 {
-  g_assert(queue != 0);
+  g_assert(queue != null_ptr);
 
   g_mutex_lock(&queue->mutex);
   if (queue->running == SC_TRUE)
@@ -112,7 +111,7 @@ void sc_event_queue_append(sc_event_queue * queue, sc_event * evt, sc_addr edge,
 
 void sc_event_queue_remove(sc_event_queue *queue, sc_event *event)
 {
-  g_assert(queue != 0);
+  g_assert(queue != null_ptr);
   g_mutex_lock(&queue->mutex);
 
   g_mutex_unlock(&queue->mutex);

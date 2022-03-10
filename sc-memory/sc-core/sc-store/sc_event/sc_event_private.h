@@ -38,7 +38,7 @@ struct _sc_event
   fEventCallbackEx callback_ex;
   //! Pointer to callback function, that calls, when subscribed sc-element deleted
   fDeleteCallback delete_callback;
-  //! Reference count (just references from queue). Higest bit used for SC_EVENT_REQUEST_DESTROY
+  //! Reference count (just references from queue). Highest bit used for SC_EVENT_REQUEST_DESTROY
   volatile sc_uint32 ref_count;
   //! Context lock
   volatile sc_pointer thread_lock;
@@ -55,7 +55,7 @@ sc_bool sc_events_initialize();
 //! Function to shutdown sc-events module
 void sc_events_shutdown();
 
-//! Waits while all emited events will be processed, then returns. After calling that function all new emited events will be ignored
+//! Waits while all emitted events will be processed, then returns. After calling that function all new emitted events will be ignored
 void sc_events_stop_processing();
 
 /*! Notificate about sc-element deletion.
@@ -69,14 +69,14 @@ sc_result sc_event_notify_element_deleted(sc_addr element);
  * If \ctx is in a pending mode, then event will be pend for emit
  * @param ctx pointer to context, that emits event
  * @param el sc-addr of element that emitting event
- * @param el_access Acces level of \p el
+ * @param el_access Access level of \p el
  * @param type Emitting event type
  * @param edge sc-addr of added/remove edge (just for specified events)
  * @param other_el sc-addr of the second element of edge. If \p el is a source, then \p other_el is a target.
  * If \p el is a target, then \p other_el is a source.
  * @return If event emitted without any errors, then return SC_OK; otherwise return SC_ERROR code
  */
-sc_result sc_event_emit(sc_memory_context * ctx, sc_addr el, sc_access_levels el_acces, sc_event_type type, sc_addr edge, sc_addr other_el);
+sc_result sc_event_emit(sc_memory_context * ctx, sc_addr el, sc_access_levels el_access, sc_event_type type, sc_addr edge, sc_addr other_el);
 
 /*! Emit event immediately
  */

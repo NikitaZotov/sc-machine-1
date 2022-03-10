@@ -1028,7 +1028,7 @@ BOOST_PYTHON_MODULE(sc)
     .staticmethod("GetResultCodeByAddr")
     .def_readonly("kCommandStateAddr", &ScKeynodes::kCommandStateAddr)
     .def_readonly("kCommandInitiatedAddr", &ScKeynodes::kCommandInitiatedAddr)
-    .def_readonly("kCommandProgressdAddr", &ScKeynodes::kCommandProgressdAddr)
+    .def_readonly("kCommandProgressedAddr", &ScKeynodes::kCommandProgressedAddr)
     .def_readonly("kCommandFinishedAddr", &ScKeynodes::kCommandFinishedAddr)
     ;
 

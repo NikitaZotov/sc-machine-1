@@ -18,8 +18,8 @@ GMutex events_table_mutex;
 #define TABLE_KEY(__Addr) GUINT_TO_POINTER(SC_ADDR_LOCAL_TO_INT(__Addr))
 
 // Pointer to hash table that contains events
-GHashTable *events_table = 0;
-sc_event_queue *event_queue = 0;
+GHashTable *events_table = null_ptr;
+sc_event_queue *event_queue = null_ptr;
 
 guint events_table_hash_func(gconstpointer pointer)
 {
@@ -34,13 +34,13 @@ gboolean events_table_equal_func(gconstpointer a, gconstpointer b)
 //! Inserts specified event into events table
 sc_result insert_event_into_table(sc_event *event)
 {
-  GSList *element_events_list = 0;
+  GSList *element_events_list = null_ptr;
 
   EVENTS_TABLE_LOCK
 
-      // the first, if table doesn't exist, then create it
-      if (events_table == null_ptr)
-      events_table = g_hash_table_new(events_table_hash_func, events_table_equal_func);
+  // the first, if table doesn't exist, then create it
+  if (events_table == null_ptr)
+    events_table = g_hash_table_new(events_table_hash_func, events_table_equal_func);
 
   // if there are no events for specified sc-element, then create new events list
   element_events_list = (GSList*)g_hash_table_lookup(events_table, TABLE_KEY(event->element));
@@ -55,12 +55,13 @@ sc_result insert_event_into_table(sc_event *event)
 //! Remove specified sc-event from events table
 sc_result remove_event_from_table(sc_event *event)
 {
-  GSList *element_events_list = 0;
   g_assert(events_table != null_ptr);
+
+  GSList *element_events_list = null_ptr;
 
   EVENTS_TABLE_LOCK
 
-      element_events_list = (GSList*)g_hash_table_lookup(events_table, TABLE_KEY(event->element));
+  element_events_list = (GSList*)g_hash_table_lookup(events_table, TABLE_KEY(event->element));
   if (element_events_list == null_ptr)
   {
     EVENTS_TABLE_UNLOCK
@@ -95,6 +96,7 @@ sc_bool _sc_event_try_emit(sc_event * evt)
   sc_bool res = SC_TRUE;
 
   sc_event_lock(evt);
+
   if (evt->ref_count & SC_EVENT_REQUEST_DESTROY)
   {
     res = SC_FALSE;
@@ -238,13 +240,14 @@ unref:
 
 sc_result sc_event_notify_element_deleted(sc_addr element)
 {
-  GSList *element_events_list = 0;
-  sc_event *evt = 0;
+  GSList *element_events_list = null_ptr;
+  sc_event *evt = null_ptr;
 
   EVENTS_TABLE_LOCK
-      // do nothing, if there are no registered events
-      if (events_table == null_ptr)
-      goto result;
+
+  // do nothing, if there are no registered events
+  if (events_table == null_ptr)
+    goto result;
 
   // lookup for all registered to specified sc-element events
   element_events_list = (GSList*)g_hash_table_lookup(events_table, TABLE_KEY(element));
@@ -268,7 +271,7 @@ sc_result sc_event_notify_element_deleted(sc_addr element)
 
 result:
   {
-    EVENTS_TABLE_UNLOCK;
+    EVENTS_TABLE_UNLOCK
   }
 
   return SC_RESULT_OK;
@@ -294,18 +297,18 @@ sc_result sc_event_emit(sc_memory_context * ctx, sc_addr el, sc_access_levels el
 
 sc_result sc_event_emit_impl(sc_memory_context const * ctx, sc_addr el, sc_access_levels el_access, sc_event_type type, sc_addr edge, sc_addr other_el)
 {
-  GSList *element_events_list = 0;
-  sc_event *event = 0;
+  GSList *element_events_list = null_ptr;
+  sc_event *event = null_ptr;
 
   g_assert(SC_ADDR_IS_NOT_EMPTY(el));
 
-  EVENTS_TABLE_LOCK;
+  EVENTS_TABLE_LOCK
 
   // if table is empty, then do nothing
   if (events_table == null_ptr)
     goto result;
 
-  // lookup for all registered to specified sc-elemen events
+  // lookup for all registered to specified sc-element events
   element_events_list = (GSList*)g_hash_table_lookup(events_table, TABLE_KEY(el));
   while (element_events_list != null_ptr)
   {
@@ -324,7 +327,7 @@ sc_result sc_event_emit_impl(sc_memory_context const * ctx, sc_addr el, sc_acces
 
 result:
   {
-    EVENTS_TABLE_UNLOCK;
+    EVENTS_TABLE_UNLOCK
   }
 
   return SC_RESULT_OK;
@@ -389,7 +392,7 @@ sc_bool sc_events_initialize()
 void sc_events_shutdown()
 {
   sc_event_queue_destroy_wait(event_queue);
-  event_queue = 0;
+  event_queue = null_ptr;
 }
 
 void sc_events_stop_processing()

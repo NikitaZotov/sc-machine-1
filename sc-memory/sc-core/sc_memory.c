@@ -125,7 +125,7 @@ void sc_memory_shutdown(sc_bool save_state)
 
   /// todo: clear contexts
   g_hash_table_destroy(s_context_hash_table);
-  s_context_hash_table = 0;
+  s_context_hash_table = null_ptr;
   s_context_id_last = 0;
   //g_assert(s_context_id_count == 0);
 }
@@ -147,7 +147,7 @@ sc_memory_context* sc_memory_context_new_impl(sc_uint8 levels)
 
   ctx->access_levels = levels;
 
-  // setup concurency id
+  // setup concurrency id
   g_mutex_lock(&s_concurrency_mutex);
   if (s_context_id_count >= G_MAXUINT32)
     goto error;
