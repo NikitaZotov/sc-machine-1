@@ -25,7 +25,7 @@ private:
     params.ext_path = extPath.empty() ? nullptr : extPath.c_str();
 
     ScMemory::LogMute();
-    ScMemory::Initialize(params);
+    SC_ASSERT(ScMemory::Initialize(params), ("Unable to initialize memory"));
     ScMemory::LogUnmute();
   }
 

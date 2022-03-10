@@ -49,10 +49,10 @@ sc_memory_context* sc_memory_initialize(const sc_memory_params *params)
 
   g_message("Configuration:");
   g_message("\tmax_loaded_segments: %d", sc_config_get_max_loaded_segments());
-  g_message("sc-element size: %zd", sizeof(sc_element));
+  g_message("\tsc-element size: %zd", sizeof(sc_element));
 
   if (sc_storage_initialize(params->repo_path, params->clear) != SC_TRUE)
-    return 0;
+    return null_ptr;
 
   s_memory_default_ctx = sc_memory_context_new(sc_access_lvl_make(SC_ACCESS_LVL_MAX_VALUE, SC_ACCESS_LVL_MAX_VALUE));
   sc_memory_context *helper_ctx = sc_memory_context_new(sc_access_lvl_make(SC_ACCESS_LVL_MIN_VALUE, SC_ACCESS_LVL_MAX_VALUE));
