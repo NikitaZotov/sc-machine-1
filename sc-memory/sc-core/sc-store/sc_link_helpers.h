@@ -10,6 +10,7 @@
 #include "sc_types.h"
 #include "sc_stream.h"
 
+sc_bool sc_link_calculate_checksum(const sc_stream *stream, sc_char **hash_string);
 
 sc_bool sc_link_get_content(const sc_stream *stream, sc_char **content, sc_uint16 *size);
 

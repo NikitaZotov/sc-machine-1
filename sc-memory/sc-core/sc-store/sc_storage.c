@@ -933,7 +933,7 @@ sc_result sc_storage_set_link_content(sc_memory_context *ctx, sc_addr addr, cons
     goto unlock;
   }
 
-  sc_char * data = null_ptr;
+  sc_char *data = null_ptr;
   sc_uint16 size = 0;
   if (sc_link_get_content(stream, &data, &size) == SC_FALSE)
   {
@@ -990,7 +990,7 @@ sc_result sc_storage_get_link_content(const sc_memory_context *ctx, sc_addr addr
   if (el->flags.type & sc_flag_link_self_container)
   {
     sc_char * sc_string;
-    sc_uint16 size;
+    sc_uint32 size;
     sc_string_tree_get_sc_string_ext(addr, &sc_string, &size);
     *stream = sc_stream_memory_new(sc_string, size, SC_STREAM_FLAG_READ, SC_TRUE);
     result = SC_RESULT_OK;
@@ -1012,15 +1012,15 @@ sc_result sc_storage_find_links_with_content(const sc_memory_context *ctx, const
   *result_addrs = null_ptr;
   *result_count = 0;
 
-  sc_char *data = null_ptr;
+  sc_char *sc_string = null_ptr;
   sc_uint16 size = 0;
-  if (sc_link_get_content(stream, &data, &size) != SC_TRUE)
+  if (sc_link_get_content(stream, &sc_string, &size) != SC_TRUE)
     return SC_RESULT_ERROR;
 
   sc_addr *found_addrs;
   sc_uint32 addrs_size = 0;
 
-  sc_result result = sc_string_tree_get_sc_links(data, &found_addrs, &addrs_size);
+  sc_result result = sc_string_tree_get_sc_links(sc_string, &found_addrs, &addrs_size);
   if (result != SC_RESULT_OK || found_addrs == null_ptr || addrs_size == 0)
     return SC_RESULT_ERROR;
 
@@ -1076,12 +1076,12 @@ sc_result sc_storage_find_link_with_content(const sc_memory_context *ctx, const 
   sc_result result = SC_RESULT_ERROR;
   SC_ADDR_MAKE_EMPTY(*found)
 
-  sc_char *data = null_ptr;
+  sc_char *sc_string = null_ptr;
   sc_uint16 size = 0;
-  if (sc_link_get_content(stream, &data, &size) != SC_TRUE)
+  if (sc_link_get_content(stream, &sc_string, &size) != SC_TRUE)
     return SC_RESULT_ERROR;
 
-  sc_addr addr = sc_string_tree_get_sc_link(data);
+  sc_addr addr = sc_string_tree_get_sc_link(sc_string);
   if (SC_ADDR_IS_EMPTY(addr))
   {
     return SC_RESULT_ERROR;

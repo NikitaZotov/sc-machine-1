@@ -45,7 +45,7 @@ typedef void* sc_pointer;
 
 typedef sc_uint8 sc_bool;
 
-// types limits
+// type limits
 #define SC_MININT8	((sc_int8)  0x80)
 #define SC_MAXINT8	((sc_int8)  0x7f)
 #define SC_MAXUINT8	((sc_uint8) 0xff)
