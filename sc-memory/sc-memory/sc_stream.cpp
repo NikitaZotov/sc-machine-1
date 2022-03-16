@@ -41,12 +41,12 @@ void ScStream::Reset()
 {
   if (m_stream)
     sc_stream_free(m_stream);
-  m_stream = 0;
+  m_stream = nullptr;
 }
 
 bool ScStream::IsValid() const
 {
-  return m_stream != 0;
+  return m_stream != nullptr;
 }
 
 bool ScStream::Read(sc_char * buff, size_t buffLen, size_t & readBytes) const

@@ -124,6 +124,7 @@ TEST_CASE("sc-link-content-changed", "[test sc-links content changed]")
   REQUIRE(link.Set(str));
   REQUIRE(str == link.GetAsString());
 
+  REQUIRE(!ctx.FindLinksByContent("content3").empty());
   REQUIRE(ctx.FindLinksByContent("content1").empty());
   REQUIRE(ctx.FindLinksByContent("content2").empty());
 
