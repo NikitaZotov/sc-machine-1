@@ -34,6 +34,7 @@ typedef struct _sc_link_content
 {
   sc_string_tree_node *node;
   sc_char *sc_string;
+  sc_uint32 string_size;
 } sc_link_content;
 
 sc_bool sc_string_tree_initialize();
@@ -83,6 +84,15 @@ void sc_string_tree_get_sc_string_ext(sc_addr addr, sc_char **sc_string, sc_uint
 void sc_string_tree_show_from_node(sc_string_tree_node *node, sc_char *tab);
 
 void sc_string_tree_show();
+
+void sc_string_tree_visit_node_from_node(
+      sc_string_tree_node *node,
+      void (*callable)(sc_string_tree_node*, void*),
+      void *dest);
+
+void sc_string_tree_write_nodes(void (*callable)(sc_string_tree_node*, void*), void *dest);
+
+void sc_string_tree_write_node(sc_string_tree_node *node, void *dest);
 
 void sc_string_tree_links_hashes_show();
 

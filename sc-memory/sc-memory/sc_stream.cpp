@@ -132,7 +132,6 @@ bool ScStreamConverter::StreamToString(ScStreamPtr const & stream, std::string &
   delete []data;
 
   return true;
-
 }
 
 ScStreamPtr ScStreamConverter::StreamFromString(std::string const & str)

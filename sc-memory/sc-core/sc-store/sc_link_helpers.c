@@ -39,7 +39,7 @@ sc_bool sc_link_calculate_checksum(const sc_stream *stream, sc_char **hash_strin
   result = g_checksum_get_string(checksum);
 
   *hash_string = g_new0(sc_char, strlen(result));
-  memcpy(*hash_string, result, sizeof(sc_char) * strlen(result));
+  memcpy(*hash_string, &(result[0]), strlen(result));
 
   g_checksum_free(checksum);
 
@@ -68,7 +68,7 @@ sc_bool sc_link_get_content(const sc_stream *stream, sc_char **content, sc_uint1
     return SC_FALSE;
 
   *content = g_new0(sc_char, length);
-  memcpy(*content, buffer, sizeof(sc_char) * length);
+  memcpy(*content, &(buffer[0]), length);
   *size = length;
 
   return SC_TRUE;
