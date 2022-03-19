@@ -189,7 +189,7 @@ private:
             m_ctx.SetElementSubtype(result, *newType);
           } else if (!newType.CanExtendTo(oldType))
           {
-            SC_THROW_EXCEPTION(utils::ExceptionInvalidType, "Duplicate element type for " + el.GetIdtf());
+            //SC_THROW_EXCEPTION(utils::ExceptionInvalidType, "Duplicate element type for " + el.GetIdtf());
           }
         }
       }

@@ -57,6 +57,8 @@ elseif (NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 endif ()
 
+add_compile_options(-gdwarf-4)
+
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DSC_DEBUG -DSC_PROFILE")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSC_DEBUG -DSC_PROFILE")
 
@@ -111,7 +113,6 @@ elseif (${UNIX})
     else ()
         find_package(Boost 1.54 REQUIRED COMPONENTS filesystem python-py${PY_SHORT_VERSION})
     endif()
-    find_package(RocksDB REQUIRED)
 
     include(FindPkgConfig)
     pkg_check_modules (GLIB2 REQUIRED glib-2.0)
@@ -150,7 +151,6 @@ elseif (${WIN32})
 
     set (GLIB_PATH "${PACKAGES_PATH}/glib.2.36.2.11/build/native")
     set (BOOST_PATH "${PACKAGES_PATH}/boost.${BOOST_VERSION}/lib/native")
-    set (ROCKSDB_PATH "${SC_MACHINE_THIRDPARTY_PATH}/rocksdb")
 
     set (LIBCLANG_INCLUDE_DIRS "${SC_MACHINE_THIRDPARTY_PATH}/clang/include")
     set (LIBCLANG_LIBRARY "libclang")
@@ -166,9 +166,6 @@ elseif (${WIN32})
     set (BOOST_PYTHON_BIN_PATH "${SC_MACHINE_THIRDPARTY_PATH}/boost")
     set (BOOST_PYTHON_LIBRARY_RELEASE "${BOOST_PYTHON_BIN_PATH}/boost_python3-${MSVC_SUFFIX}-mt-1_64.lib")
     set (BOOST_PYTHON_LIBRARY_DEBUG "${BOOST_PYTHON_BIN_PATH}/boost_python3-${MSVC_SUFFIX}-mt-gd-1_64.lib")
-
-    set (RocksDB_INCLUDE_DIR "${ROCKSDB_PATH}/include")
-    set (RocksDB_LIBRARIES "${ROCKSDB_PATH}/rocksdb-shared.lib")
 
     include_directories("${BOOST_PATH}/include"
                         "${LIBCURL_INCLUDE_DIRS}")
@@ -205,7 +202,6 @@ elseif (${WIN32})
             "${LIBCURL_RUNTIME_PATH}/ssleay32.dll"
             "${BOOST_PYTHON_BIN_PATH}/boost_python3-${MSVC_SUFFIX}-mt-1_64.dll"
             "${BOOST_PYTHON_BIN_PATH}/boost_python3-${MSVC_SUFFIX}-mt-gd-1_64.dll"
-            "${ROCKSDB_PATH}/rocksdb-shared.dll"
             )
     file(COPY ${WIN_RUNTIME_LIBRARIES} DESTINATION "${SC_BIN_PATH}")
 

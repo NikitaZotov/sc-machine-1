@@ -42,7 +42,6 @@ jobs:
           packages: [
             'python3-pip',
             'g++-7',
-            'librocksdb-dev',
             'libglib2.0-dev',
             'libboost-system-dev',
             'libboost-filesystem-dev',

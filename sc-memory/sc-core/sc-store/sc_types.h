@@ -68,7 +68,7 @@ typedef sc_uint8 sc_bool;
 typedef sc_uint16 sc_addr_seg;
 typedef sc_uint16 sc_addr_offset;
 
-typedef sc_uint16 sc_addr_hash;
+typedef sc_uint64 sc_addr_hash;
 
 //! Structure to store sc-element address
 struct _sc_addr
@@ -188,15 +188,6 @@ enum _sc_result
   SC_RESULT_ERROR_NO_RIGHTS = SC_RESULT_ERROR_NO_WRITE_RIGHTS | SC_RESULT_ERROR_NO_READ_RIGHTS
 };
 
-// contents
-#define SC_MAX_CHECKSUM_LEN     32
-//! Structure to store checksum information
-struct _sc_check_sum
-{
-  char data[SC_MAX_CHECKSUM_LEN];  // maximum checksum length
-  sc_uint8 len;    // checksum length
-};
-
 // events
 enum _sc_event_type
 {
@@ -221,7 +212,6 @@ struct _sc_stat
 };
 
 
-typedef struct _sc_check_sum sc_check_sum;
 typedef struct _sc_arc  sc_arc;
 typedef struct _sc_arc_info sc_arc_info;
 typedef sc_uint8 sc_access_levels;

@@ -354,7 +354,8 @@ ScAddrVector ScMemoryContext::FindLinksByContent(ScStreamPtr const & stream)
   sc_addr * result = nullptr;
   sc_uint32 resultCount = 0;
 
-  if (sc_memory_find_links_with_content(m_context, stream->m_stream, &result, &resultCount) == SC_RESULT_OK)
+  sc_stream * str = stream->m_stream;
+  if (sc_memory_find_links_with_content(m_context, str, &result, &resultCount) == SC_RESULT_OK)
   {
     for (sc_uint32 i = 0; i < resultCount; ++i)
       contents.push_back(ScAddr(result[i]));

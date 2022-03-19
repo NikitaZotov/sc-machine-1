@@ -33,7 +33,7 @@ sc_result sc_stream_memory_read(const sc_stream *stream, sc_char *data, sc_uint3
   else
     *bytes_read = length;
 
-  memcpy(data, &(buffer->data[buffer->pos]), *bytes_read);
+  memcpy(data, buffer->data + buffer->pos, *bytes_read);
   buffer->pos += *bytes_read;
 
   return SC_RESULT_OK;
@@ -90,7 +90,7 @@ sc_result sc_stream_memory_free_handler(const sc_stream *stream)
 
   if (buffer->data_owner == SC_TRUE)
   {
-    g_assert(buffer->data != 0);
+    g_assert(buffer->data != null_ptr);
     g_free(buffer->data);
   }
 

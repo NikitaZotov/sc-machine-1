@@ -70,8 +70,10 @@ sc_result resolve_nrel_system_identifier(sc_memory_context const *ctx)
 
 void _init_keynodes_str()
 {
+  gsize bytes_read = 0, bytes_written = 0;
   keynodes_str = g_new0(gchar*, SC_KEYNODE_COUNT);
-  keynodes_str[SC_KEYNODE_NREL_SYSTEM_IDENTIFIER] = "nrel_system_identifier";
+  keynodes_str[SC_KEYNODE_NREL_SYSTEM_IDENTIFIER]
+      = g_locale_to_utf8("nrel_system_identifier", -1, &bytes_read, &bytes_written, 0);
 
   // check for errors
   sc_uint32 i;

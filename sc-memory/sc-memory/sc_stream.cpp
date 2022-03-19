@@ -8,7 +8,7 @@
 
 
 ScStream::ScStream()
-  : m_stream(0)
+  : m_stream(nullptr)
 {
 }
 
