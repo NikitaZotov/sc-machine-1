@@ -177,6 +177,7 @@ TEST_CASE("sc-link-content-changed", "[test sc-links content changed]")
 
   REQUIRE(!ctx.FindLinksByContent("content3").empty());
   REQUIRE(ctx.FindLinksByContent("content1").empty());
+  REQUIRE(ctx.FindLinksByContent("content1").empty());
   REQUIRE(ctx.FindLinksByContent("content2").empty());
 
   sc_string_tree_show();
