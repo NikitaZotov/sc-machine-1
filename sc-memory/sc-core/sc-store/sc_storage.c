@@ -168,8 +168,6 @@ void sc_storage_shutdown(sc_bool save_state)
 {
   g_assert(segments != (sc_segment**)null_ptr);
 
-  sc_string_tree_show();
-  sc_string_tree_links_hashes_show();
   sc_fs_storage_shutdown(segments, save_state);
 
   sc_uint idx;
@@ -1026,15 +1024,15 @@ sc_result sc_storage_find_links_with_content(const sc_memory_context *ctx, const
   if (sc_link_get_content(stream, &sc_string, &size) != SC_TRUE)
     return SC_RESULT_ERROR;
 
-  sc_addr *found_addrs;
-  sc_uint32 addrs_size = 0;
-
-  sc_result result = sc_string_tree_get_sc_links(sc_string, &found_addrs, &addrs_size);
-  if (result != SC_RESULT_OK || found_addrs == null_ptr || addrs_size == 0)
+  sc_addr *found_addrs = null_ptr;
+  sc_result result = sc_string_tree_get_sc_links(sc_string, &found_addrs, result_count);
+  if (result != SC_RESULT_OK || found_addrs == null_ptr || result_count == 0)
     return SC_RESULT_ERROR;
 
+  *result_addrs = g_new0(sc_addr, *result_count);
+
   sc_uint32 i;
-  for (i = 0; i < addrs_size; ++i)
+  for (i = 0; i < *result_count; ++i)
   {
     sc_addr found = found_addrs[i];
     if (SC_ADDR_IS_EMPTY(found))
@@ -1053,12 +1051,7 @@ sc_result sc_storage_find_links_with_content(const sc_memory_context *ctx, const
       goto unlock;
     }
 
-    if (*result_addrs == null_ptr)
-      *result_addrs = g_new0(sc_addr, ++(*result_count));
-    else
-      *result_addrs = g_renew(sc_addr, *result_addrs, ++(*result_count));
-
-    *result_addrs[(*result_count) - 1] = found;
+    *result_addrs[i] = found;
     result = SC_RESULT_OK;
 
 unlock:

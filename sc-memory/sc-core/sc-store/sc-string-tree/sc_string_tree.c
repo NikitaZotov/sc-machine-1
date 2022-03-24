@@ -87,19 +87,22 @@ inline sc_string_tree_node* _sc_string_tree_get_next_node(sc_string_tree_node *n
 
 sc_string_tree_node* sc_string_tree_append_to_node(sc_string_tree_node *node, sc_char *sc_string, sc_uint32 size)
 {
+  sc_char **sc_string_ptr = g_new0(sc_char*, 1);
+  *sc_string_ptr = sc_string;
+
   sc_uint32 i = 0;
   sc_uint32 saved_offset_size = size;
   while (i < size)
   {
     sc_uint8 num;
-    sc_char_to_sc_int(sc_string[i], &num, &node->mask);
+    sc_char_to_sc_int(**sc_string_ptr, &num, &node->mask);
     if (SC_STRING_TREE_NODE_IS_NOT_VALID(node->next[num]))
     {
       node->next[num] = _sc_string_tree_node_initialize();
 
       sc_string_tree_node *temp = node->next[num];
 
-      temp->offset = &sc_string[i];
+      temp->offset = *sc_string_ptr;
       temp->offset_size = size - i;
 
       node = temp;
@@ -111,7 +114,8 @@ sc_string_tree_node* sc_string_tree_append_to_node(sc_string_tree_node *node, sc
       sc_string_tree_node *moving = node->next[num];
 
       sc_uint32 j = 0;
-      for (; i < size && j < moving->offset_size && tolower(moving->offset[j]) == tolower(sc_string[i]); ++i, ++j);
+      for (; i < size && j < moving->offset_size && tolower(moving->offset[j]) == tolower(**sc_string_ptr);
+          ++i, ++j, ++(*sc_string_ptr));
 
       if (j != moving->offset_size)
       {
@@ -129,14 +133,16 @@ sc_string_tree_node* sc_string_tree_append_to_node(sc_string_tree_node *node, sc
 
       if (j < moving->offset_size)
       {
-        sc_char_to_sc_int(node->offset[j], &num, &node->mask);
+        sc_char *offset_ptr = &*(node->offset + j);
+
+        sc_char_to_sc_int(*offset_ptr, &num, &node->mask);
         if (node->next[num] == null_ptr)
         {
           node->next[num] = moving;
 
           sc_string_tree_node *temp = node->next[num];
 
-          temp->offset = &node->offset[j];
+          temp->offset = offset_ptr;
           temp->offset_size = saved_offset_size - j;
         }
       }
@@ -144,10 +150,12 @@ sc_string_tree_node* sc_string_tree_append_to_node(sc_string_tree_node *node, sc
     else
     {
       node = node->next[num];
+      (*sc_string_ptr)++;
       ++i;
     }
   }
 
+  g_free(sc_string_ptr);
   return node;
 }
 
@@ -159,18 +167,26 @@ sc_string_tree_node* sc_string_tree_append(sc_addr addr, sc_char *sc_string, sc_
     sc_uint8 hashes_size = old_content->node->data->value_size;
     sc_addr_hash *hashes = old_content->node->data->value;
 
-    sc_uint8 i;
-    for (i = 0; i < hashes_size; ++i)
+    sc_addr_hash **temp = g_new0(sc_addr_hash*, 1);
+    *temp = old_content->node->data->value;
+
+    sc_uint8 i = 0;
+    while (i++ < hashes_size)
     {
-      sc_addr_hash hash = hashes[i];
+      sc_addr_hash hash = *hashes;
 
       sc_addr other;
       other.seg = SC_ADDR_LOCAL_SEG_FROM_INT(hash);
       other.offset = SC_ADDR_LOCAL_OFFSET_FROM_INT(hash);
 
       if (SC_ADDR_IS_EQUAL(other, addr))
-        ((sc_addr_hash*)old_content->node->data->value)[i] = 0;
+        *hashes = 0;
+
+      hashes++;
     }
+
+    old_content->node->data->value = *temp;
+    g_free(temp);
   }
 
   sc_string_tree_node *node = sc_string_tree_append_to_node(tree->root, sc_string, size);
@@ -226,12 +242,18 @@ sc_string_tree_node* sc_string_tree_remove_from_node(sc_string_tree_node *node, 
       return node;
   }
 
-  if (node->data != null_ptr
-      && index == string_size
-      && strcmp(
-            g_utf8_substring(node->offset, 0, node->offset_size),
-            sc_string + (string_size - node->offset_size)) == 0)
-    return null_ptr;
+  if (index == string_size)
+  {
+    sc_char *str = g_new0(sc_char, node->offset_size + 1);
+    memcpy(str, node->offset, node->offset_size);
+
+    if (strcmp(str, sc_string + (string_size - node->offset_size)) == 0)
+    {
+      g_free(str);
+      return node;
+    }
+    g_free(str);
+  }
 
   return node;
 }
@@ -263,7 +285,11 @@ sc_string_tree_node* sc_string_tree_get_last_node_from_node(sc_string_tree_node 
     memcpy(str, node->offset, node->offset_size);
 
     if (strcmp(str, sc_string + (string_size - node->offset_size)) == 0)
+    {
+      g_free(str);
       return node;
+    }
+    g_free(str);
   }
 
   return null_ptr;
@@ -293,8 +319,14 @@ void* sc_string_tree_get_data_from_node(sc_string_tree_node *node, const sc_char
 
 sc_addr sc_string_tree_get_sc_link(const sc_char *sc_string)
 {
+  sc_addr empty;
+  SC_ADDR_MAKE_EMPTY(empty)
+
   sc_addr_hash *addr_hash = sc_string_tree_get_data_from_node(tree->root, sc_string);
-  if (addr_hash != null_ptr && *addr_hash != 0)
+  if (addr_hash == null_ptr)
+    return empty;
+
+  if (*addr_hash != 0)
   {
     sc_addr addr;
     addr.seg = SC_ADDR_LOCAL_SEG_FROM_INT(*addr_hash);
@@ -302,8 +334,18 @@ sc_addr sc_string_tree_get_sc_link(const sc_char *sc_string)
     return addr;
   }
 
-  sc_addr empty;
-  SC_ADDR_MAKE_EMPTY(empty)
+  while (*addr_hash == 0)
+  {
+    if (*addr_hash != 0)
+    {
+      sc_addr addr;
+      addr.seg = SC_ADDR_LOCAL_SEG_FROM_INT(*addr_hash);
+      addr.offset = SC_ADDR_LOCAL_OFFSET_FROM_INT(*addr_hash);
+    }
+
+    addr_hash++;
+  }
+
   return empty;
 }
 
@@ -326,30 +368,38 @@ sc_bool sc_string_tree_get_datas_from_node(sc_string_tree_node *node, const sc_c
 
 sc_bool sc_string_tree_get_sc_links(const sc_char *sc_string, sc_addr **links, sc_uint32 *size)
 {
-  sc_addr_hash * addr_hashes;
+  sc_addr_hash *addr_hashes = null_ptr;
   sc_uint32 found_size = 0;
   sc_bool result = sc_string_tree_get_datas_from_node(tree->root, sc_string, (void**)&addr_hashes, &found_size);
 
+  sc_addr **temps = null_ptr;
   *links = null_ptr;
   *size = 0;
   sc_uint32 i;
   for (i = 0; i < found_size; ++i)
   {
     sc_addr addr;
-    sc_addr_hash hash = addr_hashes[i];
+    sc_addr_hash hash = *addr_hashes++;
     addr.seg = SC_ADDR_LOCAL_SEG_FROM_INT(hash);
     addr.offset = SC_ADDR_LOCAL_OFFSET_FROM_INT(hash);
 
     if (SC_ADDR_IS_NOT_EMPTY(addr))
     {
       if (*links == null_ptr)
+      {
         *links = g_new0(sc_addr, ++*size);
+        temps = g_new0(sc_addr*, 1);
+        *temps = *links;
+      }
       else
         *links = g_renew(sc_addr, *links, ++*size);
 
-      (*links)[*size - 1] = addr;
+      *(*temps)++ = addr;
     }
   }
+
+  if (temps != null_ptr)
+    g_free(temps);
 
   return result;
 }
@@ -423,9 +473,10 @@ void sc_string_tree_show_from_node(sc_string_tree_node *node, sc_char *tab)
   sc_uint8 i;
   for (i = 1; i < sc_string_tree_children_size(); ++i)
   {
-    if (node->next[i] != null_ptr)
+    sc_string_tree_node *next = node->next[i];
+
+    if (SC_STRING_TREE_NODE_IS_VALID(next))
     {
-      sc_string_tree_node *next = node->next[i];
       sc_char *str = g_new0(sc_char, next->offset_size + 1);
       memcpy(str, next->offset, next->offset_size);
       sc_uchar ch = sc_int_to_sc_char(i, 0);
@@ -435,11 +486,15 @@ void sc_string_tree_show_from_node(sc_string_tree_node *node, sc_char *tab)
       else
         printf("%s%c {%s}\n", tab, ch, str);
 
+      g_free(str);
+
       sc_char *new_tab = g_new0(sc_char, strlen(tab) + 6);
       strcpy(new_tab, tab);
       strcat(new_tab, "|----\0");
 
       sc_string_tree_show_from_node(next, new_tab);
+
+      g_free(new_tab);
     }
   }
 }

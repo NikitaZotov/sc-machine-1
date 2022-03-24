@@ -451,7 +451,6 @@ sc_bool sc_fs_storage_read_strings()
       sc_addr addr;
       addr.seg = SC_ADDR_LOCAL_SEG_FROM_INT(hashes[i]);
       addr.offset = SC_ADDR_LOCAL_OFFSET_FROM_INT(hashes[i]);
-      g_message("Read: %llu :: %s", hashes[i], string);
 
       sc_string_tree_append(addr, string, string_size);
     }

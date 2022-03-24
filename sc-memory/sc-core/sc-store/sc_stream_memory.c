@@ -86,7 +86,7 @@ sc_result sc_stream_memory_tell(const sc_stream *stream, sc_uint32 *position)
 sc_result sc_stream_memory_free_handler(const sc_stream *stream)
 {
   sc_memory_buffer *buffer = (sc_memory_buffer*)stream->handler;
-  g_assert(buffer != 0);
+  g_assert(buffer != null_ptr);
 
   if (buffer->data_owner == SC_TRUE)
   {
