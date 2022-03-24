@@ -250,7 +250,7 @@ sc_string_tree_node* sc_string_tree_remove_from_node(sc_string_tree_node *node, 
     if (strcmp(str, sc_string + (string_size - node->offset_size)) == 0)
     {
       g_free(str);
-      return node;
+      return null_ptr;
     }
     g_free(str);
   }
