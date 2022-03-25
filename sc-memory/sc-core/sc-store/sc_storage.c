@@ -933,7 +933,7 @@ sc_result sc_storage_set_link_content(sc_memory_context *ctx, sc_addr addr, cons
   }
 
   sc_char *data = null_ptr;
-  sc_uint16 size = 0;
+  sc_uint32 size = 0;
   if (sc_link_get_content(stream, &data, &size) == SC_FALSE)
   {
     result = SC_RESULT_ERROR_NO_READ_RIGHTS;
