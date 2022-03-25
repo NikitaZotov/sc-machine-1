@@ -1080,7 +1080,7 @@ sc_result sc_storage_find_link_with_content(const sc_memory_context *ctx, const 
   SC_ADDR_MAKE_EMPTY(*found)
 
   sc_char *sc_string = null_ptr;
-  sc_uint16 size = 0;
+  sc_uint32 size = 0;
   if (sc_link_get_content(stream, &sc_string, &size) != SC_TRUE)
     return SC_RESULT_ERROR;
 
