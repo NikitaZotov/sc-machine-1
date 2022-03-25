@@ -168,6 +168,7 @@ void sc_storage_shutdown(sc_bool save_state)
 {
   g_assert(segments != (sc_segment**)null_ptr);
 
+  sc_string_tree_show();
   sc_fs_storage_shutdown(segments, save_state);
 
   sc_uint idx;
@@ -989,8 +990,8 @@ sc_result sc_storage_get_link_content(const sc_memory_context *ctx, sc_addr addr
 
   if (el->flags.type & sc_flag_link_self_container)
   {
-    sc_uint32 size;
-    sc_char *sc_string;
+    sc_uint32 size = 0;
+    sc_char *sc_string = null_ptr;
     sc_string_tree_get_sc_string_ext(addr, &sc_string, &size);
 
     if (sc_string == null_ptr)

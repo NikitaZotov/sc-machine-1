@@ -265,9 +265,9 @@ sc_bool sc_string_tree_remove(const sc_char *sc_string)
 
 sc_string_tree_node* sc_string_tree_get_last_node_from_node(sc_string_tree_node *node, const sc_char *sc_string)
 {
-  sc_uint32 i;
+  sc_uint32 i = 0;
   sc_uint32 string_size = strlen(sc_string);
-  for (i = 0; i < string_size;)
+  while (i < string_size)
   {
     sc_string_tree_node *next = _sc_string_tree_get_next_node(node, sc_string[i]);
     if (SC_STRING_TREE_NODE_IS_VALID(next))
