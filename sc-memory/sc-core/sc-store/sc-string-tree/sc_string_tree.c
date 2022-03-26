@@ -200,11 +200,11 @@ sc_string_tree_node* sc_string_tree_append(sc_addr addr, sc_char *sc_string, sc_
   else
     node->data->value = g_renew(sc_addr_hash, node->data->value, ++node->data->value_size);
 
-  sc_uint32 hash = sc_addr_to_hash(addr);
+  sc_addr_hash hash = sc_addr_to_hash(addr);
   ((sc_addr_hash*)node->data->value)[node->data->value_size - 1] = hash;
 
   sc_char *hash_str = sc_addr_to_str(addr);
-  sc_uint32 hash_str_len = strlen(hash_str);
+  sc_addr_hash hash_str_len = strlen(hash_str);
   sc_string_tree_node *link_hash_node
       = sc_string_tree_append_to_node(links_hashes_tree->root, hash_str, hash_str_len);
 
