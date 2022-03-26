@@ -133,7 +133,10 @@ TEST_CASE("sc-links-smoke", "[test sc-links smoke]")
   link.Set(str);
   REQUIRE("atomic_formula" == link.GetAsString());
 
-  REQUIRE(ctx.FindLinksByContent("atomic_formula").size() == 2);
+  ScAddrVector linkList = ctx.FindLinksByContent("atomic_formula");
+  REQUIRE(linkList.size() == 2);
+  REQUIRE(linkList[0].IsValid());
+  REQUIRE(linkList[1].IsValid());
 
   str = "non_atomic_formula";
   link.Set(str);

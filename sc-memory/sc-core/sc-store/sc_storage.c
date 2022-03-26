@@ -1031,7 +1031,6 @@ sc_result sc_storage_find_links_with_content(const sc_memory_context *ctx, const
     return SC_RESULT_ERROR;
 
   *result_addrs = g_new0(sc_addr, *result_count);
-  memcpy(*result_addrs, found_addrs, *result_count);
 
   sc_uint32 i;
   for (i = 0; i < *result_count; ++i)
@@ -1053,7 +1052,7 @@ sc_result sc_storage_find_links_with_content(const sc_memory_context *ctx, const
       goto unlock;
     }
 
-    *result_addrs[i] = found;
+    (*result_addrs)[i] = found;
 
 unlock:
     {
