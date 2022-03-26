@@ -168,7 +168,6 @@ void sc_storage_shutdown(sc_bool save_state)
 {
   g_assert(segments != (sc_segment**)null_ptr);
 
-  sc_string_tree_show();
   sc_fs_storage_shutdown(segments, save_state);
 
   sc_uint idx;
