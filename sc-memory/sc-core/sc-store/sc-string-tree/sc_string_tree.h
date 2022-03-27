@@ -87,10 +87,10 @@ void sc_string_tree_show();
 
 void sc_string_tree_visit_node_from_node(
       sc_string_tree_node *node,
-      void (*callable)(sc_string_tree_node*, void*),
-      void *dest);
+      void (*callable)(sc_string_tree_node*, void**),
+      void **dest);
 
-void sc_string_tree_visit_nodes(void (*callable)(sc_string_tree_node*, void*), void *dest);
+void sc_string_tree_visit_nodes(void (*callable)(sc_string_tree_node*, void**), void **dest);
 
 void sc_string_tree_links_hashes_show();
 

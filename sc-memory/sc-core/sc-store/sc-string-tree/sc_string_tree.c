@@ -506,7 +506,7 @@ void sc_string_tree_show()
   printf("----------------------------------------------\n");
 }
 
-void sc_string_tree_visit_node_from_node(sc_string_tree_node *node, void (*callable)(sc_string_tree_node*, void*), void *dest)
+void sc_string_tree_visit_node_from_node(sc_string_tree_node *node, void (*callable)(sc_string_tree_node*, void**), void **dest)
 {
   sc_uint8 i;
   for (i = 1; i < sc_string_tree_children_size(); ++i)
@@ -522,7 +522,7 @@ void sc_string_tree_visit_node_from_node(sc_string_tree_node *node, void (*calla
   }
 }
 
-void sc_string_tree_visit_nodes(void (*callable)(sc_string_tree_node*, void*), void *dest)
+void sc_string_tree_visit_nodes(void (*callable)(sc_string_tree_node*, void**), void **dest)
 {
   sc_string_tree_visit_node_from_node(links_hashes_tree->root, callable, dest);
 }

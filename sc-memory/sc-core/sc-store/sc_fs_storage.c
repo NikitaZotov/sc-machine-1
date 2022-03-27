@@ -20,6 +20,7 @@
 sc_char *repo_path = 0;
 sc_char segments_path[MAX_PATH_LENGTH];
 sc_char strings_path[MAX_PATH_LENGTH];
+sc_char links_path[MAX_PATH_LENGTH];
 
 
 int _checksum_type()
@@ -34,19 +35,16 @@ sc_uint8 _checksum_get_size()
 
 void _sc_fm_remove_dir(const sc_char *path)
 {
-  sc_char tmp_path[MAX_PATH_LENGTH];
-  sc_char const *file = null_ptr;
-  GDir *directory = null_ptr;
-
-  if (g_file_test(path, G_FILE_TEST_IS_DIR) == FALSE)
+  if (g_file_test(path, G_FILE_TEST_IS_DIR) == SC_FALSE)
     return;
 
-  directory = g_dir_open(path, 0, 0);
+  GDir *directory = g_dir_open(path, 0, 0);
   g_assert(directory != null_ptr);
 
   // calculate files
-  file = g_dir_read_name(directory);
-  while (file != 0)
+  sc_char tmp_path[MAX_PATH_LENGTH];
+  sc_char const *file = g_dir_read_name(directory);
+  while (file != null_ptr)
   {
     g_snprintf(tmp_path, MAX_PATH_LENGTH, "%s/%s", path, file);
 
@@ -66,7 +64,7 @@ void _sc_fm_remove_dir(const sc_char *path)
 }
 
 // ----------------------------------------------
-sc_bool _sc_fs_mkdirs(const char *path)
+sc_bool _sc_fs_mkdirs(const sc_char *path)
 {
 #if SC_PLATFORM_LINUX || SC_PLATFORM_MAC
   int const mode = 0755;
@@ -81,7 +79,7 @@ sc_bool _sc_fs_mkdirs(const char *path)
 
 sc_bool sc_fs_storage_initialize(const sc_char *path, sc_bool clear)
 {
-  g_message("Initialize sc-string tree");
+  g_message("Initialize sc-dictionary from path: %s", path);
   sc_bool result = sc_string_tree_initialize();
   if (result == SC_FALSE)
     return SC_FALSE;
@@ -89,6 +87,8 @@ sc_bool sc_fs_storage_initialize(const sc_char *path, sc_bool clear)
   g_message("Initialize sc-storage from path: %s", path);
   g_snprintf(segments_path, MAX_PATH_LENGTH, "%s/segments.scdb", path);
   g_snprintf(strings_path, MAX_PATH_LENGTH, "%s/strings.scdb", path);
+  g_snprintf(links_path, MAX_PATH_LENGTH, "%s/strings.scdb", path);
+
   repo_path = g_strdup(path);
 
   // clear repository if it needs
@@ -104,29 +104,33 @@ sc_bool sc_fs_storage_initialize(const sc_char *path, sc_bool clear)
 
 sc_bool sc_fs_storage_shutdown(sc_segment **segments, sc_bool save_segments)
 {
-  g_message("Shutdown sc-storage");
-
   if (save_segments == SC_TRUE)
   {
     g_message("Write segments");
     sc_fs_storage_write_to_path(segments);
+    g_message("Write sc-dictionary");
     sc_fs_storage_write_strings();
   }
 
-  sc_string_tree_shutdown();
+  g_message("Shutdown sc-dictionary");
+  if (sc_string_tree_shutdown() == SC_FALSE)
+    g_critical("Can't shutdown sc-dictionary");
+
   g_free(repo_path);
+
+  g_message("Shutdown sc-fs-storage");
 
   return SC_FALSE;
 }
 
 sc_bool sc_fs_storage_read_from_path(sc_segment **segments, sc_uint32 *segments_num)
 {
-  if (g_file_test(repo_path, G_FILE_TEST_IS_DIR) == FALSE)
+  if (g_file_test(repo_path, G_FILE_TEST_IS_DIR) == SC_FALSE)
   {
     g_error("%s isn't a directory.", repo_path);
   }
 
-  if (g_file_test(segments_path, G_FILE_TEST_IS_REGULAR) == FALSE)
+  if (g_file_test(segments_path, G_FILE_TEST_IS_REGULAR) == SC_FALSE)
   {
     g_message("There are no segments in %s", segments_path);
     return SC_FALSE;
@@ -138,13 +142,14 @@ sc_bool sc_fs_storage_read_from_path(sc_segment **segments, sc_uint32 *segments_
     sc_bool is_valid = SC_TRUE;
 
     g_assert(_checksum_get_size() == SC_STORAGE_SEG_CHECKSUM_SIZE);
-    if (!in_file)
+    if (in_file == null_ptr)
     {
       g_critical("Can't open segments from: %s", segments_path);
       return SC_FALSE;
     }
 
-    if (g_io_channel_set_encoding(in_file, null_ptr, null_ptr) != G_IO_STATUS_NORMAL)
+    if (g_io_channel_set_encoding(
+          in_file, null_ptr, null_ptr) != G_IO_STATUS_NORMAL)
     {
       g_critical("Can't setup encoding: %s", segments_path);
       return SC_FALSE;
@@ -152,7 +157,8 @@ sc_bool sc_fs_storage_read_from_path(sc_segment **segments, sc_uint32 *segments_
 
     gsize bytes_num = 0;
     sc_uint32 header_size = 0;
-    if ((g_io_channel_read_chars(in_file, (sc_char*)&header_size, sizeof(header_size), &bytes_num, null_ptr)
+    if ((g_io_channel_read_chars(
+          in_file, (sc_char*)&header_size, sizeof(header_size), &bytes_num, null_ptr)
         != G_IO_STATUS_NORMAL) || (bytes_num != sizeof(header_size)))
     {
       g_critical("Can't read header size");
@@ -166,7 +172,8 @@ sc_bool sc_fs_storage_read_from_path(sc_segment **segments, sc_uint32 *segments_
       return SC_FALSE;
     }
 
-    if ((g_io_channel_read_chars(in_file, (sc_char*)&header, sizeof(header), &bytes_num, null_ptr)
+    if ((g_io_channel_read_chars(
+          in_file, (sc_char*)&header, sizeof(header), &bytes_num, null_ptr)
         != G_IO_STATUS_NORMAL) || (bytes_num != sizeof(header)))
     {
       g_critical("Can't read header of segments: %s", segments_path);
@@ -190,13 +197,14 @@ sc_bool sc_fs_storage_read_from_path(sc_segment **segments, sc_uint32 *segments_
       seg = sc_segment_new(i);
       segments[i] = seg;
 
-      g_io_channel_read_chars(in_file, (gchar*)seg->elements, SC_SEG_ELEMENTS_SIZE_BYTE, &bytes_num, null_ptr);
+      g_io_channel_read_chars(
+            in_file, (sc_char*)seg->elements, SC_SEG_ELEMENTS_SIZE_BYTE, &bytes_num, null_ptr);
       sc_segment_loaded(seg);
       if (bytes_num != SC_SEG_ELEMENTS_SIZE_BYTE)
       {
         g_error("Error while read data for segment: %d", i);
       }
-      g_checksum_update(checksum, (guchar*)seg->elements, SC_SEG_ELEMENTS_SIZE_BYTE);
+      g_checksum_update(checksum, (sc_uchar*)seg->elements, SC_SEG_ELEMENTS_SIZE_BYTE);
     }
 
     // compare checksum
@@ -221,7 +229,7 @@ sc_bool sc_fs_storage_read_from_path(sc_segment **segments, sc_uint32 *segments_
     }
 
     g_checksum_free(checksum);
-    g_io_channel_shutdown(in_file, FALSE, null_ptr);
+    g_io_channel_shutdown(in_file, SC_FALSE, null_ptr);
 
     if (is_valid == SC_FALSE)
       return SC_FALSE;
@@ -229,19 +237,14 @@ sc_bool sc_fs_storage_read_from_path(sc_segment **segments, sc_uint32 *segments_
 
   g_message("Segments loaded: %u", *segments_num);
 
-  sc_fs_storage_read_strings();
-
   return SC_TRUE;
 }
 
 static GIOChannel* _open_tmp_file(sc_char **tmp_file_name, sc_char *prefix)
 {
-  GIOChannel *result;
-
   *tmp_file_name = g_strdup_printf("%s/%s_%lu", repo_path, prefix, (sc_ulong)g_get_real_time());
 
-  result = g_io_channel_new_file(*tmp_file_name, "w", null_ptr);
-
+  GIOChannel *result = g_io_channel_new_file(*tmp_file_name, "w", null_ptr);
   return result;
 }
 
@@ -285,11 +288,13 @@ sc_bool sc_fs_storage_write_to_path(sc_segment **segments)
   g_checksum_get_digest(checksum, header.checksum, &bytes);
 
   sc_uint32 header_size = sizeof(header);
-  if (g_io_channel_write_chars(output, (gchar*)&header_size, sizeof(header_size), &bytes, null_ptr)
+  if (g_io_channel_write_chars(
+        output, (gchar*)&header_size, sizeof(header_size), &bytes, null_ptr)
       != G_IO_STATUS_NORMAL || bytes != sizeof(header_size))
     g_error("Can't write header size: %s", tmp_filename);
 
-  if (g_io_channel_write_chars(output, (gchar*)&header, header_size, &bytes, null_ptr)
+  if (g_io_channel_write_chars(
+        output, (gchar*)&header, header_size, &bytes, null_ptr)
       != G_IO_STATUS_NORMAL || bytes != header_size)
     g_error("Can't write header: %s", tmp_filename);
 
@@ -298,7 +303,8 @@ sc_bool sc_fs_storage_write_to_path(sc_segment **segments)
     segment = segments[idx];
     g_assert(segment != null_ptr);
 
-    if (g_io_channel_write_chars(output, (gchar*)segment->elements, SC_SEG_ELEMENTS_SIZE_BYTE, &bytes, null_ptr)
+    if (g_io_channel_write_chars(
+          output, (gchar*)segment->elements, SC_SEG_ELEMENTS_SIZE_BYTE, &bytes, null_ptr)
         != G_IO_STATUS_NORMAL || bytes != SC_SEG_ELEMENTS_SIZE_BYTE)
       g_error("Can't write segment %d into %s", idx, tmp_filename);
   }
@@ -306,29 +312,35 @@ sc_bool sc_fs_storage_write_to_path(sc_segment **segments)
   // rename main file
   if (g_file_test(tmp_filename, G_FILE_TEST_IS_REGULAR))
   {
-    g_io_channel_shutdown(output, TRUE, NULL);
+    g_io_channel_shutdown(output, SC_TRUE, NULL);
     output = null_ptr;
 
     if (g_rename(tmp_filename, segments_path) != 0)
       g_error("Can't rename %s -> %s", tmp_filename, segments_path);
   }
 
-  if (tmp_filename)
+  if (tmp_filename != null_ptr)
     g_free(tmp_filename);
-  if (checksum)
+  if (checksum != null_ptr)
     g_checksum_free(checksum);
-  if (output)
-    g_io_channel_shutdown(output, TRUE, null_ptr);
+  if (output != null_ptr)
+    g_io_channel_shutdown(output, SC_TRUE, null_ptr);
 
   return SC_TRUE;
 }
 
-void sc_fs_storage_write_nodes(void (*callable)(sc_string_tree_node*, void*), void *dest)
+void sc_fs_storage_write_nodes(void (*callable)(sc_string_tree_node*, void**), GIOChannel *strings_dest, GIOChannel *links_dest)
 {
-  sc_string_tree_visit_nodes(callable, dest);
+  GIOChannel **dest = g_new0(GIOChannel*, 2);
+  dest[0] = strings_dest;
+  dest[1] = links_dest;
+
+  sc_string_tree_visit_nodes(callable, (void**)dest);
+
+  g_free(dest);
 }
 
-void sc_fs_storage_write_node(sc_string_tree_node *node, void *dest)
+void sc_fs_storage_write_node(sc_string_tree_node *node, void **dest)
 {
   sc_link_content *content = node->data->value;
 
@@ -340,21 +352,39 @@ void sc_fs_storage_write_node(sc_string_tree_node *node, void *dest)
 
   content->node->mask |= 0xF0;
 
-  GIOChannel *channel = dest;
+  GIOChannel *strings_channel = dest[0];
+  g_assert(strings_channel != null_ptr);
+  GIOChannel *links_channel = dest[1];
+  g_assert(links_channel != null_ptr);
+
   gsize bytes;
-  if (g_io_channel_write_chars(channel, (sc_char*)&hashes_size, sizeof(hashes_size), &bytes, null_ptr)
+  if (g_io_channel_write_chars(
+        strings_channel, (sc_char*)&hashes_size, sizeof(hashes_size), &bytes, null_ptr)
       != G_IO_STATUS_NORMAL)
     g_error("Can't write string hashes size %d into %s", hashes_size, strings_path);
 
-  if (g_io_channel_write_chars(channel, (sc_char*)hashes, sizeof(sc_addr_hash) * hashes_size, &bytes, null_ptr)
+  if (g_io_channel_write_chars(
+        strings_channel, (sc_char*)hashes, sizeof(sc_addr_hash) * hashes_size, &bytes, null_ptr)
       != G_IO_STATUS_NORMAL)
     g_error("Can't write string hashes %llu into %s", *hashes, strings_path);
 
-  if (g_io_channel_write_chars(channel, (sc_char*)&content->string_size, sizeof(content->string_size), &bytes, null_ptr)
+  if (g_io_channel_write_chars(
+        links_channel, (sc_char*)&hashes_size, sizeof(hashes_size), &bytes, null_ptr)
+      != G_IO_STATUS_NORMAL)
+    g_error("Can't write string hashes size %d into %s", hashes_size, links_path);
+
+  if (g_io_channel_write_chars(
+        links_channel, (sc_char*)hashes, sizeof(sc_addr_hash) * hashes_size, &bytes, null_ptr)
+      != G_IO_STATUS_NORMAL)
+    g_error("Can't write string hashes %llu into %s", *hashes, links_path);
+
+  if (g_io_channel_write_chars(
+        strings_channel, (sc_char*)&content->string_size, sizeof(content->string_size), &bytes, null_ptr)
       != G_IO_STATUS_NORMAL)
     g_error("Can't write sc-string size %d into %s", hashes_size, strings_path);
 
-  if (g_io_channel_write_chars(channel, content->sc_string, content->string_size, &bytes, null_ptr)
+  if (g_io_channel_write_chars(
+        strings_channel, content->sc_string, content->string_size, &bytes, null_ptr)
       != G_IO_STATUS_NORMAL)
     g_error("Can't write sc-string %s into %s", content->sc_string, strings_path);
 }
@@ -367,38 +397,53 @@ sc_bool sc_fs_storage_write_strings()
       g_error("Can't create a directory %s", repo_path);
   }
 
-  // create temporary file
-  sc_char *tmp_filename = null_ptr;
-  GIOChannel *output = _open_tmp_file(&tmp_filename, "strings");
+  sc_char *strings_filename = null_ptr;
+  GIOChannel *output_strings = _open_tmp_file(&strings_filename, "strings");
+  g_io_channel_set_encoding(output_strings, null_ptr, null_ptr);
 
-  g_io_channel_set_encoding(output, null_ptr, null_ptr);
+  sc_char *links_filename = null_ptr;
+  GIOChannel *output_links = _open_tmp_file(&links_filename, "links");
+  g_io_channel_set_encoding(output_links, null_ptr, null_ptr);
 
-  sc_fs_storage_write_nodes(sc_fs_storage_write_node, output);
+  sc_fs_storage_write_nodes(sc_fs_storage_write_node, output_strings, output_links);
 
-  // rename main file
-  if (g_file_test(tmp_filename, G_FILE_TEST_IS_REGULAR))
+  if (g_file_test(strings_filename, G_FILE_TEST_IS_REGULAR))
   {
-    g_io_channel_shutdown(output, SC_TRUE, NULL);
-    output = null_ptr;
+    g_io_channel_shutdown(output_strings, SC_TRUE, null_ptr);
+    output_strings = null_ptr;
 
-    if (g_rename(tmp_filename, strings_path) != 0)
-      g_error("Can't rename %s -> %s", tmp_filename, strings_path);
+    if (g_rename(strings_filename, strings_path) != 0)
+      g_error("Can't rename %s -> %s", strings_filename, strings_path);
   }
 
-  if (tmp_filename)
-    g_free(tmp_filename);
-  if (output)
-    g_io_channel_shutdown(output, SC_TRUE, null_ptr);
+  if (g_file_test(links_filename, G_FILE_TEST_IS_REGULAR))
+  {
+    g_io_channel_shutdown(output_links, SC_TRUE, null_ptr);
+    output_links = null_ptr;
+
+    if (g_rename(links_filename, links_path) != 0)
+      g_error("Can't rename %s -> %s", links_filename, links_path);
+  }
+
+  if (strings_filename != null_ptr)
+    g_free(strings_filename);
+  if (output_strings != null_ptr)
+    g_io_channel_shutdown(output_strings, SC_TRUE, null_ptr);
+
+  if (links_filename != null_ptr)
+    g_free(links_filename);
+  if (output_links != null_ptr)
+    g_io_channel_shutdown(output_links, SC_TRUE, null_ptr);
 
   return SC_TRUE;
 }
 
 sc_bool sc_fs_storage_read_strings()
 {
-  if (g_file_test(repo_path, G_FILE_TEST_IS_DIR) == FALSE)
+  if (g_file_test(repo_path, G_FILE_TEST_IS_DIR) == SC_FALSE)
     g_error("%s isn't a directory.", repo_path);
 
-  if (g_file_test(strings_path, G_FILE_TEST_IS_REGULAR) == FALSE)
+  if (g_file_test(strings_path, G_FILE_TEST_IS_REGULAR) == SC_FALSE)
   {
     g_message("There are no strings in %s", strings_path);
     return SC_FALSE;
@@ -407,9 +452,9 @@ sc_bool sc_fs_storage_read_strings()
   GIOChannel *in_file = g_io_channel_new_file(strings_path, "r", null_ptr);
 
   g_assert(_checksum_get_size() == SC_STORAGE_SEG_CHECKSUM_SIZE);
-  if (!in_file)
+  if (in_file == null_ptr)
   {
-    g_critical("Can't open segments from: %s", segments_path);
+    g_critical("Can't open strings from: %s", segments_path);
     return SC_FALSE;
   }
 
@@ -423,22 +468,26 @@ sc_bool sc_fs_storage_read_strings()
   while (SC_TRUE)
   {
     sc_uint8 hashes_size = 0;
-    if (g_io_channel_read_chars(in_file, (gchar*)&hashes_size, sizeof(hashes_size), &bytes_num, null_ptr)
+    if (g_io_channel_read_chars(
+          in_file, (gchar*)&hashes_size, sizeof(hashes_size), &bytes_num, null_ptr)
         != G_IO_STATUS_NORMAL)
       break;
 
     sc_addr_hash *hashes = g_new0(sc_addr_hash, hashes_size);
-    if (g_io_channel_read_chars(in_file, (gchar*)hashes, sizeof(sc_addr_hash) * hashes_size, &bytes_num, null_ptr)
+    if (g_io_channel_read_chars(
+          in_file, (gchar*)hashes, sizeof(sc_addr_hash) * hashes_size, &bytes_num, null_ptr)
         != G_IO_STATUS_NORMAL)
       break;
 
     sc_uint32 string_size = 0;
-    if (g_io_channel_read_chars(in_file, (gchar*)&string_size, sizeof(string_size), &bytes_num, null_ptr)
+    if (g_io_channel_read_chars(
+          in_file, (gchar*)&string_size, sizeof(string_size), &bytes_num, null_ptr)
         != G_IO_STATUS_NORMAL)
       break;
 
     sc_char *string = g_new0(sc_char, string_size);
-    if (g_io_channel_read_chars(in_file, (gchar*)string, string_size, &bytes_num, null_ptr)
+    if (g_io_channel_read_chars(
+          in_file, (gchar*)string, string_size, &bytes_num, null_ptr)
         != G_IO_STATUS_NORMAL)
       break;
 
@@ -456,9 +505,9 @@ sc_bool sc_fs_storage_read_strings()
     }
   }
 
-  g_io_channel_shutdown(in_file, FALSE, null_ptr);
+  g_io_channel_shutdown(in_file, SC_FALSE, null_ptr);
 
-  g_message("SC-string tree loaded");
+  g_message("SC-dictionary loaded");
 
   return SC_TRUE;
 }

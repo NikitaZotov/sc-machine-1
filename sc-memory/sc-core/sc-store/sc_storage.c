@@ -155,10 +155,12 @@ sc_bool sc_storage_initialize(const char *path, sc_bool clear)
     return SC_FALSE;
 
   if (clear == SC_FALSE)
+  {
     sc_fs_storage_read_from_path(segments, &segments_num);
+    sc_fs_storage_read_strings();
+  }
 
   is_initialized = SC_TRUE;
-
   memset(&(segments_cache[0]), 0, sizeof(sc_segment*) * SC_SEGMENT_CACHE_SIZE);
 
   return SC_TRUE;
@@ -178,6 +180,7 @@ void sc_storage_shutdown(sc_bool save_state)
     sc_segment_free(segments[idx]);
   }
 
+  g_message("Shutdown sc-storage");
   g_free(segments);
   segments = (sc_segment**)null_ptr;
   segments_num = 0;
@@ -219,7 +222,7 @@ sc_element* sc_storage_append_el_into_segments(const sc_memory_context *ctx, sc_
 
   /// @todo store segment with empty slots
   // try to find segment with empty slots
-  while (seg != 0)
+  while (seg != null_ptr)
   {
     sc_segment *seg = _sc_segment_cache_get(ctx);
 
