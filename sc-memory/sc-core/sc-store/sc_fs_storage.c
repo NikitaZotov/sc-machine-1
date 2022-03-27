@@ -87,7 +87,7 @@ sc_bool sc_fs_storage_initialize(const sc_char *path, sc_bool clear)
   g_message("Initialize sc-storage from path: %s", path);
   g_snprintf(segments_path, MAX_PATH_LENGTH, "%s/segments.scdb", path);
   g_snprintf(strings_path, MAX_PATH_LENGTH, "%s/strings.scdb", path);
-  g_snprintf(links_path, MAX_PATH_LENGTH, "%s/strings.scdb", path);
+  g_snprintf(links_path, MAX_PATH_LENGTH, "%s/links.scdb", path);
 
   repo_path = g_strdup(path);
 
