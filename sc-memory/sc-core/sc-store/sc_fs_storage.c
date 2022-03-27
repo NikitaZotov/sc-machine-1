@@ -379,9 +379,9 @@ void sc_fs_storage_write_node(sc_string_tree_node *node, void **dest)
     g_error("Can't write sc-string %s into %s", content->sc_string, strings_path);
 
   if (g_io_channel_write_chars(
-        links_channel, (sc_char*)&hashes_size, sizeof(hashes_size), &bytes, null_ptr)
+        links_channel, (sc_char*)hashes, sizeof(sc_addr_hash) * hashes_size, &bytes, null_ptr)
       != G_IO_STATUS_NORMAL)
-    g_error("Can't write string hashes size %d into %s", hashes_size, links_path);
+    g_error("Can't write string hashes %llu into %s", *hashes, links_path);
 }
 
 sc_bool sc_fs_storage_write_strings()
