@@ -369,16 +369,6 @@ void sc_fs_storage_write_node(sc_string_tree_node *node, void **dest)
     g_error("Can't write string hashes %llu into %s", *hashes, strings_path);
 
   if (g_io_channel_write_chars(
-        links_channel, (sc_char*)&hashes_size, sizeof(hashes_size), &bytes, null_ptr)
-      != G_IO_STATUS_NORMAL)
-    g_error("Can't write string hashes size %d into %s", hashes_size, links_path);
-
-  if (g_io_channel_write_chars(
-        links_channel, (sc_char*)hashes, sizeof(sc_addr_hash) * hashes_size, &bytes, null_ptr)
-      != G_IO_STATUS_NORMAL)
-    g_error("Can't write string hashes %llu into %s", *hashes, links_path);
-
-  if (g_io_channel_write_chars(
         strings_channel, (sc_char*)&content->string_size, sizeof(content->string_size), &bytes, null_ptr)
       != G_IO_STATUS_NORMAL)
     g_error("Can't write sc-string size %d into %s", hashes_size, strings_path);
@@ -387,6 +377,11 @@ void sc_fs_storage_write_node(sc_string_tree_node *node, void **dest)
         strings_channel, content->sc_string, content->string_size, &bytes, null_ptr)
       != G_IO_STATUS_NORMAL)
     g_error("Can't write sc-string %s into %s", content->sc_string, strings_path);
+
+  if (g_io_channel_write_chars(
+        links_channel, (sc_char*)&hashes_size, sizeof(hashes_size), &bytes, null_ptr)
+      != G_IO_STATUS_NORMAL)
+    g_error("Can't write string hashes size %d into %s", hashes_size, links_path);
 }
 
 sc_bool sc_fs_storage_write_strings()
@@ -450,17 +445,15 @@ sc_bool sc_fs_storage_read_strings()
   }
 
   GIOChannel *in_file = g_io_channel_new_file(strings_path, "r", null_ptr);
-
-  g_assert(_checksum_get_size() == SC_STORAGE_SEG_CHECKSUM_SIZE);
   if (in_file == null_ptr)
   {
-    g_critical("Can't open strings from: %s", segments_path);
+    g_critical("Can't open strings from: %s", strings_path);
     return SC_FALSE;
   }
 
   if (g_io_channel_set_encoding(in_file, null_ptr, null_ptr) != G_IO_STATUS_NORMAL)
   {
-    g_critical("Can't setup encoding: %s", segments_path);
+    g_critical("Can't setup encoding: %s", strings_path);
     return SC_FALSE;
   }
 
