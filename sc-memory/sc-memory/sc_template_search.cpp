@@ -35,13 +35,56 @@ public:
     }
     else if (!m_template.IsSearchCacheValid() && !m_template.m_constructions.empty())
     {
+      ScAddr const priorityKeynodeClass
+          = m_context.HelperFindBySystemIdtf("concept_priority_keynode_for_template_search");
+
       // update it
       ScTemplate::ProcessOrder preCache(m_template.m_constructions.size());
       for (size_t i = 0; i < preCache.size(); ++i)
         preCache[i] = i;
 
+      static const size_t kScoreMax = 10;
       static const size_t kScoreEdge = 5;
       static const size_t kScoreOther = 1;
+
+      auto const CalculateScore = [this, &priorityKeynodeClass](ScTemplateConstr3 const & constr)
+      {
+        uint8_t score = 0;
+        auto const & values = constr.GetValues();
+        if (values[1].IsAddr() && values[0].IsAssign() && values[2].IsAssign())
+        {
+          SC_LOG_DEBUG("ScTemplateSearch: afa")
+          score += kScoreEdge;
+        }
+        else if (values[0].IsAddr() && values[1].IsAssign() && values[2].IsAddr())
+        {
+          SC_LOG_DEBUG("ScTemplateSearch: faf")
+          score += kScoreOther * 2; // should be a sum of (f_a_a and a_a_f)
+        }
+        else if (values[0].IsAddr() || values[2].IsAddr())
+        {
+          SC_LOG_DEBUG("ScTemplateSearch: faa | aaf")
+          score += kScoreOther;
+
+          if (!values[2].m_typeValue.IsEdge())
+          {
+            SC_LOG_DEBUG("ScTemplateSearch: fae")
+            score += kScoreEdge;
+          }
+        }
+
+        if (values[0].IsAddr())
+        {
+          if (priorityKeynodeClass.IsValid()
+              && m_context.HelperCheckEdge(priorityKeynodeClass, values[0].m_addrValue, ScType::EdgeAccessConstPosPerm))
+          {
+            SC_LOG_DEBUG("ScTemplateSearch: it is priority keynode")
+            score += kScoreMax;
+          }
+        }
+
+        return score;
+      };
 
       /** First of all we need to calculate scores for all triples
         * (more scores - should be search first).
@@ -52,19 +95,7 @@ public:
       for (size_t i = 0; i < m_template.m_constructions.size(); ++i)
       {
         ScTemplateConstr3 const & triple = m_template.m_constructions[i];
-        auto const CalculateScore = [](ScTemplateConstr3 const & constr)
-        {
-          uint8_t score = 0;
-          auto const & values = constr.GetValues();
-          if (values[1].IsAddr() && values[0].IsAssign() && values[2].IsAssign())
-            score += kScoreEdge;
-          else if (values[0].IsAddr() && values[1].IsAssign() && values[2].IsAddr())
-            score += kScoreOther * 2; // should be a sum of (f_a_a and a_a_f)
-          else if (values[0].IsAddr() || values[2].IsAddr())
-            score += kScoreOther;
 
-          return score;
-        };
         tripleScores[i] = CalculateScore(triple);
         // doesn't add edges into depend map
         auto const TryAppendRepl = [&](ScTemplateItemValue const & value, size_t idx)
