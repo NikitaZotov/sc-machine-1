@@ -375,8 +375,13 @@ sc_bool sc_string_tree_get_sc_links(const sc_char *sc_string, sc_addr **links, s
   sc_addr **temps = null_ptr;
   *links = null_ptr;
   *size = 0;
-  sc_uint32 i;
-  for (i = 0; i < found_size; ++i)
+  sc_uint32 i = 0;
+
+  *links = g_new0(sc_addr, found_size);
+  temps = g_new0(sc_addr*, 1);
+  *temps = *links;
+
+  while (i++ < found_size)
   {
     sc_addr addr;
     sc_addr_hash hash = *addr_hashes++;
@@ -385,21 +390,14 @@ sc_bool sc_string_tree_get_sc_links(const sc_char *sc_string, sc_addr **links, s
 
     if (SC_ADDR_IS_NOT_EMPTY(addr))
     {
-      if (*links == null_ptr)
-      {
-        *links = g_new0(sc_addr, ++*size);
-        temps = g_new0(sc_addr*, 1);
-        *temps = *links;
-      }
-      else
-        *links = g_renew(sc_addr, *links, ++*size);
-
-      *(*temps)++ = addr;
+      **temps = addr;
+      ++*temps;
+      ++*size;
     }
   }
 
-  if (temps != null_ptr)
-    g_free(temps);
+  *links = memcpy(*links, *links, *size);
+  g_free(temps);
 
   return result;
 }
