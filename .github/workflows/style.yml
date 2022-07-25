@@ -33,20 +33,14 @@ jobs:
           # you must provide GITHUB_TOKEN to this input if checkAllCommitMessages is true
           accessToken: ${{ secrets.GITHUB_TOKEN }} # optional, default is false
 
-  check_formatting:
-    name: Check formatting
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v1
+      - uses: actions/checkout@v3
+      - uses: cpp-linter/cpp-linter-action@v1
+        id: linter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          submodules: recursive
+          style: file
 
-      - name: Install dependencies
-        id: install_deps
-        run: sudo apt-get install -y clang-format
-
-      - name: Checking the code with clang
-        run: |
-          ./scripts/ci/check-formatting.sh
+      - name: clang-format check 
+        if: steps.linter.outputs.checks-failed > 0
+        run: exit 1
