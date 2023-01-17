@@ -436,8 +436,8 @@ protected:
       ScTemplateGenResult & result,
       ScTemplateParams const & params,
       ScTemplateResultCode * errorCode = nullptr) const;
-  Result Search(ScMemoryContext & ctx, ScTemplateSearchResult & result);
-  Result SearchInStruct(ScMemoryContext & ctx, ScAddr const & scStruct, ScTemplateSearchResult & result);
+  Result Search(ScMemoryContext & ctx, ScTemplateSearchResult & result) const;
+  Result SearchInStruct(ScMemoryContext & ctx, ScAddr const & scStruct, ScTemplateSearchResult & result) const;
 
   // Builds template based on template in sc-memory
   Result FromScTemplate(

@@ -14,8 +14,8 @@
 class ScTemplateSearch
 {
 public:
-  ScTemplateSearch(ScTemplate & templ, ScMemoryContext & context, ScAddr const & scStruct)
-    : m_template(templ)
+  ScTemplateSearch(ScTemplate const & templ, ScMemoryContext & context, ScAddr const & scStruct)
+    : m_template(const_cast<ScTemplate &>(templ))
     , m_context(context)
     , m_struct(scStruct)
   {
@@ -444,7 +444,7 @@ public:
 
       // check construction for that it is in structure
       if (IsStructureValid() && (!IsInStructure(addr1) || !IsInStructure(addr2) || !IsInStructure(addr3)))
-        return;
+        continue;
 
       for (size_t const constructIdx : constructs)
       {
@@ -623,7 +623,7 @@ private:
   std::map<std::string, ScTemplateGroupedConstructions> m_itemsToConstructs;
 };
 
-ScTemplate::Result ScTemplate::Search(ScMemoryContext & ctx, ScTemplateSearchResult & result)
+ScTemplate::Result ScTemplate::Search(ScMemoryContext & ctx, ScTemplateSearchResult & result) const
 {
   ScTemplateSearch search(*this, ctx, ScAddr());
   return search(result);
@@ -632,7 +632,7 @@ ScTemplate::Result ScTemplate::Search(ScMemoryContext & ctx, ScTemplateSearchRes
 ScTemplate::Result ScTemplate::SearchInStruct(
     ScMemoryContext & ctx,
     ScAddr const & scStruct,
-    ScTemplateSearchResult & result)
+    ScTemplateSearchResult & result) const
 {
   ScTemplateSearch search(*this, ctx, scStruct);
   return search(result);
