@@ -26,9 +26,14 @@ public:
 
   void PrepareSearch()
   {
-    auto const & constructsWithConstBeginElement = m_template.m_orderedConstructions[(size_t)ScConstr3Type::FAE];
-    size_t priorityConstructIdx = -1;
-    size_t minOutputArcsCount = -1;
+    auto constructsWithConstBeginElement = m_template.m_orderedConstructions[(size_t)ScConstr3Type::FAE];
+    if (constructsWithConstBeginElement.empty())
+    {
+      constructsWithConstBeginElement = m_template.m_orderedConstructions[(size_t)ScConstr3Type::FAN];
+    }
+
+    sc_int32 priorityConstructIdx = -1;
+    sc_int32 minOutputArcsCount = -1;
     for (size_t const constructIdx : constructsWithConstBeginElement)
     {
       ScTemplateConstr3 const * construct = m_template.m_constructions[constructIdx];
@@ -36,14 +41,14 @@ public:
 
       if (minOutputArcsCount == -1 || count < minOutputArcsCount)
       {
-        priorityConstructIdx = constructIdx;
-        minOutputArcsCount = count;
+        priorityConstructIdx = (sc_int32)constructIdx;
+        minOutputArcsCount = (sc_int32)count;
       }
     }
 
     if (priorityConstructIdx != -1)
     {
-      m_template.m_orderedConstructions[(size_t)ScConstr3Type::FAE].insert(priorityConstructIdx);
+      m_template.m_orderedConstructions[(size_t)ScConstr3Type::PFAE].insert(priorityConstructIdx);
     }
 
     for (auto const * construct : m_template.m_constructions)
@@ -55,7 +60,7 @@ public:
 
       for (auto * otherConstruct : m_template.m_constructions)
       {
-        auto & otherValues = otherConstruct->GetValues();
+        auto const & otherValues = otherConstruct->GetValues();
         ScTemplateItemValue const & otherItem1 = otherValues[0];
         ScTemplateItemValue const & otherItem2 = otherValues[1];
         ScTemplateItemValue const & otherItem3 = otherValues[2];
@@ -76,8 +81,8 @@ public:
 
           if (withItem1Equal || withItem2Equal || withItem3Equal)
           {
-            std::stringstream stream;
-            stream << item.m_replacementName << construct->m_index;
+            std::ostringstream stream{item.m_replacementName};
+            stream << construct->m_index;
 
             std::string const key = stream.str();
             auto const & found = m_itemsToConstructs.find(key);
@@ -230,8 +235,8 @@ public:
     if (value.m_replacementName.empty())
       return;
 
-    std::stringstream stream;
-    stream << value.m_replacementName << construct->m_index;
+    std::ostringstream stream{value.m_replacementName};
+    stream << construct->m_index;
 
     auto const & found = m_itemsToConstructs.find(stream.str());
     if (found != m_itemsToConstructs.cend())
@@ -547,10 +552,13 @@ public:
 
         if (checkedConstructs.size() == m_template.m_constructions.size())
         {
-          result.m_results.emplace_back(resultAddrs);
           if (m_callback)
           {
             m_callback(result[result.Size() - 1]);
+          }
+          else
+          {
+            result.m_results.emplace_back(resultAddrs);
           }
         }
       }

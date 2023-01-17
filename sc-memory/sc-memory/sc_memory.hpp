@@ -342,15 +342,18 @@ public:
       ScTemplateGenResult & result,
       ScTemplateParams const & params = ScTemplateParams::Empty,
       ScTemplateResultCode * resultCode = nullptr);
+  _SC_EXTERN ScTemplate::Result HelperSearchTemplate(ScTemplate & templ, ScTemplateSearchResult & result);
   _SC_EXTERN ScTemplate::Result HelperSearchTemplate(
       ScTemplate & templ,
-      ScTemplateSearchResult & result,
-      std::function<void(ScTemplateSearchResultItem const & resultAddrs)> const & callback = {});
+      std::function<void(ScTemplateSearchResultItem const & resultAddrs)> const & callback);
   _SC_EXTERN ScTemplate::Result HelperSearchTemplateInStruct(
       ScTemplate & templ,
       ScAddr const & scStruct,
-      ScTemplateSearchResult & result,
-      std::function<void(ScTemplateSearchResultItem const & resultAddrs)> const & callback = {});
+      ScTemplateSearchResult & result);
+  _SC_EXTERN ScTemplate::Result HelperSearchTemplateInStruct(
+      ScTemplate & templ,
+      ScAddr const & scStruct,
+      std::function<void(ScTemplateSearchResultItem const & resultAddrs)> const & callback);
   _SC_EXTERN ScTemplate::Result HelperBuildTemplate(
       ScTemplate & templ,
       ScAddr const & templAddr,
