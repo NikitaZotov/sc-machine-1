@@ -37,7 +37,7 @@ public:
     for (size_t const constructIdx : constructsWithConstBeginElement)
     {
       ScTemplateConstr3 const * construct = m_template.m_constructions[constructIdx];
-      size_t const count = m_context.GetElementOutputArcsCount(construct->GetValues()[0].m_addrValue);
+      auto const count = (sc_int32)m_context.GetElementOutputArcsCount(construct->GetValues()[0].m_addrValue);
 
       if (minOutputArcsCount == -1 || count < minOutputArcsCount)
       {
@@ -302,7 +302,7 @@ public:
             constructValues[2].m_replacementName == otherConstructValues[2].m_replacementName);
   };
 
-  using UsedEdges = std::unordered_set<ScAddr, ScAddrHashFunc<uint32_t>>;
+  using UsedEdges = std::vector<std::unordered_set<ScAddr, ScAddrHashFunc<uint32_t>>>;
 
   void DoIterationOnNextEqualConstructions(
       ScTemplateGroupedConstructions const & constructs,
@@ -424,33 +424,37 @@ public:
     ScAddrVector const currentResultAddrs{resultAddrs};
     while (it->Next())
     {
-      ScAddr const & addr2 = it->Get(1);
-      if (checkedEdges.find(addr2) != checkedEdges.cend())
-      {
-        isLast = true;
-        isAllChildrenFinished = true;
-        continue;
-      }
-
-      if (isAllChildrenFinished && count == constructs.size())
-      {
-        count = 0;
-        checkedConstructs = std::unordered_set<size_t>{currentCheckedConstructs};
-        resultAddrs.assign(currentResultAddrs.cbegin(), currentResultAddrs.cend());
-      }
-
       ScAddr const & addr1 = it->Get(0);
+      ScAddr const & addr2 = it->Get(1);
       ScAddr const & addr3 = it->Get(2);
 
       // check construction for that it is in structure
       if (IsStructureValid() && (!IsInStructure(addr1) || !IsInStructure(addr2) || !IsInStructure(addr3)))
+      {
+        for (size_t const constructIdx : constructs)
+        {
+          checkedEdges[constructIdx].insert(addr2);
+        }
         continue;
+      }
 
       for (size_t const constructIdx : constructs)
       {
         construct = m_template.m_constructions[constructIdx];
 
-        if (checkedConstructs.find(construct->m_index) != checkedConstructs.cend())
+        if (checkedEdges[constructIdx].find(addr2) != checkedEdges[constructIdx].cend())
+        {
+          continue;
+        }
+
+        if (isAllChildrenFinished && count == constructs.size())
+        {
+          count = 0;
+          checkedConstructs = std::unordered_set<size_t>{currentCheckedConstructs};
+          resultAddrs.assign(currentResultAddrs.cbegin(), currentResultAddrs.cend());
+        }
+
+        if (checkedConstructs.find(constructIdx) != checkedConstructs.cend())
         {
           continue;
         }
@@ -466,12 +470,13 @@ public:
 
         {
           // don't use cycle to call this function
-          size_t const idx = construct->m_index * 3;
+          size_t idx = constructIdx * 3;
           UpdateResults(value1, addr1, idx, resultAddrs);
-          UpdateResults(value2, addr2, idx + 1, resultAddrs);
-          UpdateResults(value3, addr3, idx + 2, resultAddrs);
+          UpdateResults(value2, addr2, ++idx, resultAddrs);
+          UpdateResults(value3, addr3, ++idx, resultAddrs);
 
-          checkedConstructs.insert(construct->m_index);
+          checkedConstructs.insert(constructIdx);
+          checkedEdges[constructIdx].insert(addr2);
         }
 
         // find next depended on constructions and analyse result
@@ -492,7 +497,7 @@ public:
           isLast = isNoChild;
           if (!isChildFinished && !isLast)
           {
-            ClearResults(construct->m_index, resultAddrs, checkedConstructs);
+            ClearResults(constructIdx, resultAddrs, checkedConstructs);
             continue;
           }
 
@@ -510,7 +515,7 @@ public:
           isLast &= isNoChild;
           if (!isChildFinished && !isLast)
           {
-            ClearResults(construct->m_index, resultAddrs, checkedConstructs);
+            ClearResults(constructIdx, resultAddrs, checkedConstructs);
             continue;
           }
 
@@ -528,7 +533,7 @@ public:
           isLast &= isNoChild;
           if (!isChildFinished && !isLast)
           {
-            ClearResults(construct->m_index, resultAddrs, checkedConstructs);
+            ClearResults(constructIdx, resultAddrs, checkedConstructs);
             continue;
           }
 
@@ -537,8 +542,12 @@ public:
             //            std::cout << "succeed " << construct->m_index << " = {" << value1.m_replacementName << "}---{"
             //                      << value2.m_replacementName << "}---> {" << value3.m_replacementName << "}" <<
             //                      std::endl;
-            checkedEdges.insert(addr2);
             ++count;
+
+            for (size_t const idx : constructs)
+            {
+              checkedEdges[idx].insert(addr2);
+            }
             break;
           }
         }
@@ -578,7 +587,7 @@ public:
       std::unordered_set<size_t> checkedConstructs;
       checkedConstructs.reserve(CalculateOneResultSize());
       UsedEdges checkedEdges;
-      checkedEdges.reserve(CalculateOneResultSize());
+      checkedEdges.resize(CalculateOneResultSize());
 
       bool isFinished = false;
       bool isLast = false;
