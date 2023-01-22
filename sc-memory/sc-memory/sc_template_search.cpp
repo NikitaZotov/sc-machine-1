@@ -419,12 +419,11 @@ public:
     };
 
     auto const & ClearResults =
-        [this](size_t tripleIdx, ScAddrVector & resultAddrs, std::unordered_set<size_t> & checkedTriples) {
+        [](size_t tripleIdx, ScAddrVector & resultAddrs, std::unordered_set<size_t> & checkedTriples) {
           checkedTriples.erase(tripleIdx);
 
           tripleIdx *= 3;
           resultAddrs[tripleIdx] = ScAddr::Empty;
-          m_usedEdges.erase(resultAddrs[++tripleIdx]);
           resultAddrs[tripleIdx] = ScAddr::Empty;
           resultAddrs[++tripleIdx] = ScAddr::Empty;
         };
@@ -467,12 +466,6 @@ public:
         continue;
       }
 
-      // check if edge is used for previous triples
-      if (m_usedEdges.find(addr2) != m_usedEdges.cend())
-      {
-        continue;
-      }
-
       for (size_t const tripleIdx : triples)
       {
         triple = m_template.m_triples[tripleIdx];
@@ -487,7 +480,7 @@ public:
         if (isAllChildrenFinished && count == triples.size())
         {
           count = 0;
-          checkedTriples = std::unordered_set<size_t>{currentCheckedTriples};
+          checkedTriples = {currentCheckedTriples};
           resultAddrs.assign(currentResultAddrs.cbegin(), currentResultAddrs.cend());
         }
 
@@ -510,7 +503,6 @@ public:
 
           checkedTriples.insert(tripleIdx);
           m_triplesOrderUsedEdges[tripleIdx].insert(addr2);
-          m_usedEdges.insert(addr2);
         }
 
         // find next depended on triples and analyse result
@@ -665,7 +657,6 @@ private:
   ScTemplateSearchResultCheckCallback m_checkCallback;
 
   ScTriplesOrderUsedEdges m_triplesOrderUsedEdges;
-  UsedEdges m_usedEdges;
   std::map<std::string, ScTemplateGroupedTriples> m_itemsToTriples;
 };
 
