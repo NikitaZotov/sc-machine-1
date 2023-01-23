@@ -9,10 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Provide loop-ranged API method for sc-template search ([78](https://github.com/ostis-ai/sc-machine/issues/78))
+- Sc-template cycle preventing search
+- Sc-template equal triples search
+- Sc-template search API to get and use constructions step by step
+- Sc-template search API to custom filter constructions with step by step search
+- Sc-template search API with request commands (continue search, stop search and error during search)
+- Cover all sc-template search and gen API with tests
+- Order triples by type and dependencies with other triples
+- Count input/output edges in elements during edges adding
+- Order triples by input/output edges count for triple items
+- Determined sc-template depth-first search
+- Sc-template safe API without exceptions handling
+- Insert sc-keynodes in global knowledge base during sc-memory initiation
 - Extend create elements by SCs in `sc-server` with outputStructure field
 - Write docs for system identifier set/get/find/resolve sc-memory API
 - Extend set/get/find/resolve sc-memory API with out system identifier fiver parameters
-- Insert sc-keynodes in global knowledge base during sc-memory initiation 
+- Insert sc-keynodes in global knowledge base during sc-memory initiation
 - CI for documentation build
 - Fix memory clear parameter reading from config file
 - Add output structure builder feature to config
@@ -23,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Replace asserts in sc-template search and gen API by exceptions throwing
 - Remove 1 minute assert in ScWait
 - Add language parameter for sc2scs-json-translator to get elements identifiers
 - Append to sc2scs-json elements main/system identifiers
@@ -30,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Sc-template search by empty template ([65](https://github.com/ostis-ai/sc-machine/issues/65)))
 - `SCs-helper` doesn't return generated identifier links ([207](https://github.com/ostis-ai/sc-machine/issues/207))
 - No json string message parsing in `sc-server` ([190](https://github.com/ostis-ai/sc-machine/issues/190))
 - `SCs-parser` create structure twice
