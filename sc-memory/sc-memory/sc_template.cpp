@@ -42,10 +42,9 @@ ScTemplate::ScTemplate(bool forceOrder /* = false */)
 ScTemplate & ScTemplate::operator()(
     ScTemplateItemValue const & param1,
     ScTemplateItemValue const & param2,
-    ScTemplateItemValue const & param3,
-    ScTemplate::TripleFlag isRequired /* = ScTemplate::TripleFlag::Required */)
+    ScTemplateItemValue const & param3)
 {
-  return Triple(param1, param2, param3, isRequired);
+  return Triple(param1, param2, param3);
 }
 
 ScTemplate & ScTemplate::operator()(
@@ -53,16 +52,15 @@ ScTemplate & ScTemplate::operator()(
     ScTemplateItemValue const & param2,
     ScTemplateItemValue const & param3,
     ScTemplateItemValue const & param4,
-    ScTemplateItemValue const & param5,
-    ScTemplate::TripleFlag isRequired /* = ScTemplate::TripleFlag::Required */)
+    ScTemplateItemValue const & param5)
 {
-  return TripleWithRelation(param1, param2, param3, param4, param5, isRequired);
+  return TripleWithRelation(param1, param2, param3, param4, param5);
 }
 
 void ScTemplate::Clear()
 {
-  for (auto * tripleuct : m_triples)
-    delete tripleuct;
+  for (auto * triple : m_triples)
+    delete triple;
   m_triples.clear();
 
   m_namesToAddrs.clear();
@@ -83,8 +81,7 @@ bool ScTemplate::HasReplacement(std::string const & repl) const
 ScTemplate & ScTemplate::Triple(
     ScTemplateItemValue const & param1,
     ScTemplateItemValue const & param2,
-    ScTemplateItemValue const & param3,
-    ScTemplate::TripleFlag isRequired /* = ScTemplate::TripleFlag::Required */)
+    ScTemplateItemValue const & param3)
 {
   size_t const replPos = m_triples.size() * 3;
   m_triples.emplace_back(new ScTemplateTriple(param1, param2, param3, m_triples.size(), isRequired));
@@ -160,8 +157,7 @@ ScTemplate & ScTemplate::TripleWithRelation(
     ScTemplateItemValue const & param2,
     ScTemplateItemValue const & param3,
     ScTemplateItemValue const & param4,
-    ScTemplateItemValue const & param5,
-    ScTemplate::TripleFlag isRequired /* = ScTemplate::TripleFlag::Required */)
+    ScTemplateItemValue const & param5)
 {
   size_t const replPos = m_triples.size() * 3;
 

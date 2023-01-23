@@ -464,7 +464,6 @@ private:
     isFinished = true;
 
     std::unordered_set<size_t> iteratedTriples;
-
     for (size_t const idx : triples)
     {
       ScTemplateTriple * triple = m_template.m_triples[idx];
@@ -527,17 +526,30 @@ private:
           isLast);
     };
 
-    auto const & UpdateResults = [&result](
-                                     ScTemplateItemValue const & item,
-                                     ScAddr const & addr,
-                                     size_t const elementNum,
-                                     ScAddrVector & resultAddrs) {
+    auto const & UpdateItemResults = [&result](
+                                         ScTemplateItemValue const & item,
+                                         ScAddr const & addr,
+                                         size_t const elementNum,
+                                         ScAddrVector & resultAddrs) {
       resultAddrs[elementNum] = addr;
 
       if (item.m_replacementName.empty())
         return;
 
       result.m_replacements.insert({item.m_replacementName, elementNum});
+    };
+
+    auto const & UpdateResults = [&UpdateItemResults](
+                                     ScTemplateTriple * triple,
+                                     ScAddr const & addr1,
+                                     ScAddr const & addr2,
+                                     ScAddr const & addr3,
+                                     ScAddrVector & resultAddrs) {
+      size_t itemIdx = triple->m_index * 3;
+
+      UpdateItemResults((*triple)[0], addr1, itemIdx, resultAddrs);
+      UpdateItemResults((*triple)[1], addr2, ++itemIdx, resultAddrs);
+      UpdateItemResults((*triple)[2], addr3, ++itemIdx, resultAddrs);
     };
 
     auto const & ClearResults =
@@ -620,13 +632,9 @@ private:
         item2 = (*triple)[1];
         item3 = (*triple)[2];
 
+        // update data
         {
-          // don't use cycle to call this function
-          size_t itemIdx = tripleIdx * 3;
-          UpdateResults(item1, addr1, itemIdx, resultAddrs);
-          UpdateResults(item2, addr2, ++itemIdx, resultAddrs);
-          UpdateResults(item3, addr3, ++itemIdx, resultAddrs);
-
+          UpdateResults(triple, addr1, addr2, addr3, resultAddrs);
           checkedTriples.insert(tripleIdx);
           m_triplesOrderUsedEdges[tripleIdx].insert(addr2);
           m_usedEdges.insert(addr2);
