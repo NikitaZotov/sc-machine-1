@@ -125,10 +125,8 @@ public:
       ScTemplateItemValue const & param1,
       ScTemplateItemValue const & param2,
       ScTemplateItemValue const & param3,
-      size_t index,
-      Flag isRequired)
+      size_t index)
     : m_index(index)
-    , m_isRequired(isRequired)
   {
     m_values[0] = param1;
     m_values[1] = param2;
@@ -160,7 +158,6 @@ public:
 
 protected:
   ItemsArray m_values;
-  Flag m_isRequired;
 };
 
 _SC_EXTERN ScTemplateItemValue operator>>(ScAddr const & value, char const * replName);
