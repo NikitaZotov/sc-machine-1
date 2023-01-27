@@ -84,6 +84,8 @@ struct ScTemplateItemValue
     m_addrValue = addr;
     if (replName)
       m_replacementName = replName;
+    else
+      m_replacementName = std::to_string(addr.Hash());
   }
 
   void SetType(ScType const & type, char const * replName = nullptr)

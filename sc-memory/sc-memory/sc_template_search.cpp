@@ -140,7 +140,7 @@ private:
         if (item1.IsAddr())
         {
           ScTemplateGroupedTriples checkedTriples;
-          FindCycleWithFAATriple(item1, triple, triple->m_index, checkedTriples, isFound);
+          FindCycleWithFAATriple(item1, triple, triple, checkedTriples, isFound);
         }
 
         if (isFound)
@@ -184,7 +184,7 @@ private:
   void FindCycleWithFAATriple(
       ScTemplateItemValue const & item,
       ScTemplateTriple const * triple,
-      size_t const tripleIdxToFind,
+      ScTemplateTriple const * tripleToFind,
       ScTemplateGroupedTriples & checkedTriples,
       bool & isFound)
   {
@@ -193,7 +193,7 @@ private:
       return;
     }
 
-    auto const & FindCycleWithFAATripleByTripleItem = [this, &tripleIdxToFind, &checkedTriples, &isFound](
+    auto const & FindCycleWithFAATripleByTripleItem = [this, &tripleToFind, &checkedTriples, &isFound](
                                                           ScTemplateItemValue const & item,
                                                           ScTemplateTriple const * triple,
                                                           ScTemplateItemValue const & previousItem) {
@@ -207,7 +207,7 @@ private:
         return;
       }
 
-      FindCycleWithFAATriple(item, triple, tripleIdxToFind, checkedTriples, isFound);
+      FindCycleWithFAATriple(item, triple, tripleToFind, checkedTriples, isFound);
     };
 
     ScTemplateGroupedTriples nextTriples;
@@ -215,7 +215,8 @@ private:
 
     for (size_t const otherTripleIdx : nextTriples)
     {
-      if (otherTripleIdx == tripleIdxToFind || isFound)
+      if ((otherTripleIdx == tripleToFind->m_index && item.m_replacementName != (*tripleToFind)[0].m_replacementName) ||
+          isFound)
       {
         isFound = true;
         break;
@@ -632,6 +633,10 @@ private:
         item2 = (*triple)[1];
         item3 = (*triple)[2];
 
+        //        std::cout << triple->m_index << " = {" << item1.m_replacementName << "} ---{" <<
+        //          item2.m_replacementName
+        //                          << "}---> {" << item3.m_replacementName << "}" << std::endl;
+
         // update data
         {
           UpdateResults(triple, addr1, addr2, addr3, resultAddrs);
@@ -682,6 +687,10 @@ private:
             // current triple is checked
             ++count;
 
+            //            std::cout << "succeed " << triple->m_index << " = {" << item1.m_replacementName << "}---{"
+            //                                  << item2.m_replacementName << "}---> {" << item3.m_replacementName <<
+            //                                  "}" << std::endl;
+
             // current edge is busy for all equal triples
             for (size_t const idx : triples)
             {
@@ -695,6 +704,9 @@ private:
       // there are no next triples for current triple, it is last
       if (isLast && isAllChildrenFinished && checkedTriples.size() == m_template.m_triples.size())
       {
+        //        std::cout << "Found " << checkedTriples.size() << " to achieve " <<
+        //            m_template.m_triples.size() << std::endl;
+
         if (m_callback)
         {
           m_callback(ScTemplateSearchResultItem(&resultAddrs, &result.m_replacements));
