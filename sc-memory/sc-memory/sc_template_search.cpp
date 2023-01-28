@@ -11,6 +11,70 @@
 
 #include <algorithm>
 #include <utility>
+#include <future>
+
+namespace std
+{
+
+template <class Type, class HashFunc = std::hash<Type>, class Compare = std::equal_to<Type>>
+class concurrent_unordered_set
+{
+private:
+  std::unordered_set<Type, HashFunc, Compare> m_set;
+  std::mutex m_mutex;
+
+public:
+  typedef typename std::unordered_set<Type, HashFunc, Compare>::iterator iterator;
+
+  concurrent_unordered_set() = default;
+
+  concurrent_unordered_set(concurrent_unordered_set<Type, HashFunc, Compare> const & otherSet)
+    : m_set(otherSet.m_set)
+  {
+    m_set.reserve(16);
+  }
+
+  concurrent_unordered_set<Type, HashFunc, Compare> & operator=(concurrent_unordered_set<Type, HashFunc, Compare> const & otherSet)
+  {
+    m_set = otherSet.m_set;
+    return *this;
+  }
+
+  std::pair<iterator, bool> insert(Type const & val)
+  {
+    std::unique_lock<std::mutex> lock(m_mutex);
+    return m_set.insert(val);
+  }
+
+  auto find(Type const & object)
+  {
+    std::unique_lock<std::mutex> lock(m_mutex);
+    return m_set.find(object);
+  }
+
+  bool contains(Type const & object)
+  {
+    std::unique_lock<std::mutex> lock(m_mutex);
+    return m_set.find(object) != m_set.cend();
+  }
+
+  void erase(Type const & object)
+  {
+    m_set.erase(object);
+  }
+
+  size_t size()
+  {
+    return m_set.size();
+  }
+
+  auto cend()
+  {
+    return m_set.cend();
+  }
+};
+
+}
 
 class ScTemplateSearch
 {
@@ -132,7 +196,7 @@ private:
     };
 
     auto const & RemoveCycledDependenciesBetweenTriples = [this]() {
-      auto const & faeTriples = m_template.m_orderedTriples[(size_t)ScTemplateTripleType::FAN];
+      auto const & faeTriples =  m_template.m_orderedTriples[(size_t)ScTemplateTripleType::FAN];
 
       for (ScTemplateTriple const * triple : m_template.m_triples)
       {
@@ -450,13 +514,13 @@ private:
              (itemName.empty() || otherTripleValues[0].m_replacementName == itemName)));
   };
 
-  using UsedEdges = std::unordered_set<ScAddr, ScAddrHashFunc<uint32_t>>;
+  using UsedEdges = std::concurrent_unordered_set<ScAddr, ScAddrHashFunc<uint32_t>>;
   using ScTriplesOrderCheckedEdges = std::vector<UsedEdges>;
 
   void DoIterationOnNextEqualTriples(
       ScTemplateGroupedTriples const & triples,
       std::string const & itemName,
-      std::unordered_set<size_t> & checkedTriples,
+      std::concurrent_unordered_set<size_t> & checkedTriples,
       ScTemplateGroupedTriples const & currentIterableTriples,
       ScAddrVector & resultAddrs,
       ScTemplateSearchResult & result,
@@ -477,7 +541,7 @@ private:
       for (ScTemplateTriple * otherTriple : m_template.m_triples)
       {
         // check if iterable triple is equal to current, not checked and not iterable with previous
-        if (checkedTriples.find(otherTriple->m_index) == checkedTriples.cend() &&
+        if (!checkedTriples.contains(otherTriple->m_index) &&
             std::find_if(
                 currentIterableTriples.cbegin(),
                 currentIterableTriples.cend(),
@@ -501,7 +565,7 @@ private:
 
   void DoDependenceIteration(
       ScTemplateGroupedTriples const & triples,
-      std::unordered_set<size_t> & checkedTriples,
+      std::concurrent_unordered_set<size_t> & checkedTriples,
       ScAddrVector & resultAddrs,
       ScTemplateSearchResult & result,
       bool & isFinished)
@@ -510,7 +574,7 @@ private:
                                                     ScTemplateTriple const * triple,
                                                     ScTemplateItemValue const & item,
                                                     ScAddr const & itemAddr,
-                                                    std::unordered_set<size_t> & checkedTriples,
+                                                    std::concurrent_unordered_set<size_t> & checkedTriples,
                                                     ScAddrVector & resultAddrs,
                                                     ScTemplateGroupedTriples const & currentIterableTriples,
                                                     bool & isFinished,
@@ -556,7 +620,7 @@ private:
     };
 
     auto const & ClearResults =
-        [this](size_t tripleIdx, ScAddrVector & resultAddrs, std::unordered_set<size_t> & checkedTriples) {
+        [this](size_t tripleIdx, ScAddrVector & resultAddrs, std::concurrent_unordered_set<size_t> & checkedTriples) {
           checkedTriples.erase(tripleIdx);
 
           tripleIdx *= 3;
@@ -575,9 +639,8 @@ private:
     ScTemplateItemValue item2 = (*triple)[1];
     ScTemplateItemValue item3 = (*triple)[2];
 
-    //    std::cout << "try " << triple->m_index << " = {" << item1.m_replacementName << "} ---{" <<
-    //        item2.m_replacementName
-    //              << "}---> {" << item3.m_replacementName << "}" << std::endl;
+//    std::cout << "try " << triple->m_index << " = {" << item1.m_replacementName << "} ---{" <<
+//        item2.m_replacementName << "}---> {" << item3.m_replacementName << "}" << std::endl;
 
     ScIterator3Ptr const it = CreateIterator(item1, item2, item3, resultAddrs, result);
     if (!it || !it->IsValid())
@@ -587,13 +650,13 @@ private:
 
     size_t count = 0;
 
-    std::unordered_set<size_t> const currentCheckedTriples{checkedTriples};
+    std::concurrent_unordered_set<size_t> const currentCheckedTriples{checkedTriples};
     ScAddrVector const currentResultAddrs{resultAddrs};
     while (it->Next() && !isStopped)
     {
       ScAddr const & addr2 = it->Get(1);
 
-      if (m_usedEdges.find(addr2) != m_usedEdges.cend())
+      if (m_usedEdges.contains(addr2))
       {
         continue;
       }
@@ -617,7 +680,7 @@ private:
         triple = m_template.m_triples[tripleIdx];
 
         // check if edge is used for other equal triple
-        if (m_triplesOrderUsedEdges[tripleIdx].find(addr2) != m_triplesOrderUsedEdges[tripleIdx].cend())
+        if (m_triplesOrderUsedEdges[tripleIdx].contains(addr2))
         {
           continue;
         }
@@ -628,11 +691,19 @@ private:
           size_t const triplesCount = m_template.m_triples.size();
           if (isAllChildrenFinished && checkedTriples.size() != triplesCount)
           {
-            break;
+            size_t const prevResultCount = m_resultCount;
+            while (checkedTriples.size() != triplesCount && !m_finishedResult.contains(prevResultCount))
+            {
+              std::cout << "wait" << std::endl;
+            }
           }
 
+          std::cout << "next" << std::endl;
+
           count = 0;
-          checkedTriples = std::unordered_set<size_t>{currentCheckedTriples};
+          m_finishedResult.insert(m_resultCount);
+          ++m_resultCount;
+          checkedTriples = std::concurrent_unordered_set<size_t>{currentCheckedTriples};
           resultAddrs.assign(currentResultAddrs.cbegin(), currentResultAddrs.cend());
         }
 
@@ -645,10 +716,8 @@ private:
         item2 = (*triple)[1];
         item3 = (*triple)[2];
 
-        //                std::cout << "iterate " << triple->m_index << " = {" << m_context.HelperGetSystemIdtf(addr1)
-        //                << "} ---{" <<
-        //                  item2.m_replacementName
-        //                  << "}---> {" << m_context.HelperGetSystemIdtf(addr3)  << "}" << std::endl;
+                std::cout << "iterate " << triple->m_index << " = {" << m_context.HelperGetSystemIdtf(addr1) << "} ---{" <<
+                  item2.m_replacementName << "}---> {" << m_context.HelperGetSystemIdtf(addr3)  << "}" << std::endl;
 
         // update data
         {
@@ -665,95 +734,108 @@ private:
           bool isNoChild = false;
 
           // first of all check triples by edge, it is more effectively
-          TryDoNextDependenceIteration(
-              triple, item2, addr2, checkedTriples, resultAddrs, triples, isChildFinished, isNoChild);
-          isAllChildrenFinished = isChildFinished;
-          isLast = isNoChild;
-          if (!isChildFinished && !isLast)
-          {
-            ClearResults(tripleIdx, resultAddrs, checkedTriples);
-            continue;
-          }
+          auto branchFuture2 = std::async(std::launch::async, [&]() {
+            TryDoNextDependenceIteration(
+                triple, item2, addr2, checkedTriples, resultAddrs, triples, isChildFinished, isNoChild);
+            isAllChildrenFinished = isChildFinished;
+            isLast = isNoChild;
 
-          TryDoNextDependenceIteration(
-              triple, item1, addr1, checkedTriples, resultAddrs, triples, isChildFinished, isNoChild);
-          isAllChildrenFinished &= isChildFinished;
-          isLast &= isNoChild;
-          if (!isChildFinished && !isLast)
-          {
-            ClearResults(tripleIdx, resultAddrs, checkedTriples);
-            continue;
-          }
-
-          TryDoNextDependenceIteration(
-              triple, item3, addr3, checkedTriples, resultAddrs, triples, isChildFinished, isNoChild);
-          isAllChildrenFinished &= isChildFinished;
-          isLast &= isNoChild;
-          if (!isChildFinished && !isLast)
-          {
-            ClearResults(tripleIdx, resultAddrs, checkedTriples);
-            continue;
-          }
-
-          // all connected triples found
-          if (isAllChildrenFinished)
-          {
-            //                       std::cout << "succeed " << triple->m_index << " = {" << item1.m_replacementName <<
-            //                       "}---{"
-            //                                              << item2.m_replacementName << "}---> {" <<
-            //                                              item3.m_replacementName <<
-            //                                              "}" << std::endl;
-
-            // current edge is busy for all equal triples
-            for (size_t const idx : triples)
+            if (!isChildFinished && !isLast)
             {
-              m_triplesOrderUsedEdges[idx].insert(addr2);
+              ClearResults(tripleIdx, resultAddrs, checkedTriples);
             }
-            break;
-          }
-        }
-      }
+          });
 
-      //      std::cout << "Found " << checkedTriples.size() << " to achieve " <<
-      //          m_template.m_triples.size() << std::endl;
+          auto branchFuture1 = std::async(std::launch::async, [&]() {
+            TryDoNextDependenceIteration(
+                triple, item1, addr1, checkedTriples, resultAddrs, triples, isChildFinished, isNoChild);
+            isAllChildrenFinished = isChildFinished;
+            isLast = isNoChild;
 
-      // there are no next triples for current triple, it is last
-      if (isLast && isAllChildrenFinished && checkedTriples.size() == m_template.m_triples.size())
-      {
-        //                std::cout << "Great " << checkedTriples.size() << " to achieve " <<
-        //                    m_template.m_triples.size() << std::endl;
+            if (!isChildFinished && !isLast)
+            {
+              ClearResults(tripleIdx, resultAddrs, checkedTriples);
+            }
+          });
 
-        if (m_callback)
-        {
-          m_callback(ScTemplateSearchResultItem(&resultAddrs, &result.m_replacements));
-        }
-        else if (m_callbackWithRequest)
-        {
-          ScTemplateSearchRequest const & request =
-              m_callbackWithRequest(ScTemplateSearchResultItem(&resultAddrs, &result.m_replacements));
-          switch (request)
-          {
-          case ScTemplateSearchRequest::STOP:
-          {
-            isStopped = true;
-            break;
-          }
-          case ScTemplateSearchRequest::ERROR:
-          {
-            SC_THROW_EXCEPTION(utils::ExceptionInvalidState, "Requested error state during search");
-          }
-          default:
-            break;
-          }
-        }
-        else
-        {
-          result.m_results.emplace_back(resultAddrs);
+          auto branchFuture3 = std::async(std::launch::async, [&]() {
+            TryDoNextDependenceIteration(
+                triple, item3, addr3, checkedTriples, resultAddrs, triples, isChildFinished, isNoChild);
+            isAllChildrenFinished = isChildFinished;
+            isLast = isNoChild;
+
+            if (!isChildFinished && !isLast)
+            {
+              ClearResults(tripleIdx, resultAddrs, checkedTriples);
+            }
+          });
+
+          auto future = std::async(std::launch::async, [&]() {
+            branchFuture2.get();
+            branchFuture1.get();
+            branchFuture3.get();
+
+            // all connected triples found
+            if (isAllChildrenFinished)
+            {
+              std::cout << "succeed " << triple->m_index << " = {" << item1.m_replacementName << "}---{"
+                        << item2.m_replacementName << "}---> {" << item3.m_replacementName << "}" << std::endl;
+
+              // current edge is busy for all equal triples
+              for (size_t const idx : triples)
+              {
+                m_triplesOrderUsedEdges[idx].insert(addr2);
+              }
+
+              std::cout << "Found " << checkedTriples.size() << " to achieve " << m_template.m_triples.size() << std::endl;
+              // there are no next triples for current triple, it is last
+              if (isLast && checkedTriples.size() == m_template.m_triples.size() &&
+                  !m_finishedResult.contains(m_resultCount))
+              {
+                m_finishedResult.insert(m_resultCount);
+
+                std::cout << "Great " << checkedTriples.size() << " to achieve " << m_template.m_triples.size() << std::endl;
+
+                FormResult(result, resultAddrs);
+              }
+            }
+          });
         }
       }
     }
 
     isFinished = isAllChildrenFinished;
+  }
+
+  void FormResult(ScTemplateSearchResult & result, ScAddrVector const & resultAddrs)
+  {
+    if (m_callback)
+    {
+      m_callback(ScTemplateSearchResultItem(&resultAddrs, &result.m_replacements));
+    }
+    else if (m_callbackWithRequest)
+    {
+      ScTemplateSearchRequest const & request =
+          m_callbackWithRequest(ScTemplateSearchResultItem(&resultAddrs, &result.m_replacements));
+      switch (request)
+      {
+      case ScTemplateSearchRequest::STOP:
+      {
+        isStopped = true;
+        break;
+      }
+      case ScTemplateSearchRequest::ERROR:
+      {
+        SC_THROW_EXCEPTION(utils::ExceptionInvalidState, "Requested error state during search");
+      }
+      default:
+        break;
+      }
+    }
+    else
+    {
+      result.m_results.emplace_back(resultAddrs);
+    }
   }
 
   void DoIterations(ScTemplateSearchResult & result)
@@ -764,7 +846,7 @@ private:
     auto const & DoStartIteration = [this, &result](ScTemplateGroupedTriples const & triples) {
       std::vector<ScAddr> resultAddrs;
       resultAddrs.resize(CalculateOneResultSize());
-      std::unordered_set<size_t> checkedTriples;
+      std::concurrent_unordered_set<size_t> checkedTriples;
 
       bool isFinished = false;
       bool isLast = false;
@@ -824,7 +906,8 @@ private:
   UsedEdges m_usedEdges;
   ScTriplesOrderCheckedEdges m_triplesOrderUsedEdges;
 
-  std::unordered_set<size_t> m_finishedResult;
+  std::atomic<size_t> m_resultCount = { 0 };
+  std::concurrent_unordered_set<size_t> m_finishedResult;
 };
 
 ScTemplate::Result ScTemplate::Search(ScMemoryContext & ctx, ScTemplateSearchResult & result) const

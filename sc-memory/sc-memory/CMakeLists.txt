@@ -43,6 +43,7 @@ elseif(${UNIX})
         antlr4_static
         ${LIBCURL_LIBRARIES}
         ${Boost_LIBRARIES}
+        TBB::tbb
     )
 endif(${WIN32})
 

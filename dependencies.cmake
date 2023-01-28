@@ -43,8 +43,10 @@ macro(sc_linux_target_dependencies)
 
 	pkg_check_modules(LIBCURL REQUIRED libcurl)
 
+    find_package(TBB REQUIRED)
+
     # for std::thread support
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -ltbb")
 endmacro()
 
 macro(sc_win_target_dependencies _PACKAGES_CONFIG _THIRDPARTY_PATH _BIN_PATH)
