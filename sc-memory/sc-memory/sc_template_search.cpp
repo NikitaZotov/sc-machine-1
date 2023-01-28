@@ -132,12 +132,14 @@ private:
     };
 
     auto const & RemoveCycledDependenciesBetweenTriples = [this]() {
+      auto const & faeTriples = m_template.m_orderedTriples[(size_t)ScTemplateTripleType::FAN];
+
       for (ScTemplateTriple const * triple : m_template.m_triples)
       {
         auto const & item1 = (*triple)[0];
 
         bool isFound = false;
-        if (item1.IsAddr())
+        if (item1.IsAddr() && faeTriples.find(triple->m_index) != faeTriples.cend())
         {
           ScTemplateGroupedTriples checkedTriples;
           FindCycleWithFAATriple(item1, triple, triple, checkedTriples, isFound);
@@ -573,6 +575,10 @@ private:
     ScTemplateItemValue item2 = (*triple)[1];
     ScTemplateItemValue item3 = (*triple)[2];
 
+    //    std::cout << "try " << triple->m_index << " = {" << item1.m_replacementName << "} ---{" <<
+    //        item2.m_replacementName
+    //              << "}---> {" << item3.m_replacementName << "}" << std::endl;
+
     ScIterator3Ptr const it = CreateIterator(item1, item2, item3, resultAddrs, result);
     if (!it || !it->IsValid())
     {
@@ -617,10 +623,16 @@ private:
         }
 
         // check if all equal triples found to make a new search result item
-        if (isAllChildrenFinished && count == triples.size())
+        if (count == triples.size())
         {
+          size_t const triplesCount = m_template.m_triples.size();
+          if (isAllChildrenFinished && checkedTriples.size() != triplesCount)
+          {
+            break;
+          }
+
           count = 0;
-          checkedTriples = {currentCheckedTriples};
+          checkedTriples = std::unordered_set<size_t>{currentCheckedTriples};
           resultAddrs.assign(currentResultAddrs.cbegin(), currentResultAddrs.cend());
         }
 
@@ -633,9 +645,10 @@ private:
         item2 = (*triple)[1];
         item3 = (*triple)[2];
 
-        //        std::cout << triple->m_index << " = {" << item1.m_replacementName << "} ---{" <<
-        //          item2.m_replacementName
-        //                          << "}---> {" << item3.m_replacementName << "}" << std::endl;
+        //                std::cout << "iterate " << triple->m_index << " = {" << m_context.HelperGetSystemIdtf(addr1)
+        //                << "} ---{" <<
+        //                  item2.m_replacementName
+        //                  << "}---> {" << m_context.HelperGetSystemIdtf(addr3)  << "}" << std::endl;
 
         // update data
         {
@@ -643,6 +656,7 @@ private:
           checkedTriples.insert(tripleIdx);
           m_triplesOrderUsedEdges[tripleIdx].insert(addr2);
           m_usedEdges.insert(addr2);
+          ++count;
         }
 
         // find next depended on triples and analyse result
@@ -684,12 +698,11 @@ private:
           // all connected triples found
           if (isAllChildrenFinished)
           {
-            // current triple is checked
-            ++count;
-
-            //            std::cout << "succeed " << triple->m_index << " = {" << item1.m_replacementName << "}---{"
-            //                                  << item2.m_replacementName << "}---> {" << item3.m_replacementName <<
-            //                                  "}" << std::endl;
+            //                       std::cout << "succeed " << triple->m_index << " = {" << item1.m_replacementName <<
+            //                       "}---{"
+            //                                              << item2.m_replacementName << "}---> {" <<
+            //                                              item3.m_replacementName <<
+            //                                              "}" << std::endl;
 
             // current edge is busy for all equal triples
             for (size_t const idx : triples)
@@ -701,11 +714,14 @@ private:
         }
       }
 
+      //      std::cout << "Found " << checkedTriples.size() << " to achieve " <<
+      //          m_template.m_triples.size() << std::endl;
+
       // there are no next triples for current triple, it is last
       if (isLast && isAllChildrenFinished && checkedTriples.size() == m_template.m_triples.size())
       {
-        //        std::cout << "Found " << checkedTriples.size() << " to achieve " <<
-        //            m_template.m_triples.size() << std::endl;
+        //                std::cout << "Great " << checkedTriples.size() << " to achieve " <<
+        //                    m_template.m_triples.size() << std::endl;
 
         if (m_callback)
         {
@@ -749,7 +765,6 @@ private:
       std::vector<ScAddr> resultAddrs;
       resultAddrs.resize(CalculateOneResultSize());
       std::unordered_set<size_t> checkedTriples;
-      checkedTriples.reserve(CalculateOneResultSize());
 
       bool isFinished = false;
       bool isLast = false;
@@ -808,6 +823,8 @@ private:
   ScTemplateGroupedTriples m_cycledTriples;
   UsedEdges m_usedEdges;
   ScTriplesOrderCheckedEdges m_triplesOrderUsedEdges;
+
+  std::unordered_set<size_t> m_finishedResult;
 };
 
 ScTemplate::Result ScTemplate::Search(ScMemoryContext & ctx, ScTemplateSearchResult & result) const
