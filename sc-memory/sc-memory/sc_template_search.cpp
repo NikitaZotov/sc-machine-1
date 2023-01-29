@@ -577,10 +577,6 @@ private:
     ScTemplateItemValue item2 = (*triple)[1];
     ScTemplateItemValue item3 = (*triple)[2];
 
-    //        std::cout << "[" << resultIdx << "] Try " << triple->m_index << " = {" << item1.m_replacementName << "}
-    //        ---{"
-    //                  << item2.m_replacementName << "}---> {" << item3.m_replacementName << "}" << std::endl;
-
     ScIterator3Ptr const it = CreateIterator(item1, item2, item3, result.m_results[resultIdx], result);
     if (!it || !it->IsValid())
     {
@@ -625,14 +621,12 @@ private:
         if (finishedTriplesCount == triples.size())
         {
           ++resultIdx;
-          //          std::cout << "[" << resultIdx << "] To next" << std::endl;
           finishedTriplesCount = 0;
           result.m_results.emplace_back(currentResultAddrs);
           m_resultCheckedTriples.emplace_back(currentCheckedTriples);
         }
         else if (notFinishedTriplesCount == triples.size())
         {
-          //          std::cout << "[" << resultIdx << "] Reset" << std::endl;
           notFinishedTriplesCount = 0;
           result.m_results[resultIdx] = currentResultAddrs;
           m_resultCheckedTriples[resultIdx] = currentCheckedTriples;
@@ -646,11 +640,6 @@ private:
         item1 = (*triple)[0];
         item2 = (*triple)[1];
         item3 = (*triple)[2];
-
-        //                std::cout << "[" << resultIdx << "] Iterate " << triple->m_index << " = {" <<
-        //                m_context.HelperGetSystemIdtf(addr1) << "} ---{"
-        //                          << item2.m_replacementName << "}---> {" << m_context.HelperGetSystemIdtf(addr3) <<
-        //                          "}" << std::endl;
 
         // update data
         {
@@ -698,11 +687,6 @@ private:
           {
             ++finishedTriplesCount;
 
-            //                        std::cout << "[" << resultIdx << "] Succeed " << triple->m_index << " = {" <<
-            //                        item1.m_replacementName << "}---{"
-            //                                  << item2.m_replacementName << "}---> {" << item3.m_replacementName <<
-            //                                  "}" << std::endl;
-
             // current edge is busy for all equal triples
             for (size_t const idx : triples)
             {
@@ -713,16 +697,9 @@ private:
         }
       }
 
-      //            std::cout << "[" << resultIdx << "] Checked " << m_resultCheckedTriples[resultIdx].size() << " to
-      //            achieve "
-      //                      << m_template.m_triples.size() << std::endl;
-
       // there are no next triples for current triple, it is last
       if (isLast && isAllChildrenFinished && m_resultCheckedTriples[resultIdx].size() == m_template.m_triples.size())
       {
-        //                std::cout << "[" << resultIdx << "] Form result " << m_resultCheckedTriples[resultIdx].size()
-        //                << " to achieve "
-        //                          << m_template.m_triples.size() << std::endl;
         FormResult(result, resultIdx);
       }
     }
