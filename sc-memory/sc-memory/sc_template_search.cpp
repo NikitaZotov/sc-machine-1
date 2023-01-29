@@ -141,11 +141,6 @@ private:
         bool isFound = false;
         if (item1.IsAddr() && faeTriples.find(triple->m_index) != faeTriples.cend())
         {
-          if (triple->m_index == 16)
-          {
-            std::cout << "ye";
-          }
-
           ScTemplateGroupedTriples checkedTriples;
           FindCycleWithFAATriple(item1, triple, triple, checkedTriples, isFound);
         }
@@ -192,7 +187,7 @@ private:
       ScTemplateItemValue const & item,
       ScTemplateTriple const * triple,
       ScTemplateTriple const * tripleToFind,
-      ScTemplateGroupedTriples & checkedTriples,
+      ScTemplateGroupedTriples checkedTriples,
       bool & isFound)
   {
     if (isFound)
@@ -626,7 +621,7 @@ private:
         if (isAllChildrenFinished && count == triples.size())
         {
           ++resultIdx;
-          std::cout << "[" << resultIdx << "] To next" << std::endl;
+          // std::cout << "[" << resultIdx << "] To next" << std::endl;
           count = 0;
           result.m_results.emplace_back(currentResultAddrs);
           m_resultCheckedTriples.emplace_back(currentCheckedTriples);
