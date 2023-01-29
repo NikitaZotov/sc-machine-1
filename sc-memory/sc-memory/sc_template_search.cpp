@@ -544,7 +544,7 @@ private:
                                      ScAddr const & addr2,
                                      ScAddr const & addr3) {
       m_resultCheckedTriples[resultIdx].insert(triple->m_index);
-      m_triplesOrderUsedEdges[triple->m_index].insert(addr2);
+      m_usedEdges[resultIdx].insert(addr2);
 
       size_t itemIdx = triple->m_index * 3;
 
@@ -563,7 +563,7 @@ private:
 
       size_t itemIdx = tripleIdx * 3;
       resultAddrs[itemIdx] = ScAddr::Empty;
-      m_triplesOrderUsedEdges[tripleIdx].erase(resultAddrs[++itemIdx]);
+      m_usedEdges[resultIdx].erase(resultAddrs[++itemIdx]);
       resultAddrs[itemIdx] = ScAddr::Empty;
       resultAddrs[++itemIdx] = ScAddr::Empty;
     };
@@ -586,8 +586,9 @@ private:
     size_t notFinishedTriplesCount = 0;
     size_t finishedTriplesCount = 0;
 
-    std::unordered_set<size_t> const currentCheckedTriples{m_resultCheckedTriples[resultIdx]};
     ScAddrVector const currentResultAddrs{result.m_results[resultIdx]};
+    std::unordered_set<size_t> const currentCheckedTriples{m_resultCheckedTriples[resultIdx]};
+    UsedEdges currentUsedEdges{m_usedEdges[resultIdx]};
     while (it->Next() && !isStopped)
     {
       ScAddr const & addr1 = it->Get(0);
@@ -598,17 +599,12 @@ private:
       if ((IsStructureValid() && (!IsInStructure(addr1) || !IsInStructure(addr2) || !IsInStructure(addr3))) ||
           (m_checkCallback && !m_checkCallback(addr1, addr2, addr3)))
       {
-        for (size_t const tripleIdx : triples)
-        {
-          m_triplesOrderUsedEdges[tripleIdx].insert(addr2);
-        }
+        m_usedEdges[resultIdx].insert(addr2);
         continue;
       }
 
       // check if edge is used for other equal triple
-      if (std::any_of(triples.begin(), triples.end(), [this, &addr2](size_t const tripleIdx) {
-            return m_triplesOrderUsedEdges[tripleIdx].find(addr2) != m_triplesOrderUsedEdges[tripleIdx].cend();
-          }))
+      if (m_usedEdges[resultIdx].find(addr2) != m_usedEdges[resultIdx].cend())
       {
         continue;
       }
@@ -624,12 +620,14 @@ private:
           finishedTriplesCount = 0;
           result.m_results.emplace_back(currentResultAddrs);
           m_resultCheckedTriples.emplace_back(currentCheckedTriples);
+          m_usedEdges.emplace_back(currentUsedEdges);
         }
         else if (notFinishedTriplesCount == triples.size())
         {
           notFinishedTriplesCount = 0;
           result.m_results[resultIdx] = currentResultAddrs;
           m_resultCheckedTriples[resultIdx] = currentCheckedTriples;
+          m_usedEdges[resultIdx] = currentUsedEdges;
         }
 
         if (m_resultCheckedTriples[resultIdx].find(tripleIdx) != m_resultCheckedTriples[resultIdx].cend())
@@ -688,10 +686,7 @@ private:
             ++finishedTriplesCount;
 
             // current edge is busy for all equal triples
-            for (size_t const idx : triples)
-            {
-              m_triplesOrderUsedEdges[idx].insert(addr2);
-            }
+            m_usedEdges[resultIdx].insert(addr2);
             break;
           }
         }
@@ -747,6 +742,8 @@ private:
       result.m_results.reserve(16);
       result.m_results.emplace_back(newResult);
 
+      m_usedEdges.reserve(16);
+      m_usedEdges.emplace_back();
       m_resultCheckedTriples.reserve(16);
       m_resultCheckedTriples.emplace_back();
 
@@ -773,7 +770,6 @@ public:
   ScTemplate::Result operator()(ScTemplateSearchResult & result)
   {
     result.Clear();
-    m_triplesOrderUsedEdges.resize(CalculateOneResultSize());
 
     DoIterations(result);
 
@@ -791,7 +787,6 @@ public:
   void operator()()
   {
     ScTemplateSearchResult result;
-    m_triplesOrderUsedEdges.resize(CalculateOneResultSize());
 
     DoIterations(result);
   }
@@ -813,7 +808,7 @@ private:
 
   std::map<std::string, ScTemplateGroupedTriples> m_itemsToTriples;
   ScTemplateGroupedTriples m_cycledTriples;
-  ScTriplesOrderCheckedEdges m_triplesOrderUsedEdges;
+  std::vector<UsedEdges> m_usedEdges;
   std::vector<std::unordered_set<size_t>> m_resultCheckedTriples;
 
   std::unordered_set<size_t> m_foundResults;
