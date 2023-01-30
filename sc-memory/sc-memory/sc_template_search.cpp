@@ -139,7 +139,10 @@ private:
         auto const & item1 = (*triple)[0];
 
         bool isFound = false;
-        if (item1.IsAddr() && faeTriples.find(triple->m_index) != faeTriples.cend())
+        auto const & found = m_template.m_namesToTypes.find(item1.m_replacementName);
+        if (m_cycledTriples.find(triple->m_index) == m_cycledTriples.cend() &&
+            ((found != m_template.m_namesToTypes.cend() && found->second == ScType::NodeVarStruct) ||
+             (item1.IsAddr() && faeTriples.find(triple->m_index) != faeTriples.cend())))
         {
           ScTemplateGroupedTriples checkedTriples;
           FindCycleWithFAATriple(item1, triple, triple, checkedTriples, isFound);
@@ -148,6 +151,19 @@ private:
         if (isFound)
         {
           std::string const & key = GetKey(triple, item1);
+          auto const & dependedTriples = m_itemsToTriples.find(key);
+
+          if (dependedTriples != m_itemsToTriples.cend())
+          {
+            for (size_t const dependedTripleIdx : dependedTriples->second)
+            {
+              if (IsTriplesEqual(triple, m_template.m_triples[dependedTripleIdx]))
+              {
+                m_cycledTriples.insert(dependedTripleIdx);
+              }
+            }
+          }
+
           m_cycledTriples.insert(triple->m_index);
         }
       }
@@ -195,10 +211,11 @@ private:
       return;
     }
 
-    auto const & FindCycleWithFAATripleByTripleItem = [this, &tripleToFind, &checkedTriples, &isFound](
+    auto const & FindCycleWithFAATripleByTripleItem = [this, &tripleToFind, &checkedTriples](
                                                           ScTemplateItemValue const & item,
                                                           ScTemplateTriple const * triple,
-                                                          ScTemplateItemValue const & previousItem) {
+                                                          ScTemplateItemValue const & previousItem,
+                                                          bool & isFound) {
       if (!item.m_replacementName.empty() && item.m_replacementName == previousItem.m_replacementName)
       {
         return;
@@ -235,9 +252,9 @@ private:
         auto const & items = otherTriple->GetValues();
         checkedTriples.insert(otherTripleIdx);
 
-        FindCycleWithFAATripleByTripleItem(items[0], otherTriple, item);
-        FindCycleWithFAATripleByTripleItem(items[1], otherTriple, item);
-        FindCycleWithFAATripleByTripleItem(items[2], otherTriple, item);
+        FindCycleWithFAATripleByTripleItem(items[0], otherTriple, item, isFound);
+        FindCycleWithFAATripleByTripleItem(items[1], otherTriple, item, isFound);
+        FindCycleWithFAATripleByTripleItem(items[2], otherTriple, item, isFound);
       }
     }
   }
@@ -452,7 +469,6 @@ private:
   };
 
   using UsedEdges = std::unordered_set<ScAddr, ScAddrHashFunc<uint32_t>>;
-  using ScTriplesOrderCheckedEdges = std::vector<UsedEdges>;
 
   void DoIterationOnNextEqualTriples(
       ScTemplateGroupedTriples const & triples,
@@ -500,6 +516,11 @@ private:
         isFinished = std::all_of(equalTriples.begin(), equalTriples.end(), [this, resultIdx](size_t const idx) {
           return m_resultCheckedTriples[resultIdx].find(idx) != m_resultCheckedTriples[resultIdx].cend();
         });
+
+        if (!isFinished)
+        {
+          break;
+        }
       }
     }
   }
