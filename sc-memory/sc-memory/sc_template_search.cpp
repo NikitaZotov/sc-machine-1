@@ -563,9 +563,12 @@ private:
                                      size_t const resultIdx,
                                      ScAddr const & addr1,
                                      ScAddr const & addr2,
-                                     ScAddr const & addr3) {
+                                     ScAddr const & addr3,
+                                     std::unordered_map<ScAddr, std::array<ScAddr, 3>, ScAddrHashFunc<size_t>,
+                                                        ScAddLessFunc> & unusedTriples) {
       m_resultCheckedTriples[resultIdx].insert(triple->m_index);
       m_usedEdges[resultIdx].insert(addr2);
+      unusedTriples.erase(addr2);
 
       size_t itemIdx = triple->m_index * 3;
 
@@ -579,10 +582,12 @@ private:
       }
     };
 
-    auto const & ClearResults = [this](size_t const tripleIdx, size_t const resultIdx, ScAddrVector & resultAddrs) {
+    auto const & ClearResults = [this](size_t const tripleIdx, size_t const resultIdx, ScAddrVector & resultAddrs, std::unordered_map<ScAddr, std::array<ScAddr, 3>, ScAddrHashFunc<size_t>,
+                                                                                                                                      ScAddLessFunc> & unusedTriples) {
       m_resultCheckedTriples[resultIdx].erase(tripleIdx);
 
       size_t itemIdx = tripleIdx * 3;
+      unusedTriples.insert({resultAddrs[itemIdx], {resultAddrs[itemIdx], resultAddrs[itemIdx + 1], resultAddrs[itemIdx + 2]}});
       resultAddrs[itemIdx] = ScAddr::Empty;
       m_usedEdges[resultIdx].erase(resultAddrs[++itemIdx]);
       resultAddrs[itemIdx] = ScAddr::Empty;
@@ -598,7 +603,7 @@ private:
     ScTemplateItemValue item2 = (*triple)[1];
     ScTemplateItemValue item3 = (*triple)[2];
 
-    ScIterator3Ptr const it = CreateIterator(item1, item2, item3, result.m_results[resultIdx], result);
+    ScIterator3Ptr it = CreateIterator(item1, item2, item3, result.m_results[resultIdx], result);
     if (!it || !it->IsValid())
     {
       SC_THROW_EXCEPTION(utils::ExceptionInvalidState, "During search procedure has been chosen var triple");
@@ -610,11 +615,27 @@ private:
     ScAddrVector const currentResultAddrs{result.m_results[resultIdx]};
     std::unordered_set<size_t> const currentCheckedTriples{m_resultCheckedTriples[resultIdx]};
     UsedEdges currentUsedEdges{m_usedEdges[resultIdx]};
-    while (it->Next() && !isStopped)
+    std::unordered_map<ScAddr, std::array<ScAddr, 3>, ScAddrHashFunc<size_t>, ScAddLessFunc> unusedTriples;
+    bool isItFound;
+    auto unusedTriplesIt = unusedTriples.cbegin();
+    while (((isItFound = it->Next()) || unusedTriplesIt != unusedTriples.cend()) && !isStopped)
     {
-      ScAddr const & addr1 = it->Get(0);
-      ScAddr const & addr2 = it->Get(1);
-      ScAddr const & addr3 = it->Get(2);
+      ScAddr addr1;
+      ScAddr addr2;
+      ScAddr addr3;
+
+      if (isItFound)
+      {
+        addr1 = it->Get(0);
+        addr2 = it->Get(1);
+        addr3 = it->Get(2);
+      }
+      else
+      {
+        addr1 = unusedTriplesIt->second[0];
+        addr2 = unusedTriplesIt->second[1];
+        addr3 = unusedTriplesIt->second[2];
+      }
 
       // check triple elements by structure belonging or predicate callback
       if ((IsStructureValid() && (!IsInStructure(addr1) || !IsInStructure(addr2) || !IsInStructure(addr3))) ||
@@ -662,7 +683,7 @@ private:
 
         // update data
         {
-          UpdateResults(triple, resultIdx, addr1, addr2, addr3);
+          UpdateResults(triple, resultIdx, addr1, addr2, addr3, unusedTriples);
         }
 
         // find next depended on triples and analyse result
@@ -676,7 +697,7 @@ private:
           isLast = isNoChild;
           if (!isChildFinished && !isLast)
           {
-            ClearResults(tripleIdx, resultIdx, result.m_results[resultIdx]);
+            ClearResults(tripleIdx, resultIdx, result.m_results[resultIdx], unusedTriples);
             ++notFinishedTriplesCount;
             continue;
           }
@@ -686,7 +707,7 @@ private:
           isLast &= isNoChild;
           if (!isChildFinished && !isLast)
           {
-            ClearResults(tripleIdx, resultIdx, result.m_results[resultIdx]);
+            ClearResults(tripleIdx, resultIdx, result.m_results[resultIdx], unusedTriples);
             ++notFinishedTriplesCount;
             continue;
           }
@@ -696,7 +717,7 @@ private:
           isLast &= isNoChild;
           if (!isChildFinished && !isLast)
           {
-            ClearResults(tripleIdx, resultIdx, result.m_results[resultIdx]);
+            ClearResults(tripleIdx, resultIdx, result.m_results[resultIdx], unusedTriples);
             ++notFinishedTriplesCount;
             continue;
           }
@@ -717,6 +738,11 @@ private:
       if (isLast && isAllChildrenFinished && m_resultCheckedTriples[resultIdx].size() == m_template.m_triples.size())
       {
         FormResult(result, resultIdx);
+      }
+
+      if (!isItFound)
+      {
+        ++unusedTriplesIt;
       }
     }
   }
