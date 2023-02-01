@@ -20,7 +20,6 @@ public:
     , m_context(context)
     , m_structure(structure)
   {
-    std::cout << "START SEARCH" << std::endl;
     PrepareSearch();
   }
 
@@ -36,7 +35,6 @@ public:
     , m_callback(std::move(callback))
     , m_checkCallback(std::move(checkCallback))
   {
-    std::cout << "START SEARCH" << std::endl;
     PrepareSearch();
   }
 
@@ -52,7 +50,6 @@ public:
     , m_callbackWithRequest(std::move(callback))
     , m_checkCallback(std::move(checkCallback))
   {
-    std::cout << "START SEARCH" << std::endl;
     PrepareSearch();
   }
 
@@ -654,14 +651,14 @@ private:
           m_usedEdges[resultIdx] = currentUsedEdges;
         }
 
-        item1 = (*triple)[0];
-        item2 = (*triple)[1];
-        item3 = (*triple)[2];
-
         if (m_resultCheckedTriples[resultIdx].find(tripleIdx) != m_resultCheckedTriples[resultIdx].cend())
         {
           continue;
         }
+
+        item1 = (*triple)[0];
+        item2 = (*triple)[1];
+        item3 = (*triple)[2];
 
         // update data
         {
@@ -805,7 +802,6 @@ public:
     }
     result.m_results = checkedResults;
 
-    std::cout << "END SEARCH" << std::endl;
     return ScTemplate::Result(result.Size() > 0);
   }
 
