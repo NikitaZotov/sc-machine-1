@@ -20,6 +20,7 @@ public:
     , m_context(context)
     , m_structure(structure)
   {
+    std::cout << "START SEARCH" << std::endl;
     PrepareSearch();
   }
 
@@ -35,6 +36,7 @@ public:
     , m_callback(std::move(callback))
     , m_checkCallback(std::move(checkCallback))
   {
+    std::cout << "START SEARCH" << std::endl;
     PrepareSearch();
   }
 
@@ -50,6 +52,7 @@ public:
     , m_callbackWithRequest(std::move(callback))
     , m_checkCallback(std::move(checkCallback))
   {
+    std::cout << "START SEARCH" << std::endl;
     PrepareSearch();
   }
 
@@ -637,7 +640,7 @@ private:
         // check if all equal triples found to make a new search result item
         if (finishedTriplesCount == triples.size())
         {
-          ++resultIdx;
+          resultIdx = ++m_lastResultIdx;
           finishedTriplesCount = 0;
           result.m_results.emplace_back(currentResultAddrs);
           m_resultCheckedTriples.emplace_back(currentCheckedTriples);
@@ -651,14 +654,14 @@ private:
           m_usedEdges[resultIdx] = currentUsedEdges;
         }
 
+        item1 = (*triple)[0];
+        item2 = (*triple)[1];
+        item3 = (*triple)[2];
+
         if (m_resultCheckedTriples[resultIdx].find(tripleIdx) != m_resultCheckedTriples[resultIdx].cend())
         {
           continue;
         }
-
-        item1 = (*triple)[0];
-        item2 = (*triple)[1];
-        item3 = (*triple)[2];
 
         // update data
         {
@@ -802,6 +805,7 @@ public:
     }
     result.m_results = checkedResults;
 
+    std::cout << "END SEARCH" << std::endl;
     return ScTemplate::Result(result.Size() > 0);
   }
 
@@ -832,6 +836,7 @@ private:
   std::vector<UsedEdges> m_usedEdges;
   std::vector<std::unordered_set<size_t>> m_resultCheckedTriples;
 
+  size_t m_lastResultIdx = 0;
   std::unordered_set<size_t> m_foundResults;
 };
 
