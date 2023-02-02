@@ -715,7 +715,7 @@ private:
             ScAddr const & addr3,
             std::unordered_map<ScAddr, std::array<ScAddr, 3>, ScAddrHashFunc<size_t>, ScAddLessFunc> & unusedTriples) {
           m_resultCheckedTriples[resultIdx].insert(triple->m_index);
-          m_usedEdges[resultIdx].insert(addr2);
+          m_resultUsedEdges[resultIdx].insert(addr2);
           unusedTriples.erase(addr2);
 
           size_t itemIdx = triple->m_index * 3;
@@ -744,7 +744,7 @@ private:
               {resultAddrs[itemIdx], {resultAddrs[itemIdx], resultAddrs[itemIdx + 1], resultAddrs[itemIdx + 2]}});
 
           resultAddrs[itemIdx] = ScAddr::Empty;
-          m_usedEdges[resultIdx].erase(resultAddrs[++itemIdx]);
+          m_resultUsedEdges[resultIdx].erase(resultAddrs[++itemIdx]);
           resultAddrs[itemIdx] = ScAddr::Empty;
           resultAddrs[++itemIdx] = ScAddr::Empty;
         };
@@ -764,15 +764,16 @@ private:
       SC_THROW_EXCEPTION(utils::ExceptionInvalidState, "During search procedure has been chosen var triple");
     }
 
+    size_t notFinishedTriplesCount = 0;
     size_t finishedTriplesCount = 0;
 
     ScAddrVector currentResultAddrs{result.m_results[resultIdx]};
     std::unordered_set<size_t> currentCheckedTriples{m_resultCheckedTriples[resultIdx]};
-    UsedEdges currentUsedEdges{m_usedEdges[resultIdx]};
+    UsedEdges currentUsedEdges{m_resultUsedEdges[resultIdx]};
 
     ScAddrVector nextResultAddrs{result.m_results[resultIdx]};
     std::unordered_set<size_t> nextCheckedTriples{m_resultCheckedTriples[resultIdx]};
-    UsedEdges nextUsedEdges{m_usedEdges[resultIdx]};
+    UsedEdges nextUsedEdges{m_resultUsedEdges[resultIdx]};
 
     std::unordered_map<ScAddr, std::array<ScAddr, 3>, ScAddrHashFunc<size_t>, ScAddLessFunc> unusedTriples;
     bool isItFound;
@@ -800,12 +801,14 @@ private:
       if ((IsStructureValid() && (!IsInStructure(addr1) || !IsInStructure(addr2) || !IsInStructure(addr3))) ||
           (m_checkCallback && !m_checkCallback(addr1, addr2, addr3)))
       {
-        m_usedEdges[resultIdx].insert(addr2);
+        m_resultUsedEdges[resultIdx].insert(addr2);
         continue;
       }
 
       // check if edge is used for other equal triple
-      if (m_usedEdges[resultIdx].find(addr2) != m_usedEdges[resultIdx].cend())
+      if (std::any_of(m_resultUsedEdges.begin(), m_resultUsedEdges.end(), [&](UsedEdges const & edges) {
+            return edges.find(addr2) != edges.cend();
+          }))
       {
         continue;
       }
@@ -821,13 +824,20 @@ private:
           finishedTriplesCount = 0;
           result.m_results.emplace_back(nextResultAddrs);
           m_resultCheckedTriples.emplace_back(nextCheckedTriples);
-          m_usedEdges.emplace_back(nextUsedEdges);
+          m_resultUsedEdges.emplace_back(nextUsedEdges);
         }
         else
         {
           result.m_results[resultIdx] = currentResultAddrs;
           m_resultCheckedTriples[resultIdx] = currentCheckedTriples;
-          m_usedEdges[resultIdx] = currentUsedEdges;
+          m_resultUsedEdges[resultIdx] = currentUsedEdges;
+        }
+        if (notFinishedTriplesCount == triples.size())
+        {
+          notFinishedTriplesCount = 0;
+          currentResultAddrs = nextResultAddrs;
+          currentCheckedTriples = nextCheckedTriples;
+          currentUsedEdges = nextUsedEdges;
         }
 
         if (m_resultCheckedTriples[resultIdx].find(tripleIdx) != m_resultCheckedTriples[resultIdx].cend())
@@ -856,6 +866,7 @@ private:
           if (!isChildFinished && !isLast)
           {
             ClearResults(tripleIdx, resultIdx, result.m_results[resultIdx], unusedTriples);
+            ++notFinishedTriplesCount;
             continue;
           }
 
@@ -865,6 +876,7 @@ private:
           if (!isChildFinished && !isLast)
           {
             ClearResults(tripleIdx, resultIdx, result.m_results[resultIdx], unusedTriples);
+            ++notFinishedTriplesCount;
             continue;
           }
 
@@ -874,6 +886,7 @@ private:
           if (!isChildFinished && !isLast)
           {
             ClearResults(tripleIdx, resultIdx, result.m_results[resultIdx], unusedTriples);
+            ++notFinishedTriplesCount;
             continue;
           }
 
@@ -883,11 +896,12 @@ private:
             ++finishedTriplesCount;
 
             // current edge is busy for all equal triples
-            m_usedEdges[resultIdx].insert(addr2);
+            m_resultUsedEdges[resultIdx].insert(addr2);
+            m_usedEdges.insert(addr2);
 
             currentResultAddrs = result.m_results[resultIdx];
             currentCheckedTriples = m_resultCheckedTriples[resultIdx];
-            currentUsedEdges = m_usedEdges[resultIdx];
+            currentUsedEdges = m_resultUsedEdges[resultIdx];
 
             break;
           }
@@ -948,8 +962,8 @@ private:
     result.m_results.reserve(16);
     result.m_results.emplace_back(newResult);
 
-    m_usedEdges.reserve(16);
-    m_usedEdges.emplace_back();
+    m_resultUsedEdges.reserve(16);
+    m_resultUsedEdges.emplace_back();
     m_resultCheckedTriples.reserve(16);
     m_resultCheckedTriples.emplace_back();
 
@@ -1007,7 +1021,8 @@ private:
   std::vector<ScTemplateGroupedTriples> m_connectivityComponentsTriples;
   std::vector<size_t> m_connectivityComponentPriorityTriples;
 
-  std::vector<UsedEdges> m_usedEdges;
+  std::vector<UsedEdges> m_resultUsedEdges;
+  UsedEdges m_usedEdges;
   std::vector<std::unordered_set<size_t>> m_resultCheckedTriples;
 
   size_t m_lastResultIdx = 0;
