@@ -64,7 +64,7 @@ private:
     SetUpDependenciesBetweenTriples();
     RemoveCycledDependenciesBetweenTriples();
     FindConnectivityComponents();
-    FindTriplesWithMostMinimalOutputArcsForFirstItem();
+    FindTriplesWithMostMinimalArcsForFirstItem();
   }
 
   /*!
@@ -318,16 +318,26 @@ private:
 
   /*!
    * Finds all connectivity component triples among all triples that have the fixed first item, but not fixed
-   * other items, for which the minimum number of arcs goes out of the first item compared to the other triples.
+   * other items, for which the minimum number of arcs goes/incomes out of the first item compared to the other triples.
    */
-  void FindTriplesWithMostMinimalOutputArcsForFirstItem()
+  void FindTriplesWithMostMinimalArcsForFirstItem()
   {
     for (ScTemplateGroupedTriples const & connectivityComponentsTriples : m_connectivityComponentsTriples)
     {
-      sc_int32 priorityTripleIdx = FindTripleWithMostMinimalInputArcsForFirstItem(connectivityComponentsTriples);
+      sc_int32 priorityTripleIdx = -1;
+      auto & afaTriples = m_template.m_orderedTriples[(size_t)ScTemplateTripleType::AFA];
+      if (!afaTriples.empty())
+      {
+        priorityTripleIdx = (sc_int32)*afaTriples.cbegin();
+      }
+
       if (priorityTripleIdx == -1)
       {
-        priorityTripleIdx = FindTripleWithMostMinimalOutputArcsForFirstItem(connectivityComponentsTriples);
+        priorityTripleIdx = FindTripleWithMostMinimalInputArcsForFirstItem(connectivityComponentsTriples);
+        if (priorityTripleIdx == -1)
+        {
+          priorityTripleIdx = FindTripleWithMostMinimalOutputArcsForFirstItem(connectivityComponentsTriples);
+        }
       }
 
       // save triple in which the first item address has the most minimal count of input/output arcs in vector
@@ -729,8 +739,10 @@ private:
           m_resultCheckedTriples[resultIdx].erase(tripleIdx);
 
           size_t itemIdx = tripleIdx * 3;
+
           unusedTriples.insert(
               {resultAddrs[itemIdx], {resultAddrs[itemIdx], resultAddrs[itemIdx + 1], resultAddrs[itemIdx + 2]}});
+
           resultAddrs[itemIdx] = ScAddr::Empty;
           m_usedEdges[resultIdx].erase(resultAddrs[++itemIdx]);
           resultAddrs[itemIdx] = ScAddr::Empty;
@@ -752,12 +764,16 @@ private:
       SC_THROW_EXCEPTION(utils::ExceptionInvalidState, "During search procedure has been chosen var triple");
     }
 
-    size_t notFinishedTriplesCount = 0;
     size_t finishedTriplesCount = 0;
 
-    ScAddrVector const currentResultAddrs{result.m_results[resultIdx]};
-    std::unordered_set<size_t> const currentCheckedTriples{m_resultCheckedTriples[resultIdx]};
+    ScAddrVector currentResultAddrs{result.m_results[resultIdx]};
+    std::unordered_set<size_t> currentCheckedTriples{m_resultCheckedTriples[resultIdx]};
     UsedEdges currentUsedEdges{m_usedEdges[resultIdx]};
+
+    ScAddrVector nextResultAddrs{result.m_results[resultIdx]};
+    std::unordered_set<size_t> nextCheckedTriples{m_resultCheckedTriples[resultIdx]};
+    UsedEdges nextUsedEdges{m_usedEdges[resultIdx]};
+
     std::unordered_map<ScAddr, std::array<ScAddr, 3>, ScAddrHashFunc<size_t>, ScAddLessFunc> unusedTriples;
     bool isItFound;
     auto unusedTriplesIt = unusedTriples.cbegin();
@@ -803,13 +819,12 @@ private:
         {
           resultIdx = ++m_lastResultIdx;
           finishedTriplesCount = 0;
-          result.m_results.emplace_back(currentResultAddrs);
-          m_resultCheckedTriples.emplace_back(currentCheckedTriples);
-          m_usedEdges.emplace_back(currentUsedEdges);
+          result.m_results.emplace_back(nextResultAddrs);
+          m_resultCheckedTriples.emplace_back(nextCheckedTriples);
+          m_usedEdges.emplace_back(nextUsedEdges);
         }
-        else if (notFinishedTriplesCount == triples.size())
+        else
         {
-          notFinishedTriplesCount = 0;
           result.m_results[resultIdx] = currentResultAddrs;
           m_resultCheckedTriples[resultIdx] = currentCheckedTriples;
           m_usedEdges[resultIdx] = currentUsedEdges;
@@ -841,7 +856,6 @@ private:
           if (!isChildFinished && !isLast)
           {
             ClearResults(tripleIdx, resultIdx, result.m_results[resultIdx], unusedTriples);
-            ++notFinishedTriplesCount;
             continue;
           }
 
@@ -851,7 +865,6 @@ private:
           if (!isChildFinished && !isLast)
           {
             ClearResults(tripleIdx, resultIdx, result.m_results[resultIdx], unusedTriples);
-            ++notFinishedTriplesCount;
             continue;
           }
 
@@ -861,7 +874,6 @@ private:
           if (!isChildFinished && !isLast)
           {
             ClearResults(tripleIdx, resultIdx, result.m_results[resultIdx], unusedTriples);
-            ++notFinishedTriplesCount;
             continue;
           }
 
@@ -872,6 +884,11 @@ private:
 
             // current edge is busy for all equal triples
             m_usedEdges[resultIdx].insert(addr2);
+
+            currentResultAddrs = result.m_results[resultIdx];
+            currentCheckedTriples = m_resultCheckedTriples[resultIdx];
+            currentUsedEdges = m_usedEdges[resultIdx];
+
             break;
           }
         }
