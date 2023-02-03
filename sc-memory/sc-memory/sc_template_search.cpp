@@ -416,7 +416,7 @@ private:
   static std::string GetKey(ScTemplateTriple const * triple, ScTemplateItemValue const & item)
   {
     std::ostringstream stream;
-    stream << item.m_replacementName << triple->m_index;
+    stream << item.m_replacementName << "_" << triple->m_index;
     return stream.str();
   }
 
