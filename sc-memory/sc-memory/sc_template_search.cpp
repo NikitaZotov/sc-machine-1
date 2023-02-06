@@ -20,7 +20,7 @@ public:
     , m_context(context)
     , m_structure(structure)
   {
-    std::cout << "START SEARCH" << std::endl;
+    //std::cout << "START SEARCH" << std::endl;
     PrepareSearch();
   }
 
@@ -36,7 +36,7 @@ public:
     , m_callback(std::move(callback))
     , m_filterCallback(std::move(checkCallback))
   {
-    std::cout << "START SEARCH" << std::endl;
+    //std::cout << "START SEARCH" << std::endl;
     PrepareSearch();
   }
 
@@ -52,7 +52,7 @@ public:
     , m_callbackWithRequest(std::move(callback))
     , m_filterCallback(std::move(checkCallback))
   {
-    std::cout << "START SEARCH" << std::endl;
+    //std::cout << "START SEARCH" << std::endl;
     PrepareSearch();
   }
 
@@ -965,9 +965,9 @@ private:
           m_checkedTemplateTriplesInReplacementConstructions[replacementConstructionIdx].size() ==
               m_template.m_templateTriples.size())
       {
-        std::cout << "Append [" << replacementConstructionIdx << "][" << templateTriple->m_index << "] = {"
-            << (*templateTriple)[0].m_name << "} --{" << (*templateTriple)[1].m_name << "}--> {"
-                  << (*templateTriple)[2].m_name << "}" << std::endl;
+//        std::cout << "Append [" << replacementConstructionIdx << "][" << templateTriple->m_index << "] = {"
+//            << (*templateTriple)[0].m_name << "} --{" << (*templateTriple)[1].m_name << "}--> {"
+//                  << (*templateTriple)[2].m_name << "}" << std::endl;
 
         AppendFoundReplacementConstruction(result, replacementConstructionIdx);
       }
@@ -1046,7 +1046,7 @@ public:
     }
     result.m_replacementConstructions.assign(checkedResults.cbegin(), checkedResults.cend());
 
-    std::cout << "END SEARCH" << std::endl;
+    //std::cout << "END SEARCH" << std::endl;
 
     return ScTemplate::Result(result.Size() > 0);
   }
@@ -1057,7 +1057,7 @@ public:
 
     DoIterations(result);
 
-    std::cout << "END SEARCH" << std::endl;
+    //std::cout << "END SEARCH" << std::endl;
   }
 
   size_t CalculateOneResultSize() const
