@@ -20,6 +20,7 @@ public:
     , m_context(context)
     , m_structure(structure)
   {
+    std::cout << "START SEARCH" << std::endl;
     PrepareSearch();
   }
 
@@ -35,6 +36,7 @@ public:
     , m_callback(std::move(callback))
     , m_filterCallback(std::move(checkCallback))
   {
+    std::cout << "START SEARCH" << std::endl;
     PrepareSearch();
   }
 
@@ -50,6 +52,7 @@ public:
     , m_callbackWithRequest(std::move(callback))
     , m_filterCallback(std::move(checkCallback))
   {
+    std::cout << "START SEARCH" << std::endl;
     PrepareSearch();
   }
 
@@ -62,9 +65,13 @@ private:
    */
   void PrepareSearch()
   {
+    //std::cout << "SetUpDependenciesBetweenTriples" << std::endl;
     SetUpDependenciesBetweenTriples();
+    //std::cout << "RemoveCycledDependenciesBetweenTriples" << std::endl;
     RemoveCycledDependenciesBetweenTriples();
+    //std::cout << "FindConnectivityComponents" << std::endl;
     FindConnectivityComponents();
+    //std::cout << "FindTriplesWithMostMinimalArcsForFirstItem" << std::endl;
     FindTriplesWithMostMinimalArcsForFirstItem();
   }
 
@@ -770,7 +777,7 @@ private:
     ScTemplateGroupedTriples::const_iterator templateTriplesIterator;
     do
     {
-       isReplacementTriplesIteratorNext = it->Next();
+      isReplacementTriplesIteratorNext = it->Next();
       if (isReplacementTriplesIteratorNext)
       {
         replacementTriple = it->Get();
@@ -790,12 +797,7 @@ private:
       }
 
       // check if edge is used for other equal triple
-      if (std::any_of(
-              m_usedEdgesInReplacementConstructions.cbegin(),
-              m_usedEdgesInReplacementConstructions.cend(),
-              [&](UsedEdges const & edges) {
-                return edges.find(replacementTriple[1]) != edges.cend();
-              }))
+      if (m_usedEdgesInReplacementConstructions[replacementConstructionIdx].find(replacementTriple[1]) != m_usedEdgesInReplacementConstructions[replacementConstructionIdx].cend())
       {
 //        std::cout << "Used [" << replacementConstructionIdx << "][" << templateTriple->m_index << "] = {"
 //                  << (*templateTriple)[0].m_name << "} --{" << (*templateTriple)[1].m_name << "}--> {"
@@ -803,8 +805,7 @@ private:
         continue;
       }
 
-      if (templateTriples.size() == 1 &&
-          m_notUsedEdgesInTemplateTriples[templateTriple->m_index].find(replacementTriple[1]) != m_notUsedEdgesInTemplateTriples[templateTriple->m_index].cend())
+      if (m_notUsedEdgesInTemplateTriples[templateTriple->m_index].find(replacementTriple[1]) != m_notUsedEdgesInTemplateTriples[templateTriple->m_index].cend())
       {
 //        std::cout << "Not used [" << replacementConstructionIdx << "][" << templateTriple->m_index << "] = {"
 //                  << (*templateTriple)[0].m_name << "} --{" << (*templateTriple)[1].m_name << "}--> {"
@@ -832,11 +833,30 @@ private:
 //                    << (*templateTriple)[2].m_name << "}" << std::endl;
           replacementConstructionIdx = ++m_lastReplacementConstructionIdx;
           checkedCurrentResultEqualTemplateTriplesCount = 0;
+
+          if (replacementConstructionIdx >= DEFAULT_RESULT_RESERVE_SIZE * m_resultReserveCount)
+          {
+            ++m_resultReserveCount;
+            result.m_replacementConstructions.reserve(DEFAULT_RESULT_RESERVE_SIZE * m_resultReserveCount);
+            m_checkedTemplateTriplesInReplacementConstructions.reserve(DEFAULT_RESULT_RESERVE_SIZE * m_resultReserveCount);
+            m_usedEdgesInReplacementConstructions.reserve(DEFAULT_RESULT_RESERVE_SIZE * m_resultReserveCount);
+          }
+
           result.m_replacementConstructions.emplace_back(nextResultReplacementTriples);
           m_checkedTemplateTriplesInReplacementConstructions.emplace_back(nextCheckedTemplateTriples);
           m_usedEdgesInReplacementConstructions.emplace_back(nextUsedReplacementEdges);
 
           templateTriplesIterator = templateTriples.cbegin();
+        }
+
+        if (!isForLastTemplateTripleAllChildrenFinished)
+        {
+//          std::cout << "Release [" << replacementConstructionIdx << "][" << templateTriple->m_index << "] = {"
+//                    << (*templateTriple)[0].m_name << "} --{" << (*templateTriple)[1].m_name << "}--> {"
+//                    << (*templateTriple)[2].m_name << "}" << std::endl;
+          result.m_replacementConstructions[replacementConstructionIdx].assign(nextResultReplacementTriples.cbegin(), nextResultReplacementTriples.cend());
+          m_checkedTemplateTriplesInReplacementConstructions[replacementConstructionIdx] = nextCheckedTemplateTriples;
+          m_usedEdgesInReplacementConstructions[replacementConstructionIdx] = nextUsedReplacementEdges;
         }
 
         if (templateTriplesIterator == templateTriples.cend())
@@ -845,7 +865,7 @@ private:
           break;
         }
 
-        size_t tripleIdx = *templateTriplesIterator;
+        size_t const tripleIdx = *templateTriplesIterator;
 
         templateTriple = m_template.m_templateTriples[tripleIdx];
 
@@ -935,15 +955,6 @@ private:
 
             break;
           }
-          else
-          {
-//            std::cout << "Release [" << replacementConstructionIdx << "][" << templateTriple->m_index << "] = {"
-//                      << (*templateTriple)[0].m_name << "} --{" << (*templateTriple)[1].m_name << "}--> {"
-//                      << (*templateTriple)[2].m_name << "}" << std::endl;
-            result.m_replacementConstructions[replacementConstructionIdx] = nextResultReplacementTriples;
-            m_checkedTemplateTriplesInReplacementConstructions[replacementConstructionIdx] = nextCheckedTemplateTriples;
-            m_usedEdgesInReplacementConstructions[replacementConstructionIdx] = nextUsedReplacementEdges;
-          }
         }
 
         ++templateTriplesIterator;
@@ -954,9 +965,9 @@ private:
           m_checkedTemplateTriplesInReplacementConstructions[replacementConstructionIdx].size() ==
               m_template.m_templateTriples.size())
       {
-//        std::cout << "Append [" << replacementConstructionIdx << "][" << templateTriple->m_index << "] = {"
-//            << (*templateTriple)[0].m_name << "} --{" << (*templateTriple)[1].m_name << "}--> {"
-//                  << (*templateTriple)[2].m_name << "}" << std::endl;
+        std::cout << "Append [" << replacementConstructionIdx << "][" << templateTriple->m_index << "] = {"
+            << (*templateTriple)[0].m_name << "} --{" << (*templateTriple)[1].m_name << "}--> {"
+                  << (*templateTriple)[2].m_name << "}" << std::endl;
 
         AppendFoundReplacementConstruction(result, replacementConstructionIdx);
       }
@@ -1002,13 +1013,13 @@ private:
 
     ScAddrVector newResult;
     newResult.resize(CalculateOneResultSize());
-    result.m_replacementConstructions.reserve(16);
+    result.m_replacementConstructions.reserve(DEFAULT_RESULT_RESERVE_SIZE);
     result.m_replacementConstructions.emplace_back(newResult);
 
     m_notUsedEdgesInTemplateTriples.resize(m_template.m_templateTriples.size());
-    m_usedEdgesInReplacementConstructions.reserve(16);
+    m_usedEdgesInReplacementConstructions.reserve(DEFAULT_RESULT_RESERVE_SIZE);
     m_usedEdgesInReplacementConstructions.emplace_back();
-    m_checkedTemplateTriplesInReplacementConstructions.reserve(16);
+    m_checkedTemplateTriplesInReplacementConstructions.reserve(DEFAULT_RESULT_RESERVE_SIZE);
     m_checkedTemplateTriplesInReplacementConstructions.emplace_back();
 
     bool isFinished = false;
@@ -1033,7 +1044,9 @@ public:
     {
       checkedResults.emplace_back(result.m_replacementConstructions[foundIdx]);
     }
-    result.m_replacementConstructions = checkedResults;
+    result.m_replacementConstructions.assign(checkedResults.cbegin(), checkedResults.cend());
+
+    std::cout << "END SEARCH" << std::endl;
 
     return ScTemplate::Result(result.Size() > 0);
   }
@@ -1043,6 +1056,8 @@ public:
     ScTemplateSearchResult result;
 
     DoIterations(result);
+
+    std::cout << "END SEARCH" << std::endl;
   }
 
   size_t CalculateOneResultSize() const
@@ -1070,6 +1085,8 @@ private:
   std::vector<UsedEdges> m_usedEdgesInReplacementConstructions;
   std::vector<std::unordered_set<size_t>> m_checkedTemplateTriplesInReplacementConstructions;
 
+  size_t const DEFAULT_RESULT_RESERVE_SIZE = 512;
+  size_t m_resultReserveCount = 1;
   size_t m_lastReplacementConstructionIdx = 0;
   std::unordered_set<size_t> m_foundReplacementConstructions;
 };
