@@ -149,27 +149,6 @@ public:
         "Index=" + std::to_string(index) + " must be < size=" + std::to_string(m_values.size()));
   }
 
-  void ForEach(std::function<void(ScTemplateItem const & item, size_t const index)> const & callback)
-  {
-    callback(m_values[0], 0);
-    callback(m_values[1], 1);
-    callback(m_values[2], 2);
-  }
-
-  bool AnyOf(std::function<bool(ScTemplateItem const & item, size_t const index)> const & callback)
-  {
-    if (callback(m_values[1], 1))
-      return true;
-
-    if (callback(m_values[0], 0))
-      return true;
-
-    if (callback(m_values[2], 2))
-      return true;
-
-    return false;
-  }
-
   /* Store original index in template. Because when perform search or generation
    * we sort triples in suitable for operation order.
    * Used to triple result
@@ -277,10 +256,8 @@ enum class ScTemplateSearchRequest : uint8_t
 using ScTemplateSearchResultCallback = std::function<void(ScTemplateSearchResultItem const & resultItem)>;
 using ScTemplateSearchResultCallbackWithRequest =
     std::function<ScTemplateSearchRequest(ScTemplateSearchResultItem const & resultItem)>;
-using ScTemplateSearchResultFilterCallback =
-    std::function<bool(ScTemplateSearchResultItem const & resultItem)>;
-using ScTemplateSearchResultCheckCallback =
-    std::function<bool(ScAddr const & addr)>;
+using ScTemplateSearchResultFilterCallback = std::function<bool(ScTemplateSearchResultItem const & resultItem)>;
+using ScTemplateSearchResultCheckCallback = std::function<bool(ScAddr const & addr)>;
 
 class ScTemplate final
 {
@@ -635,13 +612,11 @@ protected:
   ScTemplate::ScTemplateItemsToReplacementsItemsPositions const * m_templateItemsNamesToReplacementItemPositions;
 };
 
-class ScTemplateSearchResult
+class SC_DEPRECATED(
+    0.8.0,
+    "Use ScMemoryContext::HelperSearchTemplate(ScTemplate const & templ, ScTemplateSearchResultCallback const & "
+    "callback, ScTemplateSearchResultCheckCallback const & checkCallback) instead.") ScTemplateSearchResult
 {
-  SC_DEPRECATED(
-      0.8.0,
-      "Use ScMemoryContext::HelperSearchTemplate(ScTemplate const & templ, ScTemplateSearchResultCallback const & "
-      "callback, ScTemplateSearchResultCheckCallback const & checkCallback) instead.")
-
   friend class ScTemplateSearch;
 
 public:
