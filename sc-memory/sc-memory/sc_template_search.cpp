@@ -789,10 +789,10 @@ private:
           ReserveResult(replacementConstructionIdx, result);
 
           result.m_replacementConstructions.emplace_back(nextResultReplacementTriples);
-          m_checkedTemplateTriplesInReplacementConstructions.emplace_back(DEFAULT_RESULT_RESERVE_SIZE);
+          m_checkedTemplateTriplesInReplacementConstructions.emplace_back(nextCheckedTemplateTriples);
           m_usedEdgesInReplacementConstructions.emplace_back(DEFAULT_RESULT_RESERVE_SIZE);
-          m_replacementConstructionsBranchesSizes.emplace_back(nextCheckedTemplateTriples.size());
-          m_linkedReplacementConstructions.emplace_back(linkedReplacementConstructionIdx);
+          //m_replacementConstructionsBranchesSizes.emplace_back(nextCheckedTemplateTriples.size());
+          //m_linkedReplacementConstructions.emplace_back(linkedReplacementConstructionIdx);
 
           templateTriplesIterator = templateTriples.cbegin();
         }
@@ -909,7 +909,7 @@ private:
 
       // there are no next triples for current triple, it is last
       if (isLastTemplateTripleHasNoChildren && isForLastTemplateTripleAllChildrenFinished &&
-          GetCheckedTriplesCountForReplacementConstruction(replacementConstructionIdx) ==
+          m_checkedTemplateTriplesInReplacementConstructions[replacementConstructionIdx].size() ==
               m_template.m_templateTriples.size())
       {
         LogSearch("Append item", replacementConstructionIdx, templateTriple);
