@@ -710,7 +710,8 @@ private:
       size_t replacementConstructionIdx,
       ScTemplateSearchResult & result)
   {
-    ScTemplateTriple * templateTriple = m_template.m_templateTriples[*templateTriples.begin()];
+    size_t templateTripleIdx = *templateTriples.begin();
+    ScTemplateTriple * templateTriple = m_template.m_templateTriples[templateTripleIdx];
 
     bool isForLastTemplateTripleAllChildrenFinished = true;
     bool isLastTemplateTripleHasNoChildren = false;
@@ -741,6 +742,24 @@ private:
       if (notUsedEdgesInCurrentTemplateTriple.find(replacementTriple[1]) != notUsedEdgesInCurrentTemplateTriple.cend())
       {
         LogSearch("Not used", replacementConstructionIdx, templateTriple);
+        continue;
+      }
+
+      bool isFoundInOtherTemplateTriples = false;
+      for (size_t const otherTemplateTripleIdx : templateTriples)
+      {
+        if (templateTripleIdx == otherTemplateTripleIdx)
+          continue;
+
+        if (m_usedEdgesInTemplateTriples[otherTemplateTripleIdx].find(replacementTriple[1]) !=
+            m_usedEdgesInTemplateTriples[otherTemplateTripleIdx].cend())
+        {
+          isFoundInOtherTemplateTriples = true;
+          break;
+        }
+      }
+      if (isFoundInOtherTemplateTriples)
+      {
         continue;
       }
 
@@ -811,11 +830,11 @@ private:
           break;
         }
 
-        size_t const tripleIdx = *templateTriplesIterator;
+        templateTripleIdx = *templateTriplesIterator;
 
-        templateTriple = m_template.m_templateTriples[tripleIdx];
+        templateTriple = m_template.m_templateTriples[templateTripleIdx];
 
-        if (checkedTemplateTriplesInCurrentReplacementConstruction.find(tripleIdx) !=
+        if (checkedTemplateTriplesInCurrentReplacementConstruction.find(templateTripleIdx) !=
             checkedTemplateTriplesInCurrentReplacementConstruction.cend())
         {
           LogSearch("Checked", replacementConstructionIdx, templateTriple);
@@ -882,7 +901,7 @@ private:
           {
             LogSearch("Clear", replacementConstructionIdx, templateTriple);
 
-            ClearResult(tripleIdx, replacementConstructionIdx, replacementConstruction);
+            ClearResult(templateTripleIdx, replacementConstructionIdx, replacementConstruction);
             continue;
           }
 
@@ -894,6 +913,7 @@ private:
             LogSearch("Found", replacementConstructionIdx, templateTriple);
 
             // current edge is busy for all equal triples
+            m_usedEdgesInTemplateTriples[templateTripleIdx].insert(replacementTriple[1]);
             m_usedEdgesInReplacementConstructions[replacementConstructionIdx].insert(replacementTriple[1]);
 
             break;
@@ -1030,6 +1050,7 @@ private:
     result.m_replacementConstructions.emplace_back(newResult);
 
     m_notUsedEdgesInTemplateTriples.resize(m_template.m_templateTriples.size());
+    m_usedEdgesInTemplateTriples.resize(m_template.m_templateTriples.size());
     m_usedEdgesInReplacementConstructions.reserve(DEFAULT_RESULT_RESERVE_SIZE);
     m_usedEdgesInReplacementConstructions.emplace_back();
     m_checkedTemplateTriplesInReplacementConstructions.reserve(DEFAULT_RESULT_RESERVE_SIZE);
@@ -1086,6 +1107,7 @@ private:
 
   // fields search by template
   std::vector<UsedEdges> m_notUsedEdgesInTemplateTriples;
+  std::vector<UsedEdges> m_usedEdgesInTemplateTriples;
   std::vector<UsedEdges> m_usedEdgesInReplacementConstructions;
   std::vector<size_t> m_linkedReplacementConstructions;
   std::vector<size_t> m_replacementConstructionsBranchesSizes;
