@@ -118,6 +118,8 @@ class ScTemplateTriple
   friend class ScTemplate;
 
 public:
+  SC_DISALLOW_COPY_AND_MOVE(ScTemplateTriple);
+
   using ScTemplateTripleItems = std::array<ScTemplateItem, 3>;
 
   ScTemplateTriple(
@@ -183,9 +185,7 @@ class ScTemplateParams
   friend class ScTemplateGenerator;
 
 public:
-  ScTemplateParams & operator=(ScTemplateParams const & other) = delete;
-
-  explicit ScTemplateParams() = default;
+  ScTemplateParams() = default;
 
   SC_DEPRECATED(0.4.0, "You should to use ScTemplateParams::Add")
   _SC_EXTERN ScTemplateParams & add(std::string const & varIdtf, ScAddr const & value) noexcept(false)
@@ -293,12 +293,12 @@ public:
   };
 
 public:
-  ScTemplate(ScTemplate const & other) = delete;
-  ScTemplate & operator=(ScTemplate const & other) = delete;
+  SC_DISALLOW_COPY_AND_MOVE(ScTemplate);
 
   using ScTemplateItemsToReplacementsItemsPositions = std::unordered_multimap<std::string, size_t>;
   using ScTemplateTriplesVector = std::vector<ScTemplateTriple *>;
 
+  SC_DEPRECATED(0.8.0, "Now ScTemplate sorts itself effectively")
   _SC_EXTERN explicit ScTemplate(bool forceOrder = false);
 
   _SC_EXTERN ~ScTemplate()
@@ -412,6 +412,8 @@ class ScTemplateGenResult
 public:
   ScTemplateGenResult() = default;
 
+  SC_DISALLOW_COPY_AND_MOVE(ScTemplateGenResult);
+
   /* Gets generated sc-element address by replacement `name`.
    * @param name A replacement name of sc-element address
    * @param outAddr[out] A found sc-element address by replacement `name`
@@ -496,6 +498,16 @@ public:
     return m_replacementConstruction.size();
   }
 
+  ScAddrVector::const_iterator begin() const
+  {
+    return m_replacementConstruction.cbegin();
+  }
+
+  ScAddrVector::const_iterator end() const
+  {
+    return m_replacementConstruction.cend();
+  }
+
   inline ScTemplate::ScTemplateItemsToReplacementsItemsPositions const & GetReplacements() const
   {
     return m_templateItemsNamesToReplacementItemsPositions;
@@ -526,6 +538,8 @@ public:
     , m_templateItemsNamesToReplacementItemPositions(replacements)
   {
   }
+
+  SC_DISALLOW_COPY_AND_MOVE(ScTemplateSearchResultItem);
 
   /* Gets found sc-element address by replacement `name`.
    * @param name A replacement name of sc-element address
@@ -608,6 +622,16 @@ public:
     return m_replacementConstruction ? m_replacementConstruction->size() : 0;
   }
 
+  ScAddrVector::const_iterator begin() const
+  {
+    return m_replacementConstruction->cbegin();
+  }
+
+  ScAddrVector::const_iterator end() const
+  {
+    return m_replacementConstruction->cend();
+  }
+
 protected:
   ScAddrVector const * m_replacementConstruction;
   ScTemplate::ScTemplateItemsToReplacementsItemsPositions const * m_templateItemsNamesToReplacementItemPositions;
@@ -621,6 +645,10 @@ class SC_DEPRECATED(
   friend class ScTemplateSearch;
 
 public:
+  ScTemplateSearchResult() = default;
+
+  SC_DISALLOW_COPY_AND_MOVE(ScTemplateSearchResult);
+
   inline size_t Size() const
   {
     return m_replacementConstructions.size();
@@ -653,7 +681,7 @@ public:
   {
     if (index < Size())
     {
-      return {&(m_replacementConstructions[index]), &m_templateItemsNamesToReplacementItemsPositions};
+      return {&m_replacementConstructions[index], &m_templateItemsNamesToReplacementItemsPositions};
     }
 
     SC_THROW_EXCEPTION(
@@ -674,12 +702,13 @@ public:
   template <typename FnT>
   void ForEach(FnT && f) noexcept
   {
-    for (auto const & res : m_replacementConstructions)
+    for (auto & res : m_replacementConstructions)
       f(ScTemplateSearchResultItem(&res, &m_templateItemsNamesToReplacementItemsPositions));
   }
 
 protected:
   using SearchResults = std::vector<ScAddrVector>;
   SearchResults m_replacementConstructions;
+  ;
   ScTemplate::ScTemplateItemsToReplacementsItemsPositions m_templateItemsNamesToReplacementItemsPositions;
 };

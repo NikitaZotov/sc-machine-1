@@ -9,11 +9,13 @@
 
 #include <algorithm>
 
+SC_DEPRECATED(0.8.0, "Don't use alias for fixed sc-address")
 ScTemplateItem operator>>(ScAddr const & value, char const * replName)
 {
   return {value, replName};
 }
 
+SC_DEPRECATED(0.8.0, "Don't use alias for fixed sc-address")
 ScTemplateItem operator>>(ScAddr const & value, std::string const & replName)
 {
   return {value, replName.c_str()};
