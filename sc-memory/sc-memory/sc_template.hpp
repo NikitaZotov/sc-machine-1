@@ -614,7 +614,8 @@ protected:
 
 class SC_DEPRECATED(
     0.8.0,
-    "Use ScMemoryContext::HelperSearchTemplate(ScTemplate const & templ, ScTemplateSearchResultCallback const & "
+    "Use callback-based ScMemoryContext::HelperSearchTemplate(ScTemplate const & templ, ScTemplateSearchResultCallback "
+    "const & "
     "callback, ScTemplateSearchResultCheckCallback const & checkCallback) instead.") ScTemplateSearchResult
 {
   friend class ScTemplateSearch;

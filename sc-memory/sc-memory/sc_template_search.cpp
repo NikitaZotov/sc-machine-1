@@ -10,7 +10,6 @@
 #include "sc_memory.hpp"
 
 #include <algorithm>
-#include <utility>
 
 class ScTemplateSearch
 {
@@ -730,7 +729,6 @@ private:
         m_checkedTemplateTriplesInReplacementConstructions[replacementConstructionIdx]};
     UsedEdges nextUsedReplacementEdges{m_usedEdgesInReplacementConstructions[replacementConstructionIdx]};
 
-    size_t const linkedReplacementConstructionIdx = replacementConstructionIdx;
     size_t checkedCurrentResultEqualTemplateTriplesCount = 0;
 
     bool isTemplateTriplesIteratorNext = false;
@@ -791,8 +789,6 @@ private:
           result.m_replacementConstructions.emplace_back(nextResultReplacementTriples);
           m_checkedTemplateTriplesInReplacementConstructions.emplace_back(nextCheckedTemplateTriples);
           m_usedEdgesInReplacementConstructions.emplace_back(DEFAULT_RESULT_RESERVE_SIZE);
-          //m_replacementConstructionsBranchesSizes.emplace_back(nextCheckedTemplateTriples.size());
-          //m_linkedReplacementConstructions.emplace_back(linkedReplacementConstructionIdx);
 
           templateTriplesIterator = templateTriples.cbegin();
         }
@@ -972,20 +968,6 @@ private:
     replacementConstruction[++itemIdx] = ScAddr::Empty;
   };
 
-  size_t GetCheckedTriplesCountForReplacementConstruction(size_t const replacementConstructionIdx)
-  {
-    size_t count = 0;
-    count += m_checkedTemplateTriplesInReplacementConstructions[replacementConstructionIdx].size();
-
-    if (replacementConstructionIdx < m_linkedReplacementConstructions.size())
-    {
-      if (m_linkedReplacementConstructions[replacementConstructionIdx] < m_replacementConstructionsBranchesSizes.size())
-        count += m_replacementConstructionsBranchesSizes[m_linkedReplacementConstructions[replacementConstructionIdx]];
-    }
-
-    return count;
-  }
-
   void AppendFoundReplacementConstruction(ScTemplateSearchResult & result, size_t & resultIdx)
   {
     if (m_callback)
@@ -1024,17 +1006,17 @@ private:
     {
       ++m_resultReserveCount;
       result.m_replacementConstructions.reserve(DEFAULT_RESULT_RESERVE_SIZE * m_resultReserveCount);
-      m_checkedTemplateTriplesInReplacementConstructions.reserve(
-          DEFAULT_RESULT_RESERVE_SIZE * m_resultReserveCount);
+      m_checkedTemplateTriplesInReplacementConstructions.reserve(DEFAULT_RESULT_RESERVE_SIZE * m_resultReserveCount);
       m_usedEdgesInReplacementConstructions.reserve(DEFAULT_RESULT_RESERVE_SIZE * m_resultReserveCount);
     }
   }
 
   void LogSearch(std::string const & name, size_t const constructionIdx, ScTemplateTriple const * triple)
   {
-  //    std::cout << name << " [" << constructionIdx << "][" << triple->m_index << "] = "
-  //              << "{" << (*triple)[0].m_name << "} --{" << (*triple)[1].m_name << "}--> {" << (*triple)[2].m_name <<
-  //              "}" << std::endl;
+    //    std::cout << name << " [" << constructionIdx << "][" << triple->m_index << "] = "
+    //              << "{" << (*triple)[0].m_name << "} --{" << (*triple)[1].m_name << "}--> {" << (*triple)[2].m_name
+    //              <<
+    //              "}" << std::endl;
   }
 
   void DoIterations(ScTemplateSearchResult & result)
