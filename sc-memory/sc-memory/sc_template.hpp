@@ -137,7 +137,7 @@ public:
     return m_values;
   }
 
-  ScTemplateItem const & operator[](size_t index) const
+  ScTemplateItem const & operator[](size_t index) const noexcept(false)
   {
     if (index < m_values.size())
     {
@@ -188,12 +188,12 @@ public:
   explicit ScTemplateParams() = default;
 
   SC_DEPRECATED(0.4.0, "You should to use ScTemplateParams::Add")
-  _SC_EXTERN ScTemplateParams & add(std::string const & varIdtf, ScAddr const & value)
+  _SC_EXTERN ScTemplateParams & add(std::string const & varIdtf, ScAddr const & value) noexcept(false)
   {
     return Add(varIdtf, value);
   }
 
-  _SC_EXTERN ScTemplateParams & Add(std::string const & varIdtf, ScAddr const & value)
+  _SC_EXTERN ScTemplateParams & Add(std::string const & varIdtf, ScAddr const & value) noexcept(false)
   {
     if (m_templateItemsToParams.find(varIdtf) != m_templateItemsToParams.cend())
     {
@@ -204,7 +204,7 @@ public:
     return *this;
   }
 
-  _SC_EXTERN bool Get(std::string const & varIdtf, ScAddr & outResult) const
+  _SC_EXTERN bool Get(std::string const & varIdtf, ScAddr & outResult) const noexcept
   {
     auto const it = m_templateItemsToParams.find(varIdtf);
     if (it != m_templateItemsToParams.end())
@@ -217,12 +217,12 @@ public:
   }
 
   SC_DEPRECATED(0.4.0, "You should to use ScTemplateParams::IsEmpty")
-  _SC_EXTERN bool empty() const
+  _SC_EXTERN bool empty() const noexcept
   {
     return IsEmpty();
   }
 
-  _SC_EXTERN bool IsEmpty() const
+  _SC_EXTERN bool IsEmpty() const noexcept
   {
     return m_templateItemsToParams.empty();
   }
@@ -311,14 +311,14 @@ public:
   _SC_EXTERN ScTemplate & operator()(
       ScTemplateItem const & param1,
       ScTemplateItem const & param2,
-      ScTemplateItem const & param3);
+      ScTemplateItem const & param3) noexcept(false);
 
   _SC_EXTERN ScTemplate & operator()(
       ScTemplateItem const & param1,
       ScTemplateItem const & param2,
       ScTemplateItem const & param3,
       ScTemplateItem const & param4,
-      ScTemplateItem const & param5);
+      ScTemplateItem const & param5) noexcept(false);
 
   _SC_EXTERN void Clear();
   _SC_EXTERN bool IsEmpty() const;
@@ -332,7 +332,7 @@ public:
   _SC_EXTERN ScTemplate & Triple(
       ScTemplateItem const & param1,
       ScTemplateItem const & param2,
-      ScTemplateItem const & param3);
+      ScTemplateItem const & param3) noexcept(false);
 
   /** Adds template:
    *           param2
@@ -350,7 +350,7 @@ public:
       ScTemplateItem const & param2,
       ScTemplateItem const & param3,
       ScTemplateItem const & param4,
-      ScTemplateItem const & param5);
+      ScTemplateItem const & param5) noexcept(false);
 
 protected:
   // Begin: calls by memory context
@@ -358,35 +358,36 @@ protected:
       ScMemoryContext & ctx,
       ScTemplateGenResult & result,
       ScTemplateParams const & params,
-      ScTemplateResultCode * errorCode = nullptr) const;
+      ScTemplateResultCode * errorCode = nullptr) const noexcept(false);
   SC_DEPRECATED(
       0.8.0,
       "Use ScTemplate::Search(ScMemoryContext & ctx, ScTemplateSearchResultCallback const & callback, "
       "ScTemplateSearchResultCheckCallback const & checkCallback) instead.")
-  Result Search(ScMemoryContext & ctx, ScTemplateSearchResult & result) const;
+  Result Search(ScMemoryContext & ctx, ScTemplateSearchResult & result) const noexcept(false);
   void Search(
       ScMemoryContext & ctx,
       ScTemplateSearchResultCallback const & callback,
       ScTemplateSearchResultFilterCallback const & filterCallback = {},
-      ScTemplateSearchResultCheckCallback const & checkCallback = {}) const;
+      ScTemplateSearchResultCheckCallback const & checkCallback = {}) const noexcept(false);
   void Search(
       ScMemoryContext & ctx,
       ScTemplateSearchResultCallbackWithRequest const & callback,
       ScTemplateSearchResultFilterCallback const & filterCallback = {},
-      ScTemplateSearchResultCheckCallback const & checkCallback = {}) const;
+      ScTemplateSearchResultCheckCallback const & checkCallback = {}) const noexcept(false);
 
   SC_DEPRECATED(
       0.8.0,
       "Use ScTemplate::Search(ScMemoryContext & ctx, ScTemplateSearchResultCallback const & callback, "
       "ScTemplateSearchResultCheckCallback const & checkCallback) instead.")
-  Result SearchInStruct(ScMemoryContext & ctx, ScAddr const & scStruct, ScTemplateSearchResult & result) const;
+  Result SearchInStruct(ScMemoryContext & ctx, ScAddr const & scStruct, ScTemplateSearchResult & result) const
+      noexcept(false);
 
   // Builds template based on template in sc-memory
   Result FromScTemplate(
       ScMemoryContext & ctx,
       ScAddr const & scTemplateAddr,
-      const ScTemplateParams & params = ScTemplateParams());
-  Result FromScs(ScMemoryContext & ctx, std::string const & scsText);
+      const ScTemplateParams & params = ScTemplateParams()) noexcept(false);
+  Result FromScs(ScMemoryContext & ctx, std::string const & scsText) noexcept(false);
   // End: calls by memory context
 
 protected:
@@ -484,13 +485,13 @@ public:
   }
 
   SC_DEPRECATED(0.3.0, "Use ScTemplateGenResult::Size instead")
-  inline size_t GetSize() const
+  inline size_t GetSize() const noexcept
   {
     return m_replacementConstruction.size();
   }
 
   //! Gets generated construction size
-  inline size_t Size() const
+  inline size_t Size() const noexcept
   {
     return m_replacementConstruction.size();
   }
@@ -594,7 +595,7 @@ public:
   }
 
   //! Checks if replacement `name` exists in replacements
-  inline bool Has(std::string const & name) const
+  inline bool Has(std::string const & name) const noexcept
   {
     return m_templateItemsNamesToReplacementItemPositions != nullptr &&
            m_templateItemsNamesToReplacementItemPositions->find(name) !=
@@ -602,7 +603,7 @@ public:
   }
 
   //! Gets found construction size
-  inline size_t Size() const
+  inline size_t Size() const noexcept
   {
     return m_replacementConstruction ? m_replacementConstruction->size() : 0;
   }
@@ -615,8 +616,7 @@ protected:
 class SC_DEPRECATED(
     0.8.0,
     "Use callback-based ScMemoryContext::HelperSearchTemplate(ScTemplate const & templ, ScTemplateSearchResultCallback "
-    "const & "
-    "callback, ScTemplateSearchResultCheckCallback const & checkCallback) instead.") ScTemplateSearchResult
+    "const & callback, ScTemplateSearchResultCheckCallback const & checkCallback) instead.") ScTemplateSearchResult
 {
   friend class ScTemplateSearch;
 
@@ -632,12 +632,12 @@ public:
   }
 
   SC_DEPRECATED(0.8.0, "Use ScTemplateSearchResult::Get(size_t index, ScTemplateSearchResultItem & outItem)")
-  inline bool GetResultItemSafe(size_t index, ScTemplateSearchResultItem & outItem) const
+  inline bool GetResultItemSafe(size_t index, ScTemplateSearchResultItem & outItem) const noexcept
   {
     return Get(index, outItem);
   }
 
-  inline bool Get(size_t index, ScTemplateSearchResultItem & outItem) const
+  inline bool Get(size_t index, ScTemplateSearchResultItem & outItem) const noexcept
   {
     if (index < Size())
     {
@@ -649,7 +649,7 @@ public:
     return false;
   }
 
-  inline ScTemplateSearchResultItem operator[](size_t index) const
+  inline ScTemplateSearchResultItem operator[](size_t index) const noexcept(false)
   {
     if (index < Size())
     {
@@ -660,19 +660,19 @@ public:
         utils::ExceptionInvalidParams, "Index=" + std::to_string(index) + " must be < size=" + std::to_string(Size()));
   }
 
-  inline void Clear()
+  inline void Clear() noexcept
   {
     m_replacementConstructions.clear();
     m_templateItemsNamesToReplacementItemsPositions.clear();
   }
 
-  inline ScTemplate::ScTemplateItemsToReplacementsItemsPositions const & GetReplacements() const
+  inline ScTemplate::ScTemplateItemsToReplacementsItemsPositions const & GetReplacements() const noexcept
   {
     return m_templateItemsNamesToReplacementItemsPositions;
   }
 
   template <typename FnT>
-  void ForEach(FnT && f)
+  void ForEach(FnT && f) noexcept
   {
     for (auto const & res : m_replacementConstructions)
       f(ScTemplateSearchResultItem(&res, &m_templateItemsNamesToReplacementItemsPositions));

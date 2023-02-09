@@ -13,7 +13,7 @@
 #  include <glib.h>
 #endif
 
-#define sc_assert(expr)  // g_assert(expr)
+#define sc_assert(expr) g_assert(expr)
 
 #undef GLIB
 
