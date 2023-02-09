@@ -35,6 +35,7 @@ ScTemplateItem operator>>(ScType const & value, std::string const & replName)
 
 ScTemplate::ScTemplate(bool forceOrder /* = false */)
 {
+  SC_UNUSED(forceOrder);
   m_templateTriples.reserve(16);
 
   auto const tripleTypeCount = (size_t)ScTemplateTripleType::ScConstr3TypeCount;

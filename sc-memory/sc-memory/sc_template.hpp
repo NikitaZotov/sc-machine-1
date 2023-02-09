@@ -647,8 +647,6 @@ class SC_DEPRECATED(
 public:
   ScTemplateSearchResult() = default;
 
-  SC_DISALLOW_COPY_AND_MOVE(ScTemplateSearchResult);
-
   inline size_t Size() const
   {
     return m_replacementConstructions.size();
@@ -709,6 +707,5 @@ public:
 protected:
   using SearchResults = std::vector<ScAddrVector>;
   SearchResults m_replacementConstructions;
-  ;
   ScTemplate::ScTemplateItemsToReplacementsItemsPositions m_templateItemsNamesToReplacementItemsPositions;
 };
