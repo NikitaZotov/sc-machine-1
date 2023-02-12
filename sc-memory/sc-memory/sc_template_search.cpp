@@ -665,9 +665,9 @@ private:
         isFinished = std::all_of(
             equalTemplateTriples.begin(),
             equalTemplateTriples.end(),
-            [&checkedTemplateTriplesInCurrentReplacementConstruction](size_t const idx) {
-              return checkedTemplateTriplesInCurrentReplacementConstruction.find(idx) !=
-                     checkedTemplateTriplesInCurrentReplacementConstruction.cend();
+            [this, replacementConstructionIdx](size_t const idx) {
+              return m_checkedTemplateTriplesInReplacementConstructions[replacementConstructionIdx].find(idx) !=
+                     m_checkedTemplateTriplesInReplacementConstructions[replacementConstructionIdx].cend();
             });
 
         if (!isFinished)
