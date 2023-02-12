@@ -929,9 +929,6 @@ private:
             {
               m_checkedTemplateTriplesInReplacementConstructions[replacementConstructionIdx].erase(
                   otherTemplateTripleIdx);
-              m_notUsedEdgesInTemplateTriples[otherTemplateTripleIdx].insert(
-                  m_usedEdgesInTemplateTriples[otherTemplateTripleIdx].cbegin(),
-                  m_usedEdgesInTemplateTriples[otherTemplateTripleIdx].cend());
               m_usedEdgesInTemplateTriples[otherTemplateTripleIdx].clear();
             }
             childrenTemplateTriples.clear();
