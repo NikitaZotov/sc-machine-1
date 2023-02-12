@@ -412,8 +412,6 @@ class ScTemplateGenResult
 public:
   ScTemplateGenResult() = default;
 
-  SC_DISALLOW_COPY_AND_MOVE(ScTemplateGenResult);
-
   /* Gets generated sc-element address by replacement `name`.
    * @param name A replacement name of sc-element address
    * @param outAddr[out] A found sc-element address by replacement `name`
@@ -538,8 +536,6 @@ public:
     , m_templateItemsNamesToReplacementItemPositions(replacements)
   {
   }
-
-  SC_DISALLOW_COPY_AND_MOVE(ScTemplateSearchResultItem);
 
   /* Gets found sc-element address by replacement `name`.
    * @param name A replacement name of sc-element address
