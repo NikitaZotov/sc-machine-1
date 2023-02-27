@@ -46,7 +46,10 @@ sc_result agent_erase_elements(const sc_event * event, sc_addr arg)
     sc_addr element_addr = sc_iterator3_value(set_it, 2);
 
     if (SC_ADDR_IS_EQUAL(element_addr, question_addr))
+    {
+      sc_iterator3_free(set_it);
       return SC_RESULT_ERROR;
+    }
 
     sc_iterator3 * unerase_it = sc_iterator3_f_a_f_new(
         s_erase_elements_ctx, keynode_init_memory_generated_structure, sc_type_arc_pos_const_perm, element_addr);
