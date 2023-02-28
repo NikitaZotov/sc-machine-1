@@ -8,6 +8,7 @@
 
 #define DEFAULT_SAVE_PERIOD 32000
 #define DEFAULT_UPDATE_PERIOD 16000
+#define DEFAULT_MAX_SEARCHABLE_STRING_SIZE 1000
 #define DEFAULT_MAX_THREADS 32
 #define DEFAULT_MAX_LOADED_SEGMENTS 1000
 #define DEFAULT_LOG_TYPE "Console"
@@ -21,8 +22,10 @@ void sc_memory_params_clear(sc_memory_params * params)
   params->repo_path = (sc_char const *)null_ptr;
   params->ext_path = (sc_char const *)null_ptr;
   params->enabled_exts = (sc_char const **)null_ptr;
+
   params->save_period = DEFAULT_SAVE_PERIOD;      // seconds
   params->update_period = DEFAULT_UPDATE_PERIOD;  // seconds
+  params->max_searchable_string_size = DEFAULT_MAX_SEARCHABLE_STRING_SIZE;
 
   params->log_type = DEFAULT_LOG_TYPE;
   params->log_file = DEFAULT_LOG_FILE;
