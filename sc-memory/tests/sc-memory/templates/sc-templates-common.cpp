@@ -3,10 +3,9 @@
 #include "sc-memory/sc_memory.hpp"
 #include "sc-memory/sc_struct.hpp"
 
-#include "sc_test.hpp"
 #include "template_test_utils.hpp"
 
-TEST(ScTemplateResultTest, smoke)
+TEST(ScTemplateResultTest, ScTemplateResult)
 {
   {
     ScTemplate::Result result(true);

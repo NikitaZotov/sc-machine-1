@@ -191,13 +191,13 @@ inline ScTemplateTripleType ScTemplate::GetPriority(ScTemplateTriple * triple)
   if (item2.IsFixed())
     return ScTemplateTripleType::AFA;
 
-  else if (item1.IsFixed() && item3.IsFixed())
+  if (item1.IsFixed() && item3.IsFixed())
     return ScTemplateTripleType::FAF;
 
-  else if (item3.IsFixed())
+  if (item3.IsFixed())
     return ScTemplateTripleType::AAF;
 
-  else if (item1.IsFixed() && (!item3.m_typeValue.IsEdge() && !item3.m_typeValue.IsUnknown()))
+  if (item1.IsFixed() && (!item3.m_typeValue.IsEdge() && !item3.m_typeValue.IsUnknown()))
   {
     auto const & it = m_templateItemsNamesToReplacementItemsPositions.find(item3.m_name);
     if (it != m_templateItemsNamesToReplacementItemsPositions.cend())
@@ -214,6 +214,5 @@ inline ScTemplateTripleType ScTemplate::GetPriority(ScTemplateTriple * triple)
   if (item1.IsFixed())
     return ScTemplateTripleType::FAN;
 
-  else
-    return ScTemplateTripleType::AAA;
+  return ScTemplateTripleType::AAA;
 }

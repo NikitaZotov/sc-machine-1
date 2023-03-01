@@ -727,8 +727,6 @@ private:
       SC_THROW_EXCEPTION(utils::ExceptionInvalidState, "During search procedure has been chosen var triple");
     }
 
-    LogSearch("Try", replacementConstructionIdx, templateTriple);
-
     size_t checkedCurrentResultEqualTemplateTriplesCount = 0;
 
     ScAddrVector nextResultReplacementTriples{result.m_replacementConstructions[replacementConstructionIdx]};
@@ -762,7 +760,6 @@ private:
       auto & notUsedEdgesInCurrentTemplateTriple = m_notUsedEdgesInTemplateTriples[templateTriple->m_index];
       if (notUsedEdgesInCurrentTemplateTriple.find(replacementTriple[1]) != notUsedEdgesInCurrentTemplateTriple.cend())
       {
-        LogSearch("Not used", replacementConstructionIdx, templateTriple);
         continue;
       }
 
@@ -790,7 +787,6 @@ private:
       if (usedEdgesInCurrentReplacementConstruction.find(replacementTriple[1]) !=
           usedEdgesInCurrentReplacementConstruction.cend())
       {
-        LogSearch("Used", replacementConstructionIdx, templateTriple);
         continue;
       }
 
@@ -819,8 +815,6 @@ private:
         // check if all equal triples found to make a new search result item
         if (checkedCurrentResultEqualTemplateTriplesCount == templateTriples.size())
         {
-          LogSearch("Next", replacementConstructionIdx, templateTriple);
-
           replacementConstructionIdx = ++m_lastReplacementConstructionIdx;
           checkedCurrentResultEqualTemplateTriplesCount = 0;
 
@@ -837,8 +831,6 @@ private:
             m_checkedTemplateTriplesInReplacementConstructions[replacementConstructionIdx];
         if (!isForLastTemplateTripleAllChildrenFinished)
         {
-          LogSearch("Release", replacementConstructionIdx, templateTriple);
-
           result.m_replacementConstructions[replacementConstructionIdx].assign(
               nextResultReplacementTriples.cbegin(), nextResultReplacementTriples.cend());
           checkedTemplateTriplesInCurrentReplacementConstruction = nextCheckedTemplateTriples;
@@ -858,7 +850,6 @@ private:
         if (checkedTemplateTriplesInCurrentReplacementConstruction.find(templateTripleIdx) !=
             checkedTemplateTriplesInCurrentReplacementConstruction.cend())
         {
-          LogSearch("Checked", replacementConstructionIdx, templateTriple);
           continue;
         }
 
@@ -881,8 +872,6 @@ private:
         {
           continue;
         }
-
-        LogSearch("Iterate", replacementConstructionIdx, templateTriple);
 
         // update data
         {
@@ -923,8 +912,6 @@ private:
                   isForLastTemplateTripleAllChildrenFinished,
                   isLastTemplateTripleHasNoChildren))
           {
-            LogSearch("Clear", replacementConstructionIdx, templateTriple);
-
             for (auto const & otherTemplateTripleIdx : childrenTemplateTriples)
             {
               m_checkedTemplateTriplesInReplacementConstructions[replacementConstructionIdx].erase(
@@ -942,8 +929,6 @@ private:
           {
             ++checkedCurrentResultEqualTemplateTriplesCount;
 
-            LogSearch("Found", replacementConstructionIdx, templateTriple);
-
             // current edge is busy for all equal triples
             childrenTemplateTriples.insert(templateTripleIdx);
             m_usedEdgesInTemplateTriples[templateTripleIdx].insert(replacementTriple[1]);
@@ -959,8 +944,6 @@ private:
           m_checkedTemplateTriplesInReplacementConstructions[replacementConstructionIdx].size() ==
               m_template.m_templateTriples.size())
       {
-        LogSearch("Append item", replacementConstructionIdx, templateTriple);
-
         if (!m_filterCallback || m_filterCallback(ScTemplateSearchResultItem(
                                      &result.m_replacementConstructions[replacementConstructionIdx],
                                      &result.m_templateItemsNamesToReplacementItemsPositions)))
@@ -1060,14 +1043,6 @@ private:
       m_checkedTemplateTriplesInReplacementConstructions.reserve(DEFAULT_RESULT_RESERVE_SIZE * m_resultReserveCount);
       m_usedEdgesInReplacementConstructions.reserve(DEFAULT_RESULT_RESERVE_SIZE * m_resultReserveCount);
     }
-  }
-
-  void LogSearch(std::string const & name, size_t const constructionIdx, ScTemplateTriple const * triple)
-  {
-    //    std::cout << name << " [" << constructionIdx << "][" << triple->m_index << "] = "
-    //              << "{" << (*triple)[0].m_name << "} --{" << (*triple)[1].m_name << "}--> {" << (*triple)[2].m_name
-    //              << "}"
-    //              << std::endl;
   }
 
   void DoIterations(ScTemplateSearchResult & result)
