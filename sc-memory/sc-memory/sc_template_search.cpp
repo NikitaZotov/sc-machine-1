@@ -131,7 +131,7 @@ private:
       return found != m_template.m_templateItemsNamesToTypes.cend() && found->second == ScType::NodeVarStruct;
     };
 
-    auto const & faeTriples = m_template.m_priorityOrderedTemplateTriples[(size_t)ScTemplateTripleType::FAN];
+    auto const & faeTriples = m_template.m_priorityOrderedTemplateTriples[(size_t)ScTemplateTripleType::FAE];
     auto const & CheckIfItemIsFixedAndOtherEdgeItemIsEdge =
         [&faeTriples](size_t const tripleIdx, ScTemplateItem const & item) -> bool {
       return item.IsAddr() && faeTriples.find(tripleIdx) != faeTriples.cend();
@@ -377,11 +377,11 @@ private:
 
   sc_int32 FindTripleWithMostMinimalOutputArcsForFirstItem(ScTemplateTriples const & connectivityComponentsTriples)
   {
-    auto triplesWithConstBeginElement = m_template.m_priorityOrderedTemplateTriples[(size_t)ScTemplateTripleType::FAE];
+    auto triplesWithConstBeginElement = m_template.m_priorityOrderedTemplateTriples[(size_t)ScTemplateTripleType::FAN];
     // if there are no triples with the no edge third item than sort triples with the edge third item
     if (triplesWithConstBeginElement.empty())
     {
-      triplesWithConstBeginElement = m_template.m_priorityOrderedTemplateTriples[(size_t)ScTemplateTripleType::FAN];
+      triplesWithConstBeginElement = m_template.m_priorityOrderedTemplateTriples[(size_t)ScTemplateTripleType::FAE];
     }
 
     // find triple in which the first item address has the most minimal count of output arcs

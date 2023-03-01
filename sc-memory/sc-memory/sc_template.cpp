@@ -199,20 +199,15 @@ inline ScTemplateTripleType ScTemplate::GetPriority(ScTemplateTriple * triple)
 
   if (item1.IsFixed() && (!item3.m_typeValue.IsEdge() && !item3.m_typeValue.IsUnknown()))
   {
-    auto const & it = m_templateItemsNamesToReplacementItemsPositions.find(item3.m_name);
-    if (it != m_templateItemsNamesToReplacementItemsPositions.cend())
+    auto const & it = m_templateItemsNamesToTypes.find(item3.m_name);
+    if (it != m_templateItemsNamesToTypes.cend() && !it->second.IsEdge() && !it->second.IsUnknown())
     {
-      size_t const tripleIdx = it->second / 3;
-      if (tripleIdx == triple->m_index ||
-          (tripleIdx >= m_templateTriples.size() && !m_templateTriples[tripleIdx]->m_values[1].m_typeValue.IsEdge()))
-      {
-        return ScTemplateTripleType::FAE;
-      }
+      return ScTemplateTripleType::FAN;
     }
   }
 
   if (item1.IsFixed())
-    return ScTemplateTripleType::FAN;
+    return ScTemplateTripleType::FAE;
 
   return ScTemplateTripleType::AAA;
 }
