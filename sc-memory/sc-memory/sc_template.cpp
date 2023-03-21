@@ -92,9 +92,7 @@ ScTemplate & ScTemplate::Triple(
   m_templateTriples.emplace_back(new ScTemplateTriple(param1, param2, param3, m_templateTriples.size()));
 
   if (!param2.m_name.empty() && (param2.m_name == param1.m_name || param2.m_name == param3.m_name))
-  {
     SC_THROW_EXCEPTION(utils::ExceptionInvalidParams, "You can't use equal replacement for an edge and source/target");
-  }
 
   ScTemplateTriple * triple = m_templateTriples.back();
 
@@ -103,39 +101,29 @@ ScTemplate & ScTemplate::Triple(
     ScTemplateItem & value = triple->m_values[i];
 
     if (value.IsAssign() && value.m_typeValue.HasConstancyFlag() && !value.m_typeValue.IsVar())
-    {
       SC_THROW_EXCEPTION(utils::ExceptionInvalidParams, "You should to use variable types in template");
-    }
 
     if (value.IsAddr() && !value.m_addrValue.IsValid())
-    {
       SC_THROW_EXCEPTION(utils::ExceptionInvalidParams, "You can't use empty ScAddr");
-    }
 
     if (!value.m_name.empty())
     {
       if (value.IsAddr())
-      {
         m_templateItemsNamesToReplacementItemsAddrs[value.m_name] = value.m_addrValue;
-      }
       else
       {
         auto const & found = m_templateItemsNamesToReplacementItemsAddrs.find(value.m_name);
         if (found != m_templateItemsNamesToReplacementItemsAddrs.cend())
-        {
           value.SetAddr(found->second);
-        }
       }
 
       if (value.IsType())
-      {
         m_templateItemsNamesToTypes[value.m_name] = value.m_typeValue;
-      }
 
-      if (value.m_itemType != ScTemplateItem::Type::Replace)
+      if (!value.IsReplacement())
       {
         if (m_templateItemsNamesToReplacementItemsPositions.find(value.m_name) ==
-            m_templateItemsNamesToReplacementItemsPositions.end())
+            m_templateItemsNamesToReplacementItemsPositions.cend())
           m_templateItemsNamesToReplacementItemsPositions.insert({value.m_name, replPos + i});
       }
 

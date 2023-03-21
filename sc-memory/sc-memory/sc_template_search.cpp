@@ -340,7 +340,7 @@ private:
       // with more priority
       if (priorityTripleIdx != -1)
       {
-        m_connectivityComponentPriorityTemplateTriples.emplace_back(priorityTripleIdx);
+        m_connectivityComponentPriorityTemplateTriples.insert(priorityTripleIdx);
       }
     }
   }
@@ -1067,17 +1067,14 @@ private:
     bool isFinished = false;
     bool isLast = false;
 
-    for (size_t const tripleIdx : m_connectivityComponentPriorityTemplateTriples)
-    {
-      DoIterationOnNextEqualTriples({tripleIdx}, "", 0, {}, childrenTemplateTriples, result, isFinished, isLast);
-    }
+    DoIterationOnNextEqualTriples(
+        m_connectivityComponentPriorityTemplateTriples, "", 0, {}, childrenTemplateTriples, result, isFinished, isLast);
   }
 
 public:
   ScTemplate::Result operator()(ScTemplateSearchResult & result)
   {
     result.Clear();
-
     DoIterations(result);
 
     std::vector<ScAddrVector> checkedResults;
@@ -1094,7 +1091,6 @@ public:
   void operator()()
   {
     ScTemplateSearchResult result;
-
     DoIterations(result);
   }
 
@@ -1111,15 +1107,13 @@ private:
   std::map<std::string, ScTemplateTriples> m_templateItemsNamesToDependedTemplateTriples;
   ScTemplateTriples m_cycledTemplateTriples;
   std::vector<ScTemplateTriples> m_connectivityComponentsTemplateTriples;
-  std::vector<size_t> m_connectivityComponentPriorityTemplateTriples;
+  ScTemplateTriples m_connectivityComponentPriorityTemplateTriples;
 
   // fields search by template
   std::vector<UsedEdges> m_notUsedEdgesInTemplateTriples;
   std::vector<UsedEdges> m_usedEdgesInTemplateTriples;
   std::vector<UsedEdges> m_usedEdgesInReplacementConstructions;
-  std::vector<size_t> m_linkedReplacementConstructions;
-  std::vector<size_t> m_replacementConstructionsBranchesSizes;
-  std::vector<std::unordered_set<size_t>> m_checkedTemplateTriplesInReplacementConstructions;
+  std::vector<ScTemplateTriples> m_checkedTemplateTriplesInReplacementConstructions;
 
   size_t const DEFAULT_RESULT_RESERVE_SIZE = 512;
   size_t m_resultReserveCount = 1;
