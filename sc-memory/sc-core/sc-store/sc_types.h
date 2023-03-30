@@ -59,15 +59,9 @@ typedef sc_uint8 sc_bool;
 #  define SC_MAXINT32 ((sc_int32)0x7fffffff)
 #  define SC_MAXUINT32 ((sc_uint32)0xffffffff)
 
-#  define SC_ADDR_SEG_MAX SC_MAXUINT16
-#  define SC_ADDR_OFFSET_MAX SC_MAXUINT16
-
-#  define SC_SEGMENT_ELEMENTS_COUNT SC_MAXUINT16  // number of elements in segment
-#  define SC_SEGMENT_MAX SC_MAXUINT16             // max number of segments
-
 // Types for segment and offset
-typedef sc_uint16 sc_addr_seg;
-typedef sc_uint16 sc_addr_offset;
+typedef sc_uint8 sc_addr_seg;
+typedef sc_uint64 sc_addr_offset;
 
 typedef sc_uint64 sc_addr_hash;
 
@@ -94,9 +88,9 @@ struct _sc_addr
 /*! Next defines help to pack local part of sc-addr (segment and offset) into int value
  * and get them back from int
  */
-#  define SC_ADDR_LOCAL_TO_INT(addr) (sc_uint32)(((addr).seg << 16) | ((addr).offset & 0xffff))
-#  define SC_ADDR_LOCAL_OFFSET_FROM_INT(v) (sc_uint16)((v)&0x0000ffff)
-#  define SC_ADDR_LOCAL_SEG_FROM_INT(v) SC_ADDR_LOCAL_OFFSET_FROM_INT(v >> 16)
+#  define SC_ADDR_LOCAL_TO_INT(addr) (sc_uint64)(((addr).seg << 16) | ((addr).offset & 0xffff))
+#  define SC_ADDR_LOCAL_OFFSET_FROM_INT(v) (sc_uint64)((v)&0x0000ffff)
+#  define SC_ADDR_LOCAL_SEG_FROM_INT(v) (sc_uint8) SC_ADDR_LOCAL_OFFSET_FROM_INT(v >> 16)
 #  define SC_ADDR_LOCAL_FROM_INT(hash, addr) \
     addr.seg = SC_ADDR_LOCAL_SEG_FROM_INT(hash); \
     addr.offset = SC_ADDR_LOCAL_OFFSET_FROM_INT(hash)
@@ -146,17 +140,6 @@ typedef sc_uint16 sc_type;
         sc_type_node_tuple | sc_type_node_struct | sc_type_node_role | sc_type_node_norole | sc_type_node_class | \
         sc_type_node_abstract | sc_type_node_material)
 #  define sc_type_arc_mask (sc_type)(sc_type_arc_access | sc_type_arc_common | sc_type_edge_common)
-
-// just for internal usage
-#  define sc_flag_request_deletion (0x4000)
-#  define sc_flag_link_self_container (0x8000)
-#  define sc_flags_remove(x) ((x) & ~(sc_flag_request_deletion | sc_flag_link_self_container))
-
-// locks
-#  define sc_lock_out_in 0x1
-#  define sc_lock_del 0x2
-#  define sc_lock_change 0x4
-#  define sc_lock_read 0x8
 
 // access levels
 #  define SC_ACCESS_LVL_MAX_VALUE 15
@@ -223,37 +206,15 @@ struct _sc_stat
   sc_uint32 arc_count;   // amount of all sc-arcs stored in memory
   sc_uint32 link_count;  // amount of all sc-links stored in memory
 
-  sc_uint32 empty_count;  // amount of empty sc-element cells
   sc_uint32 segments_count;
 };
 
-#  ifdef SC_ROCKSDB_FS_STORAGE
-// contents
-#    define SC_MAX_CHECKSUM_LEN 32
-//! Structure to store checksum information
-struct _sc_check_sum
-{
-  char data[SC_MAX_CHECKSUM_LEN];  // maximum checksum length
-  sc_uint8 len;                    // checksum length
-};
-#  endif
-
-typedef struct _sc_check_sum sc_check_sum;
-typedef struct _sc_content sc_content;
 #endif
 
-typedef struct _sc_arc sc_arc;
-typedef struct _sc_arc_info sc_arc_info;
 typedef sc_uint8 sc_access_levels;
-typedef struct _sc_element_locks sc_element_locks;
-typedef struct _sc_element_flags sc_element_flags;
-typedef struct _sc_element_refs sc_element_refs;
+typedef struct _sc_storage sc_storage;
 typedef struct _sc_memory_context sc_memory_context;
-typedef struct _sc_element_meta sc_element_meta;
-typedef struct _sc_element sc_element;
-typedef struct _sc_segment sc_segment;
 typedef struct _sc_addr sc_addr;
-typedef struct _sc_elements_stat sc_elements_stat;
 typedef struct _sc_iterator_param sc_iterator_param;
 typedef struct _sc_iterator3 sc_iterator3;
 typedef struct _sc_iterator5 sc_iterator5;

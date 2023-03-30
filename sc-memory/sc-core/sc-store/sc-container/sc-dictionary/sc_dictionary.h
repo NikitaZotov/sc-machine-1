@@ -78,6 +78,8 @@ sc_dictionary_node * sc_dictionary_append(
     sc_uint32 string_size,
     void * data);
 
+sc_dictionary_node * sc_dictionary_append_uint64(sc_dictionary * dictionary, sc_uint64 key, void * value);
+
 /*! Checks, if a string is in a sc-dictionary by a common prefix with another string started in sc-dictionary
  * node, if such exists.
  * @param dictionary A sc-dictionary pointer
@@ -94,6 +96,8 @@ sc_bool sc_dictionary_has(const sc_dictionary * dictionary, const sc_char * stri
  * @returns Returns Data from a sc-dictionary node where string ends
  */
 void * sc_dictionary_get_by_key(const sc_dictionary * dictionary, const sc_char * string, sc_uint32 string_size);
+
+void * sc_dictionary_get_by_key_uint64(sc_dictionary * dictionary, sc_uint64 key);
 
 /*! Visit data in sc-dictionary nodes where key prefix ends.
  * @param dictionary A sc-dictionary pointer

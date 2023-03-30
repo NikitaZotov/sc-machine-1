@@ -134,20 +134,10 @@ sc_event * sc_event_new(
     fEventCallback callback,
     fDeleteCallback delete_callback)
 {
-  sc_assert(callback != null_ptr);
-
   if (SC_ADDR_IS_EMPTY(el))
     return null_ptr;
 
-  sc_access_levels levels;
-  sc_event * event = null_ptr;
-  if (sc_storage_get_access_levels(ctx, el, &levels) != SC_RESULT_OK ||
-      !sc_access_lvl_check_read(ctx->access_levels, levels))
-    return null_ptr;
-
-  sc_storage_element_ref(el);
-
-  event = sc_mem_new(sc_event, 1);
+  sc_event * event = sc_mem_new(sc_event, 1);
   event->element = el;
   event->type = type;
   event->callback = callback;
@@ -175,20 +165,10 @@ sc_event * sc_event_new_ex(
     fEventCallbackEx callback,
     fDeleteCallback delete_callback)
 {
-  sc_assert(callback != null_ptr);
-
   if (SC_ADDR_IS_EMPTY(el))
     return null_ptr;
 
-  sc_access_levels levels;
-  sc_event * event = null_ptr;
-  if (sc_storage_get_access_levels(ctx, el, &levels) != SC_RESULT_OK ||
-      !sc_access_lvl_check_read(ctx->access_levels, levels))
-    return null_ptr;
-
-  sc_storage_element_ref(el);
-
-  event = sc_mem_new(sc_event, 1);
+  sc_event * event = sc_mem_new(sc_event, 1);
   event->element = el;
   event->type = type;
   event->callback_ex = callback;
@@ -241,7 +221,6 @@ unref:
     sc_uint32 const refs = evt->ref_count;
     if (refs == SC_EVENT_REQUEST_DESTROY)  // no refs
     {
-      sc_storage_element_unref(evt->element);
       if (evt->delete_callback != null_ptr)
         evt->delete_callback(evt);
 

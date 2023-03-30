@@ -65,7 +65,7 @@ sc_result resolve_nrel_system_identifier(sc_memory_context const * ctx)
           {
             sc_iterator5_free(it);
             sc_stream_free(stream);
-            sc_error("There are more then one sc-elements with system identifier nrel_system_identifier");
+            sc_critical("There are more then one sc-elements with system identifier nrel_system_identifier");
 
             return SC_RESULT_ERROR;
           }
@@ -201,12 +201,6 @@ sc_result sc_helper_find_element_by_system_identifier_ext(
     sc_uint32 len,
     sc_system_identifier_fiver * out_fiver)
 {
-  sc_assert(ctx != null_ptr);
-  sc_assert(data != null_ptr);
-
-  sc_assert(sc_helper_is_initialized == SC_TRUE);
-  sc_assert(sc_keynodes != null_ptr);
-
   sc_bool result = SC_FALSE;
   sc_stream * stream = null_ptr;
   sc_system_identifier_fiver_make_empty(out_fiver);
@@ -280,10 +274,6 @@ sc_result sc_helper_set_system_identifier_ext(
     sc_uint32 len,
     sc_system_identifier_fiver * out_fiver)
 {
-  sc_assert(ctx != null_ptr);
-
-  sc_assert(sc_keynodes != null_ptr);
-
   sc_system_identifier_fiver_make_empty(out_fiver);
   if (sc_helper_check_system_identifier(data) != SC_RESULT_OK)
   {
@@ -334,8 +324,6 @@ sc_result sc_helper_set_system_identifier_ext(
 
 sc_result sc_helper_get_system_identifier_link(sc_memory_context const * ctx, sc_addr el, sc_addr * sys_idtf_addr)
 {
-  sc_assert(ctx != null_ptr);
-
   sc_iterator5 * it = null_ptr;
   sc_result result = SC_RESULT_ERROR;
 
@@ -346,7 +334,6 @@ sc_result sc_helper_get_system_identifier_link(sc_memory_context const * ctx, sc
       sc_type_link,
       sc_type_arc_pos_const_perm,
       sc_keynodes[SC_KEYNODE_NREL_SYSTEM_IDENTIFIER]);
-  sc_assert(it != null_ptr);
 
   while (sc_iterator5_next(it) == SC_TRUE)
   {
@@ -361,8 +348,6 @@ sc_result sc_helper_get_system_identifier_link(sc_memory_context const * ctx, sc
 
 sc_result sc_helper_get_keynode(sc_memory_context const * ctx, sc_keynode keynode, sc_addr * keynode_addr)
 {
-  sc_assert(ctx != null_ptr);
-
   if ((sc_helper_is_initialized == SC_FALSE) || (sc_keynodes == null_ptr))
     return SC_RESULT_ERROR;
 
@@ -373,8 +358,6 @@ sc_result sc_helper_get_keynode(sc_memory_context const * ctx, sc_keynode keynod
 
 sc_bool sc_helper_resolve_system_identifier(sc_memory_context const * ctx, const char * system_idtf, sc_addr * result)
 {
-  sc_assert(ctx != null_ptr);
-
   if (system_idtf == null_ptr)
   {
     g_warning("Error while trying to convert %s to utf-8", system_idtf);
@@ -389,8 +372,6 @@ sc_bool sc_helper_resolve_system_identifier(sc_memory_context const * ctx, const
 
 sc_bool sc_helper_check_arc(sc_memory_context const * ctx, sc_addr beg_el, sc_addr end_el, sc_type arc_type)
 {
-  sc_assert(ctx != null_ptr);
-
   sc_iterator3 * it = null_ptr;
   sc_bool res = SC_FALSE;
 

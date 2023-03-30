@@ -21,7 +21,6 @@ typedef struct _sc_dictionary_fs_memory sc_fs_memory;
 typedef struct _sc_fs_memory_manager
 {
   sc_fs_memory * fs_memory;  // file system memory instance
-  sc_char * segments_path;   // file path to sc-memory segments
 
   sc_fs_memory_status (*initialize)(sc_fs_memory ** memory, const sc_char * path, sc_uint32 max_searchable_string_size);
   sc_fs_memory_status (*shutdown)(sc_fs_memory * memory);
@@ -128,17 +127,13 @@ sc_bool sc_fs_memory_get_strings_by_substring(
     sc_list ** strings);
 
 /*! Load file system memory from file system
- * @param segments[out] A pointer to loadable sc-memory segments
- * @param segments_num[out] A pointer to loadable sc-memory segments num
  * @returns SC_TRUE, if file system loaded.
  */
-sc_bool sc_fs_memory_load(sc_segment ** segments, sc_uint32 * segments_num);
+sc_bool sc_fs_memory_load();
 
 /*! Save file system memory to file system
- * @param segments A pointer to savable sc-memory segments
- * @param segments_num A pointer to loadable sc-memory segments num
  * @returns SC_TRUE, if file system saved.
  */
-sc_bool sc_fs_memory_save(sc_segment ** segments, sc_uint32 segments_num);
+sc_bool sc_fs_memory_save();
 
 #endif

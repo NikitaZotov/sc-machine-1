@@ -11,7 +11,7 @@
 #include "sc-base/sc_assert_utils.h"
 
 sc_iterator5 * sc_iterator5_new(
-    const sc_memory_context * ctx,
+    sc_storage const * storage,
     sc_iterator5_type type,
     sc_iterator_param p1,
     sc_iterator_param p2,
@@ -59,43 +59,43 @@ sc_iterator5 * sc_iterator5_new(
   it->params[4] = p5;
 
   it->type = type;
-  it->ctx = ctx;
+  it->storage = storage;
 
   // create main cycle iterator
   switch (type)
   {
   case sc_iterator5_f_a_a_a_f:
-    it->it_main = sc_iterator3_f_a_a_new(ctx, p1.addr, p2.type, p3.type);
+    it->it_main = sc_iterator3_f_a_a_new(storage, p1.addr, p2.type, p3.type);
     it->it_attr = null_ptr;
     it->results[0] = p1.addr;
     it->results[4] = p5.addr;
     break;
   case sc_iterator5_a_a_f_a_f:
-    it->it_main = sc_iterator3_a_a_f_new(ctx, p1.type, p2.type, p3.addr);
+    it->it_main = sc_iterator3_a_a_f_new(storage, p1.type, p2.type, p3.addr);
     it->it_attr = null_ptr;
     it->results[2] = p3.addr;
     it->results[4] = p5.addr;
     break;
   case sc_iterator5_f_a_f_a_f:
-    it->it_main = sc_iterator3_f_a_f_new(ctx, p1.addr, p2.type, p3.addr);
+    it->it_main = sc_iterator3_f_a_f_new(storage, p1.addr, p2.type, p3.addr);
     it->it_attr = null_ptr;
     it->results[0] = p1.addr;
     it->results[2] = p3.addr;
     it->results[4] = p5.addr;
     break;
   case sc_iterator5_f_a_f_a_a:
-    it->it_main = sc_iterator3_f_a_f_new(ctx, p1.addr, p2.type, p3.addr);
+    it->it_main = sc_iterator3_f_a_f_new(storage, p1.addr, p2.type, p3.addr);
     it->it_attr = null_ptr;
     it->results[0] = p1.addr;
     it->results[2] = p3.addr;
     break;
   case sc_iterator5_a_a_f_a_a:
-    it->it_main = sc_iterator3_a_a_f_new(ctx, p1.type, p2.type, p3.addr);
+    it->it_main = sc_iterator3_a_a_f_new(storage, p1.type, p2.type, p3.addr);
     it->it_attr = null_ptr;
     it->results[2] = p3.addr;
     break;
   case sc_iterator5_f_a_a_a_a:
-    it->it_main = sc_iterator3_f_a_a_new(ctx, p1.addr, p2.type, p3.type);
+    it->it_main = sc_iterator3_f_a_a_new(storage, p1.addr, p2.type, p3.type);
     it->it_attr = null_ptr;
     it->results[0] = p1.addr;
     break;
@@ -111,7 +111,7 @@ sc_iterator5 * sc_iterator5_new(
 }
 
 sc_iterator5 * sc_iterator5_f_a_a_a_f_new(
-    const sc_memory_context * ctx,
+    sc_storage const * storage,
     sc_addr p1,
     sc_type p2,
     sc_type p3,
@@ -130,11 +130,11 @@ sc_iterator5 * sc_iterator5_f_a_a_a_f_new(
   _p5.is_type = SC_FALSE;
   _p5.addr = p5;
 
-  return sc_iterator5_new(ctx, sc_iterator5_f_a_a_a_f, _p1, _p2, _p3, _p4, _p5);
+  return sc_iterator5_new(storage, sc_iterator5_f_a_a_a_f, _p1, _p2, _p3, _p4, _p5);
 }
 
 sc_iterator5 * sc_iterator5_a_a_f_a_f_new(
-    const sc_memory_context * ctx,
+    sc_storage const * storage,
     sc_type p1,
     sc_type p2,
     sc_addr p3,
@@ -153,11 +153,11 @@ sc_iterator5 * sc_iterator5_a_a_f_a_f_new(
   _p5.is_type = SC_FALSE;
   _p5.addr = p5;
 
-  return sc_iterator5_new(ctx, sc_iterator5_a_a_f_a_f, _p1, _p2, _p3, _p4, _p5);
+  return sc_iterator5_new(storage, sc_iterator5_a_a_f_a_f, _p1, _p2, _p3, _p4, _p5);
 }
 
 sc_iterator5 * sc_iterator5_f_a_f_a_f_new(
-    const sc_memory_context * ctx,
+    sc_storage const * storage,
     sc_addr p1,
     sc_type p2,
     sc_addr p3,
@@ -176,11 +176,11 @@ sc_iterator5 * sc_iterator5_f_a_f_a_f_new(
   _p5.is_type = SC_FALSE;
   _p5.addr = p5;
 
-  return sc_iterator5_new(ctx, sc_iterator5_f_a_f_a_f, _p1, _p2, _p3, _p4, _p5);
+  return sc_iterator5_new(storage, sc_iterator5_f_a_f_a_f, _p1, _p2, _p3, _p4, _p5);
 }
 
 sc_iterator5 * sc_iterator5_f_a_f_a_a_new(
-    const sc_memory_context * ctx,
+    sc_storage const * storage,
     sc_addr p1,
     sc_type p2,
     sc_addr p3,
@@ -199,11 +199,11 @@ sc_iterator5 * sc_iterator5_f_a_f_a_a_new(
   _p5.is_type = SC_TRUE;
   _p5.type = p5;
 
-  return sc_iterator5_new(ctx, sc_iterator5_f_a_f_a_a, _p1, _p2, _p3, _p4, _p5);
+  return sc_iterator5_new(storage, sc_iterator5_f_a_f_a_a, _p1, _p2, _p3, _p4, _p5);
 }
 
 sc_iterator5 * sc_iterator5_f_a_a_a_a_new(
-    const sc_memory_context * ctx,
+    sc_storage const * storage,
     sc_addr p1,
     sc_type p2,
     sc_type p3,
@@ -222,11 +222,11 @@ sc_iterator5 * sc_iterator5_f_a_a_a_a_new(
   _p5.is_type = SC_TRUE;
   _p5.type = p5;
 
-  return sc_iterator5_new(ctx, sc_iterator5_f_a_a_a_a, _p1, _p2, _p3, _p4, _p5);
+  return sc_iterator5_new(storage, sc_iterator5_f_a_a_a_a, _p1, _p2, _p3, _p4, _p5);
 }
 
 sc_iterator5 * sc_iterator5_a_a_f_a_a_new(
-    const sc_memory_context * ctx,
+    sc_storage const * storage,
     sc_type p1,
     sc_type p2,
     sc_addr p3,
@@ -245,7 +245,7 @@ sc_iterator5 * sc_iterator5_a_a_f_a_a_new(
   _p5.is_type = SC_TRUE;
   _p5.type = p5;
 
-  return sc_iterator5_new(ctx, sc_iterator5_a_a_f_a_a, _p1, _p2, _p3, _p4, _p5);
+  return sc_iterator5_new(storage, sc_iterator5_a_a_f_a_a, _p1, _p2, _p3, _p4, _p5);
 }
 
 void sc_iterator5_free(sc_iterator5 * it)
@@ -292,7 +292,8 @@ sc_bool _sc_iterator5_a_a_f_a_f_next(sc_iterator5 * it)
       if (!sc_iterator3_next(it->it_main))
         return SC_FALSE;
 
-      it->it_attr = sc_iterator3_f_a_f_new(it->ctx, it->params[4].addr, it->params[3].type, it->it_main->results[1]);
+      it->it_attr =
+          sc_iterator3_f_a_f_new(it->storage, it->params[4].addr, it->params[3].type, it->it_main->results[1]);
       if (it->it_attr == null_ptr)
         return SC_FALSE;
     }
@@ -335,7 +336,8 @@ sc_bool _sc_iterator5_f_a_a_a_f_next(sc_iterator5 * it)
       if (!sc_iterator3_next(it->it_main))
         return SC_FALSE;
 
-      it->it_attr = sc_iterator3_f_a_f_new(it->ctx, it->params[4].addr, it->params[3].type, it->it_main->results[1]);
+      it->it_attr =
+          sc_iterator3_f_a_f_new(it->storage, it->params[4].addr, it->params[3].type, it->it_main->results[1]);
       if (it->it_attr == null_ptr)
         return SC_FALSE;
     }
@@ -376,7 +378,8 @@ sc_bool _sc_iterator5_f_a_f_a_f_next(sc_iterator5 * it)
       if (!sc_iterator3_next(it->it_main))
         return SC_FALSE;
 
-      it->it_attr = sc_iterator3_f_a_f_new(it->ctx, it->params[4].addr, it->params[3].type, it->it_main->results[1]);
+      it->it_attr =
+          sc_iterator3_f_a_f_new(it->storage, it->params[4].addr, it->params[3].type, it->it_main->results[1]);
       if (it->it_attr == null_ptr)
         return SC_FALSE;
     }
@@ -418,7 +421,8 @@ sc_bool _sc_iterator5_f_a_f_a_a_next(sc_iterator5 * it)
       if (!sc_iterator3_next(it->it_main))
         return SC_FALSE;
 
-      it->it_attr = sc_iterator3_a_a_f_new(it->ctx, it->params[4].type, it->params[3].type, it->it_main->results[1]);
+      it->it_attr =
+          sc_iterator3_a_a_f_new(it->storage, it->params[4].type, it->params[3].type, it->it_main->results[1]);
       if (it->it_attr == null_ptr)
         return SC_FALSE;
     }
@@ -463,7 +467,8 @@ sc_bool _sc_iterator5_f_a_a_a_a_next(sc_iterator5 * it)
       if (!sc_iterator3_next(it->it_main))
         return SC_FALSE;
 
-      it->it_attr = sc_iterator3_a_a_f_new(it->ctx, it->params[4].type, it->params[3].type, it->it_main->results[1]);
+      it->it_attr =
+          sc_iterator3_a_a_f_new(it->storage, it->params[4].type, it->params[3].type, it->it_main->results[1]);
       if (it->it_attr == null_ptr)
         return SC_FALSE;
     }
@@ -508,7 +513,8 @@ sc_bool _sc_iterator5_a_a_f_a_a_next(sc_iterator5 * it)
       if (!sc_iterator3_next(it->it_main))
         return SC_FALSE;
 
-      it->it_attr = sc_iterator3_a_a_f_new(it->ctx, it->params[4].type, it->params[3].type, it->it_main->results[1]);
+      it->it_attr =
+          sc_iterator3_a_a_f_new(it->storage, it->params[4].type, it->params[3].type, it->it_main->results[1]);
       if (it->it_attr == null_ptr)
         return SC_FALSE;
     }
@@ -551,8 +557,10 @@ sc_bool sc_iterator5_next(sc_iterator5 * it)
 
 sc_addr sc_iterator5_value(sc_iterator5 * it, sc_uint vid)
 {
-  sc_assert(it != null_ptr);
-  sc_assert(vid < 5);
+  if (vid < 5)
+    return it->results[vid];
 
-  return it->results[vid];
+  sc_addr addr;
+  SC_ADDR_MAKE_EMPTY(addr);
+  return addr;
 }

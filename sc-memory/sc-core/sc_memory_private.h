@@ -7,7 +7,7 @@
 #ifndef _sc_memory_private_h_
 #define _sc_memory_private_h_
 
-#include "sc-store/sc_element.h"
+#include "sc-store/sc_storage.h"
 #include "sc-store/sc_types.h"
 
 #include <glib.h>
@@ -36,6 +36,7 @@ struct _sc_memory_context
   sc_access_levels access_levels;
   sc_uint8 flags;
   GSList * pend_events;
+  sc_storage * storage;
 };
 
 extern sc_memory_context * s_memory_default_ctx;

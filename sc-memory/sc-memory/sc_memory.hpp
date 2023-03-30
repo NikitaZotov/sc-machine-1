@@ -357,6 +357,8 @@ public:
 
   _SC_EXTERN Stat CalculateStat() const;
 
+  sc_storage * m_storage;
+
 private:
   sc_memory_context * m_context;
   std::string m_name;

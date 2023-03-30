@@ -20,6 +20,7 @@
 extern "C"
 {
 #include <glib.h>
+#include "sc-core/sc_memory_private.h"
 }
 
 #define SC_BOOL(x) (x) ? SC_TRUE : SC_FALSE
@@ -179,6 +180,7 @@ ScMemoryContext::ScMemoryContext(sc_uint8 accessLevels, std::string const & name
   : m_context(nullptr)
 {
   m_context = sc_memory_context_new(accessLevels);
+  m_storage = sc_memory_context_get_storage(m_context);
   if (name.empty())
   {
     std::stringstream ss;

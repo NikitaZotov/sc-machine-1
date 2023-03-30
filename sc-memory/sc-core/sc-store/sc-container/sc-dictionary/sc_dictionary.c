@@ -173,6 +173,16 @@ sc_dictionary_node * sc_dictionary_append(
   return node;
 }
 
+sc_dictionary_node * sc_dictionary_append_uint64(sc_dictionary * dictionary, sc_uint64 key, void * value)
+{
+  sc_char * key_string;
+  sc_uint64 size;
+  sc_int_to_str_int(key, key_string, size);
+  sc_dictionary_node * node = sc_dictionary_append(dictionary, key_string, size, value);
+  sc_mem_free(key_string);
+  return node;
+}
+
 const sc_dictionary_node * sc_dictionary_get_last_node_from_node(
     const sc_dictionary * dictionary,
     const sc_dictionary_node * node,
@@ -221,6 +231,16 @@ void * sc_dictionary_get_by_key(const sc_dictionary * dictionary, const sc_char 
     return last->data;
 
   return null_ptr;
+}
+
+void * sc_dictionary_get_by_key_uint64(sc_dictionary * dictionary, sc_uint64 key)
+{
+  sc_char * key_string;
+  sc_uint64 size;
+  sc_int_to_str_int(key, key_string, size);
+  void * data = sc_dictionary_get_by_key(dictionary, key_string, size);
+  sc_mem_free(key_string);
+  return data;
 }
 
 sc_bool sc_dictionary_get_by_key_prefix(
