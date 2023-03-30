@@ -128,6 +128,70 @@ TEST(ScStorageTest, sc_storage_add_elements_get_by_iterator)
   EXPECT_FALSE(sc_iterator3_next(it));
   sc_iterator3_free(it);
 
+  it = sc_iterator3_a_a_f_new(storage, sc_type_node | sc_type_const, 0, node_addr);
+  EXPECT_TRUE(sc_iterator3_next(it));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 0), class_addr));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 1), arc_addr));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 2), node_addr));
+  EXPECT_FALSE(sc_iterator3_next(it));
+  sc_iterator3_free(it);
+
+  it = sc_iterator3_a_a_f_new(storage, sc_type_node | sc_type_const, sc_type_arc_access, node_addr);
+  EXPECT_TRUE(sc_iterator3_next(it));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 0), class_addr));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 1), arc_addr));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 2), node_addr));
+  EXPECT_FALSE(sc_iterator3_next(it));
+  sc_iterator3_free(it);
+
+  it = sc_iterator3_a_a_f_new(storage, sc_type_node | sc_type_const, sc_type_const, node_addr);
+  EXPECT_TRUE(sc_iterator3_next(it));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 0), class_addr));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 1), arc_addr));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 2), node_addr));
+  EXPECT_FALSE(sc_iterator3_next(it));
+  sc_iterator3_free(it);
+
+  it = sc_iterator3_f_a_a_new(storage, class_addr, sc_type_arc_pos_const_perm, sc_type_node | sc_type_const);
+  EXPECT_TRUE(sc_iterator3_next(it));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 0), class_addr));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 1), arc_addr));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 2), node_addr));
+  EXPECT_FALSE(sc_iterator3_next(it));
+  sc_iterator3_free(it);
+
+  it = sc_iterator3_f_a_a_new(storage, class_addr, sc_type_arc_pos_const_perm, sc_type_node);
+  EXPECT_TRUE(sc_iterator3_next(it));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 0), class_addr));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 1), arc_addr));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 2), node_addr));
+  EXPECT_FALSE(sc_iterator3_next(it));
+  sc_iterator3_free(it);
+
+  it = sc_iterator3_f_a_a_new(storage, class_addr, 0, sc_type_node | sc_type_const);
+  EXPECT_TRUE(sc_iterator3_next(it));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 0), class_addr));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 1), arc_addr));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 2), node_addr));
+  EXPECT_FALSE(sc_iterator3_next(it));
+  sc_iterator3_free(it);
+
+  it = sc_iterator3_f_a_a_new(storage, class_addr, sc_type_arc_access, sc_type_node | sc_type_const);
+  EXPECT_TRUE(sc_iterator3_next(it));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 0), class_addr));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 1), arc_addr));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 2), node_addr));
+  EXPECT_FALSE(sc_iterator3_next(it));
+  sc_iterator3_free(it);
+
+  it = sc_iterator3_f_a_a_new(storage, class_addr, sc_type_const, sc_type_node | sc_type_const);
+  EXPECT_TRUE(sc_iterator3_next(it));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 0), class_addr));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 1), arc_addr));
+  EXPECT_TRUE(SC_ADDR_IS_EQUAL(sc_iterator3_value(it, 2), node_addr));
+  EXPECT_FALSE(sc_iterator3_next(it));
+  sc_iterator3_free(it);
+
   EXPECT_EQ(sc_storage_shutdown(storage, SC_TRUE), SC_STORAGE_OK);
 }
 

@@ -6,6 +6,8 @@
 
 #include "sc_storage.h"
 
+#include <math.h>
+
 #include "sc_stream_memory.h"
 
 #include "../sc_memory_private.h"
@@ -328,31 +330,56 @@ sc_type _sc_storage_define_perm_element_type(sc_type element_type)
   return perm_element_type;
 }
 
-sc_list * _sc_storage_update_typed_connectors(
-    sc_addr connector_addr,
-    sc_type connector_type,
-    sc_dictionary * typed_dictionary)
+sc_list * _sc_storage_get_all_connector_subtypes(sc_type connector_type)
 {
-  sc_list * connectors = sc_dictionary_get_by_key_uint64(typed_dictionary, connector_type);
-  if (connectors != null_ptr)
-  {
-    sc_list_init(&connectors);
-    sc_dictionary_append_uint64(typed_dictionary, connector_type, (void *)connectors);
-  }
-  return connectors;
+  sc_list * types;
+  sc_list_init(&types);
+  sc_type const syntactic_connector_type = _sc_storage_define_connector_syntactic_type(connector_type);
+  if (syntactic_connector_type != 0)
+    sc_list_push_back(types, (void *)(sc_uint64)syntactic_connector_type);
+
+  sc_type const const_element_type = _sc_storage_define_const_element_type(connector_type);
+  if (const_element_type != 0)
+    sc_list_push_back(types, (void *)(sc_uint64)const_element_type);
+
+  sc_type const access_connector_type = _sc_storage_define_access_connector_type(connector_type);
+  if (access_connector_type != 0)
+    sc_list_push_back(types, (void *)(sc_uint64)access_connector_type);
+
+  sc_type const perm_element_type = _sc_storage_define_perm_element_type(connector_type);
+  if (perm_element_type != 0)
+    sc_list_push_back(types, (void *)(sc_uint64)perm_element_type);
+
+  return types;
 }
 
 void _sc_storage_update_all_typed_connectors(
-    sc_addr connector_addr,
-    sc_type connector_type,
-    sc_dictionary * typed_dictionary)
+    sc_dictionary * typed_connectors_dictionary, sc_list * connector_subtypes, sc_pair * element_connectors_slot_info)
 {
-  sc_type const syntactic_connector_type = _sc_storage_define_connector_syntactic_type(connector_type);
-  sc_type const const_element_type = _sc_storage_define_const_element_type(connector_type);
-  sc_type const access_connector_type = _sc_storage_define_access_connector_type(connector_type);
-  sc_type const perm_element_type = _sc_storage_define_perm_element_type(connector_type);
+  sc_uint8 card_size = (sc_uint8)pow(2, connector_subtypes->size);
+  for (sc_uint8 i = 0; i < card_size; ++i)
+  {
+    sc_uint8 num = i;
+    sc_type subtype = 0;
 
-  sc_list * connectors = _sc_storage_update_typed_connectors(connector_addr, 0, typed_dictionary);
+    sc_iterator * it = sc_list_iterator(connector_subtypes);
+    for (sc_uint8 j = connector_subtypes->size - 1; j >= 0 && sc_iterator_next(it); --j) {
+      if (num % 2)
+        subtype |= (sc_type)(sc_uint64)sc_iterator_get(it);
+
+      num /= 2;
+    }
+    sc_iterator_destroy(it);
+
+    sc_list * element_connectors_slots = sc_dictionary_get_by_key_uint64(typed_connectors_dictionary, subtype);
+    if (element_connectors_slots == null_ptr)
+    {
+      sc_list_init(&element_connectors_slots);
+      sc_dictionary_append_uint64(typed_connectors_dictionary, subtype, (void *)element_connectors_slots);
+    }
+
+    sc_list_push_back(element_connectors_slots, element_connectors_slot_info);
+  }
 }
 
 sc_dictionary * _sc_storage_resolve_element_typed_connectors_dictionary(
@@ -375,6 +402,7 @@ sc_pair * _sc_storage_resolve_element_connectors_slot_info(
     sc_dictionary * element_connectors_dictionary,
     sc_uint64 * last_element_connectors_offset,
     sc_type connector_type,
+    sc_list * connector_subtypes,
     sc_addr element_addr)
 {
   sc_dictionary * typed_connectors_dictionary =
@@ -384,13 +412,10 @@ sc_pair * _sc_storage_resolve_element_connectors_slot_info(
   sc_list * element_connectors_slots = sc_dictionary_get_by_key_uint64(typed_connectors_dictionary, connector_type);
   if (element_connectors_slots == null_ptr)
   {
-    sc_list_init(&element_connectors_slots);
-    sc_dictionary_append_uint64(typed_connectors_dictionary, connector_type, (void *)element_connectors_slots);
-
     element_connectors_slot_info = sc_make_pair((void *)*last_element_connectors_offset, 0);
     *last_element_connectors_offset += storage->max_connectors_in_slot * sizeof(sc_uint64);
 
-    sc_list_push_back(element_connectors_slots, element_connectors_slot_info);
+    _sc_storage_update_all_typed_connectors(typed_connectors_dictionary, connector_subtypes, element_connectors_slot_info);
   }
   else
   {
@@ -398,7 +423,7 @@ sc_pair * _sc_storage_resolve_element_connectors_slot_info(
     if ((sc_uint64)element_connectors_slot_info->second == storage->max_connectors_in_slot)
     {
       element_connectors_slot_info = sc_make_pair((void *)last_element_connectors_offset, 0);
-      sc_list_push_back(element_connectors_slots, element_connectors_slot_info);
+      _sc_storage_update_all_typed_connectors(typed_connectors_dictionary, connector_subtypes, element_connectors_slot_info);
     }
   }
 
@@ -439,10 +464,11 @@ sc_bool _sc_storage_push_element_connector_in_slot(
     sc_uint64 * last_element_connectors_offset,
     sc_addr connector_addr,
     sc_type connector_type,
+    sc_list * connector_subtypes,
     sc_addr element_addr)
 {
   sc_pair * element_connectors_slot_info = _sc_storage_resolve_element_connectors_slot_info(
-      storage, element_connectors_dictionary, last_element_connectors_offset, connector_type, element_addr);
+      storage, element_connectors_dictionary, last_element_connectors_offset, connector_type, connector_subtypes, element_addr);
 
   sc_uint64 const element_connectors_offset = (sc_uint64)element_connectors_slot_info->first +
                                               (sc_uint64)element_connectors_slot_info->second * sizeof(sc_uint64);
@@ -474,6 +500,7 @@ sc_addr sc_storage_connector_new(sc_storage * storage, sc_type type, sc_addr beg
   if (_sc_storage_write_connector_elements(storage, beg, end) == SC_FALSE)
     return SC_ADDR_EMPTY;
 
+  sc_list * subtypes = _sc_storage_get_all_connector_subtypes(type);
   if (_sc_storage_push_element_connector_in_slot(
           storage,
           storage->input_connectors_path,
@@ -481,6 +508,7 @@ sc_addr sc_storage_connector_new(sc_storage * storage, sc_type type, sc_addr beg
           &storage->last_input_connectors_offset,
           new_addr,
           type,
+          subtypes,
           end) == SC_FALSE)
     return SC_ADDR_EMPTY;
 
@@ -491,8 +519,11 @@ sc_addr sc_storage_connector_new(sc_storage * storage, sc_type type, sc_addr beg
           &storage->last_output_connectors_offset,
           new_addr,
           type,
+          subtypes,
           beg) == SC_FALSE)
     return SC_ADDR_EMPTY;
+
+  sc_list_destroy(subtypes);
 
   return new_addr;
 }

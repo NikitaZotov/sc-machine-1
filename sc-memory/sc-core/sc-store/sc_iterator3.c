@@ -215,7 +215,57 @@ sc_bool _sc_iterator3_f_a_a_next(sc_iterator3 * it)
 {
   it->results[0] = it->params[0].addr;
 
-  return SC_TRUE;
+  if (it->connectors_slots_iterator == null_ptr)
+  {
+    sc_dictionary * typed_connectors_dictionary =
+        sc_dictionary_get_by_key_uint64(it->storage->output_connectors_dictionary, it->params[0].addr.offset);
+    if (typed_connectors_dictionary == null_ptr)
+      goto finish;
+
+    sc_list * element_connectors_slots = sc_dictionary_get_by_key_uint64(typed_connectors_dictionary, it->params[1].type);
+    it->connectors_slots_iterator = sc_list_iterator(element_connectors_slots);
+    it->connectors_channel = sc_io_new_read_channel(it->storage->output_connectors_path, null_ptr);
+    sc_io_channel_set_encoding(it->connectors_channel, null_ptr, null_ptr);
+
+    goto next_slot;
+  }
+
+current_slot:
+  while (it->current_connector_position_in_slot != (sc_uint64)it->current_connectors_slot->second)
+  {
+    sc_uint64 connector_addr_hash;
+    sc_uint64 written_bytes = 0;
+    if (sc_io_channel_read_chars(
+            it->connectors_channel, (sc_char *)&connector_addr_hash, sizeof(sc_uint64), &written_bytes, null_ptr) !=
+            SC_FS_IO_STATUS_NORMAL ||
+        sizeof(sc_uint64) != written_bytes)
+      goto finish;
+
+    SC_ADDR_LOCAL_FROM_INT(connector_addr_hash, it->results[1]);
+    sc_storage_get_arc_end(it->storage, it->results[1], &it->results[2]);
+
+    sc_type type;
+    sc_storage_get_element_type(it->storage, it->results[2], &type);
+    if ((it->params[2].type & type) == it->params[2].type)
+      return SC_TRUE;
+
+    ++it->current_connector_position_in_slot;
+  }
+
+next_slot:
+  if (sc_iterator_next(it->connectors_slots_iterator))
+  {
+    it->current_connector_position_in_slot = 0;
+    it->current_connectors_slot = sc_iterator_get(it->connectors_slots_iterator);
+    sc_io_channel_seek(it->connectors_channel, (sc_uint64)it->current_connectors_slot->first, SC_FS_IO_SEEK_SET, null_ptr);
+    goto current_slot;
+  }
+
+finish:
+  sc_io_channel_shutdown(it->connectors_channel, SC_TRUE, null_ptr);
+  sc_iterator_destroy(it->connectors_slots_iterator);
+  it->finished = SC_TRUE;
+  return SC_FALSE;
 }
 
 sc_bool _sc_iterator3_f_a_f_next(sc_iterator3 * it)
@@ -223,14 +273,61 @@ sc_bool _sc_iterator3_f_a_f_next(sc_iterator3 * it)
   it->results[0] = it->params[0].addr;
   it->results[2] = it->params[2].addr;
 
-  return SC_TRUE;
+  if (it->connectors_slots_iterator == null_ptr)
+  {
+    sc_dictionary * typed_connectors_dictionary =
+        sc_dictionary_get_by_key_uint64(it->storage->input_connectors_dictionary, it->params[2].addr.offset);
+    if (typed_connectors_dictionary == null_ptr)
+      goto finish;
+
+    sc_list * element_connectors_slots = sc_dictionary_get_by_key_uint64(typed_connectors_dictionary, it->params[1].type);
+    it->connectors_slots_iterator = sc_list_iterator(element_connectors_slots);
+    it->connectors_channel = sc_io_new_read_channel(it->storage->input_connectors_path, null_ptr);
+    sc_io_channel_set_encoding(it->connectors_channel, null_ptr, null_ptr);
+
+    goto next_slot;
+  }
+
+current_slot:
+  while (it->current_connector_position_in_slot != (sc_uint64)it->current_connectors_slot->second)
+  {
+    sc_uint64 connector_addr_hash;
+    sc_uint64 written_bytes = 0;
+    if (sc_io_channel_read_chars(
+            it->connectors_channel, (sc_char *)&connector_addr_hash, sizeof(sc_uint64), &written_bytes, null_ptr) !=
+            SC_FS_IO_STATUS_NORMAL ||
+        sizeof(sc_uint64) != written_bytes)
+      goto finish;
+
+    SC_ADDR_LOCAL_FROM_INT(connector_addr_hash, it->results[1]);
+    sc_storage_get_arc_begin(it->storage, it->results[1], &it->results[0]);
+
+    if (SC_ADDR_IS_EQUAL(it->params[0].addr, it->results[0]))
+      return SC_TRUE;
+
+    ++it->current_connector_position_in_slot;
+  }
+
+next_slot:
+  if (sc_iterator_next(it->connectors_slots_iterator))
+  {
+    it->current_connector_position_in_slot = 0;
+    it->current_connectors_slot = sc_iterator_get(it->connectors_slots_iterator);
+    sc_io_channel_seek(it->connectors_channel, (sc_uint64)it->current_connectors_slot->first, SC_FS_IO_SEEK_SET, null_ptr);
+    goto current_slot;
+  }
+
+finish:
+  sc_io_channel_shutdown(it->connectors_channel, SC_TRUE, null_ptr);
+  sc_iterator_destroy(it->connectors_slots_iterator);
+  it->finished = SC_TRUE;
+  return SC_FALSE;
 }
 
 sc_bool _sc_iterator3_a_a_f_next(sc_iterator3 * it)
 {
   it->results[2] = it->params[2].addr;
 
-  // try to find first input arc
   if (it->connectors_slots_iterator == null_ptr)
   {
     sc_dictionary * typed_connectors_dictionary =
@@ -286,25 +383,28 @@ finish:
 
 sc_bool _sc_iterator3_a_f_a_next(sc_iterator3 * it)
 {
-  it->finished = SC_TRUE;
   it->results[1] = it->params[1].addr;
-
-  return SC_FALSE;
+  it->finished = SC_TRUE;
+  return sc_storage_get_arc_info(it->storage, it->results[1], &it->results[0], &it->results[2]);
 }
 
 sc_bool _sc_iterator3_f_f_a_next(sc_iterator3 * it)
 {
-  return _sc_iterator3_a_f_a_next(it);
+  sc_bool const result = _sc_iterator3_a_f_a_next(it);
+  it->finished = SC_TRUE;
+  return result && SC_ADDR_IS_EQUAL(it->results[0], it->params[0].addr);
 }
 
 sc_bool _sc_iterator3_a_f_f_next(sc_iterator3 * it)
 {
-  return _sc_iterator3_a_f_a_next(it);
+  sc_bool const result = _sc_iterator3_a_f_a_next(it);
+  it->finished = SC_TRUE;
+  return result && SC_ADDR_IS_EQUAL(it->results[2], it->params[2].addr);
 }
 
 sc_bool _sc_iterator3_f_f_f_next(sc_iterator3 * it)
 {
-  return SC_FALSE;
+  return _sc_iterator3_f_f_a_next(it) && SC_ADDR_IS_EQUAL(it->results[2], it->params[2].addr);;
 }
 
 sc_bool sc_iterator3_next(sc_iterator3 * it)
