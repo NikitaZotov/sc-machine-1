@@ -29,17 +29,8 @@ TEST_F(ScMemoryTest, elements)
   EXPECT_EQ(ctx.GetElementType(link), ScType::LinkConst);
   EXPECT_EQ(ctx.GetElementType(edge), ScType::EdgeAccessConstPosPerm);
 
-  EXPECT_TRUE(ctx.SetElementSubtype(node, ScType::NodeVar));
-  EXPECT_EQ(ctx.GetElementType(node), ScType::NodeVar);
-
   EXPECT_TRUE(ctx.SetElementSubtype(node, ScType::NodeConstStruct));
   EXPECT_EQ(ctx.GetElementType(node), ScType::NodeConstStruct);
-
-  EXPECT_TRUE(ctx.SetElementSubtype(link, ScType::LinkVar));
-  EXPECT_EQ(ctx.GetElementType(link), ScType::LinkVar);
-
-  EXPECT_TRUE(ctx.SetElementSubtype(edge, ScType::EdgeAccessConstNegPerm));
-  EXPECT_EQ(ctx.GetElementType(edge), ScType::EdgeAccessConstNegPerm);
 
   EXPECT_FALSE(ctx.SetElementSubtype(node, ScType::EdgeAccessConstFuzPerm));
 

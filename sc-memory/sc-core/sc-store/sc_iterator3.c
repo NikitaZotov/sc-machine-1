@@ -6,11 +6,13 @@
 
 #include "sc_iterator.h"
 
+#include "../sc_memory.h"
+
 #include "sc-base/sc_allocator.h"
 #include "sc-container/sc-iterator/sc_container_iterator.h"
 #include "sc-fs-memory/sc_io.h"
 
-sc_iterator3 * sc_iterator3_f_a_a_new(sc_storage const * storage, sc_addr el, sc_type arc_type, sc_type end_type)
+sc_iterator3 * sc_iterator3_f_a_a_new_ext(sc_storage const * storage, sc_addr el, sc_type arc_type, sc_type end_type)
 {
   sc_iterator_param p1, p2, p3;
 
@@ -23,10 +25,15 @@ sc_iterator3 * sc_iterator3_f_a_a_new(sc_storage const * storage, sc_addr el, sc
   p3.is_type = SC_TRUE;
   p3.type = end_type;
 
-  return sc_iterator3_new(storage, sc_iterator3_f_a_a, p1, p2, p3);
+  return sc_iterator3_new_ext(storage, sc_iterator3_f_a_a, p1, p2, p3);
 }
 
-sc_iterator3 * sc_iterator3_a_a_f_new(sc_storage const * storage, sc_type beg_type, sc_type arc_type, sc_addr el)
+sc_iterator3 * sc_iterator3_f_a_a_new(sc_memory_context const * context, sc_addr el, sc_type arc_type, sc_type end_type)
+{
+  return sc_iterator3_f_a_a_new_ext(sc_memory_context_get_storage(context), el, arc_type, end_type);
+}
+
+sc_iterator3 * sc_iterator3_a_a_f_new_ext(sc_storage const * storage, sc_type beg_type, sc_type arc_type, sc_addr el)
 {
   sc_iterator_param p1, p2, p3;
 
@@ -39,10 +46,15 @@ sc_iterator3 * sc_iterator3_a_a_f_new(sc_storage const * storage, sc_type beg_ty
   p3.is_type = SC_FALSE;
   p3.addr = el;
 
-  return sc_iterator3_new(storage, sc_iterator3_a_a_f, p1, p2, p3);
+  return sc_iterator3_new_ext(storage, sc_iterator3_a_a_f, p1, p2, p3);
 }
 
-sc_iterator3 * sc_iterator3_f_a_f_new(sc_storage const * storage, sc_addr el_beg, sc_type arc_type, sc_addr el_end)
+sc_iterator3 * sc_iterator3_a_a_f_new(sc_memory_context const * context, sc_type beg_type, sc_type arc_type, sc_addr el)
+{
+  return sc_iterator3_a_a_f_new_ext(sc_memory_context_get_storage(context), beg_type, arc_type, el);
+}
+
+sc_iterator3 * sc_iterator3_f_a_f_new_ext(sc_storage const * storage, sc_addr el_beg, sc_type arc_type, sc_addr el_end)
 {
   sc_iterator_param p1, p2, p3;
 
@@ -55,10 +67,15 @@ sc_iterator3 * sc_iterator3_f_a_f_new(sc_storage const * storage, sc_addr el_beg
   p3.is_type = SC_FALSE;
   p3.addr = el_end;
 
-  return sc_iterator3_new(storage, sc_iterator3_f_a_f, p1, p2, p3);
+  return sc_iterator3_new_ext(storage, sc_iterator3_f_a_f, p1, p2, p3);
 }
 
-sc_iterator3 * sc_iterator3_a_f_a_new(sc_storage const * storage, sc_type beg_type, sc_addr arc_addr, sc_type end_type)
+sc_iterator3 * sc_iterator3_f_a_f_new(sc_memory_context const * context, sc_addr el_beg, sc_type arc_type, sc_addr el_end)
+{
+  return sc_iterator3_f_a_f_new_ext(sc_memory_context_get_storage(context), el_beg, arc_type, el_end);
+}
+
+sc_iterator3 * sc_iterator3_a_f_a_new_ext(sc_storage const * storage, sc_type beg_type, sc_addr arc_addr, sc_type end_type)
 {
   sc_iterator_param p1, p2, p3;
 
@@ -71,10 +88,15 @@ sc_iterator3 * sc_iterator3_a_f_a_new(sc_storage const * storage, sc_type beg_ty
   p3.is_type = SC_TRUE;
   p3.type = end_type;
 
-  return sc_iterator3_new(storage, sc_iterator3_a_f_a, p1, p2, p3);
+  return sc_iterator3_new_ext(storage, sc_iterator3_a_f_a, p1, p2, p3);
 }
 
-sc_iterator3 * sc_iterator3_f_f_a_new(sc_storage const * storage, sc_addr beg_addr, sc_addr edge_addr, sc_type end_type)
+sc_iterator3 * sc_iterator3_a_f_a_new(sc_memory_context const * context, sc_type beg_type, sc_addr arc_addr, sc_type end_type)
+{
+  return sc_iterator3_a_f_a_new_ext(sc_memory_context_get_storage(context), beg_type, arc_addr, end_type);
+}
+
+sc_iterator3 * sc_iterator3_f_f_a_new_ext(sc_storage const * storage, sc_addr beg_addr, sc_addr edge_addr, sc_type end_type)
 {
   sc_iterator_param p1, p2, p3;
 
@@ -87,10 +109,15 @@ sc_iterator3 * sc_iterator3_f_f_a_new(sc_storage const * storage, sc_addr beg_ad
   p3.is_type = SC_TRUE;
   p3.type = end_type;
 
-  return sc_iterator3_new(storage, sc_iterator3_f_f_a, p1, p2, p3);
+  return sc_iterator3_new_ext(storage, sc_iterator3_f_f_a, p1, p2, p3);
 }
 
-sc_iterator3 * sc_iterator3_a_f_f_new(sc_storage const * storage, sc_type beg_type, sc_addr edge_addr, sc_addr end_addr)
+sc_iterator3 * sc_iterator3_f_f_a_new(sc_memory_context const * context, sc_addr beg_addr, sc_addr arc_addr, sc_type end_type)
+{
+  return sc_iterator3_f_f_a_new_ext(sc_memory_context_get_storage(context), beg_addr, arc_addr, end_type);
+}
+
+sc_iterator3 * sc_iterator3_a_f_f_new_ext(sc_storage const * storage, sc_type beg_type, sc_addr edge_addr, sc_addr end_addr)
 {
   sc_iterator_param p1, p2, p3;
 
@@ -103,10 +130,15 @@ sc_iterator3 * sc_iterator3_a_f_f_new(sc_storage const * storage, sc_type beg_ty
   p3.is_type = SC_FALSE;
   p3.addr = end_addr;
 
-  return sc_iterator3_new(storage, sc_iterator3_a_f_f, p1, p2, p3);
+  return sc_iterator3_new_ext(storage, sc_iterator3_a_f_f, p1, p2, p3);
 }
 
-sc_iterator3 * sc_iterator3_f_f_f_new(sc_storage const * storage, sc_addr beg_addr, sc_addr edge_addr, sc_addr end_addr)
+sc_iterator3 * sc_iterator3_a_f_f_new(sc_memory_context const * context, sc_type beg_type, sc_addr arc_addr, sc_addr end_addr)
+{
+  return sc_iterator3_a_f_f_new_ext(sc_memory_context_get_storage(context), beg_type, arc_addr, end_addr);
+}
+
+sc_iterator3 * sc_iterator3_f_f_f_new_ext(sc_storage const * storage, sc_addr beg_addr, sc_addr edge_addr, sc_addr end_addr)
 {
   sc_iterator_param p1, p2, p3;
 
@@ -119,10 +151,15 @@ sc_iterator3 * sc_iterator3_f_f_f_new(sc_storage const * storage, sc_addr beg_ad
   p3.is_type = SC_FALSE;
   p3.addr = end_addr;
 
-  return sc_iterator3_new(storage, sc_iterator3_f_f_f, p1, p2, p3);
+  return sc_iterator3_new_ext(storage, sc_iterator3_f_f_f, p1, p2, p3);
 }
 
-sc_iterator3 * sc_iterator3_new(
+sc_iterator3 * sc_iterator3_f_f_f_new(sc_memory_context const * context, sc_addr beg_addr, sc_addr arc_addr, sc_addr end_addr)
+{
+  return sc_iterator3_f_f_f_new_ext(sc_memory_context_get_storage(context), beg_addr, arc_addr, end_addr);
+}
+
+sc_iterator3 * sc_iterator3_new_ext(
     sc_storage const * storage,
     sc_iterator3_type type,
     sc_iterator_param p1,
@@ -218,7 +255,7 @@ sc_bool _sc_iterator3_f_a_a_next(sc_iterator3 * it)
   if (it->connectors_slots_iterator == null_ptr)
   {
     sc_dictionary * typed_connectors_dictionary =
-        sc_dictionary_get_by_key_uint64(it->storage->output_connectors_dictionary, it->params[0].addr.offset);
+        sc_dictionary_get_by_key_uint64(it->storage->output_connectors_dictionary, SC_ADDR_LOCAL_TO_INT(it->params[0].addr));
     if (typed_connectors_dictionary == null_ptr)
       goto finish;
 
@@ -236,20 +273,20 @@ current_slot:
     sc_uint64 connector_addr_hash;
     sc_uint64 written_bytes = 0;
     if (sc_io_channel_read_chars(
-            it->connectors_channel, (sc_char *)&connector_addr_hash, sizeof(sc_uint64), &written_bytes, null_ptr) !=
+            it->connectors_channel, (sc_char *)&connector_addr_hash, sizeof(sc_addr_hash), &written_bytes, null_ptr) !=
             SC_FS_IO_STATUS_NORMAL ||
-        sizeof(sc_uint64) != written_bytes)
+        sizeof(sc_addr_hash) != written_bytes)
       goto finish;
 
     SC_ADDR_LOCAL_FROM_INT(connector_addr_hash, it->results[1]);
     sc_storage_get_arc_end(it->storage, it->results[1], &it->results[2]);
 
+    ++it->current_connector_position_in_slot;
+
     sc_type type;
     sc_storage_get_element_type(it->storage, it->results[2], &type);
     if ((it->params[2].type & type) == it->params[2].type)
       return SC_TRUE;
-
-    ++it->current_connector_position_in_slot;
   }
 
 next_slot:
@@ -276,7 +313,7 @@ sc_bool _sc_iterator3_f_a_f_next(sc_iterator3 * it)
   if (it->connectors_slots_iterator == null_ptr)
   {
     sc_dictionary * typed_connectors_dictionary =
-        sc_dictionary_get_by_key_uint64(it->storage->input_connectors_dictionary, it->params[2].addr.offset);
+        sc_dictionary_get_by_key_uint64(it->storage->input_connectors_dictionary, SC_ADDR_LOCAL_TO_INT(it->params[2].addr));
     if (typed_connectors_dictionary == null_ptr)
       goto finish;
 
@@ -294,9 +331,9 @@ current_slot:
     sc_uint64 connector_addr_hash;
     sc_uint64 written_bytes = 0;
     if (sc_io_channel_read_chars(
-            it->connectors_channel, (sc_char *)&connector_addr_hash, sizeof(sc_uint64), &written_bytes, null_ptr) !=
+            it->connectors_channel, (sc_char *)&connector_addr_hash, sizeof(sc_addr_hash), &written_bytes, null_ptr) !=
             SC_FS_IO_STATUS_NORMAL ||
-        sizeof(sc_uint64) != written_bytes)
+        sizeof(sc_addr_hash) != written_bytes)
       goto finish;
 
     SC_ADDR_LOCAL_FROM_INT(connector_addr_hash, it->results[1]);
@@ -318,7 +355,10 @@ next_slot:
   }
 
 finish:
-  sc_io_channel_shutdown(it->connectors_channel, SC_TRUE, null_ptr);
+  if (it->connectors_channel)
+  {
+    sc_io_channel_shutdown(it->connectors_channel, SC_TRUE, null_ptr);
+  }
   sc_iterator_destroy(it->connectors_slots_iterator);
   it->finished = SC_TRUE;
   return SC_FALSE;
@@ -331,7 +371,7 @@ sc_bool _sc_iterator3_a_a_f_next(sc_iterator3 * it)
   if (it->connectors_slots_iterator == null_ptr)
   {
     sc_dictionary * typed_connectors_dictionary =
-        sc_dictionary_get_by_key_uint64(it->storage->input_connectors_dictionary, it->params[2].addr.offset);
+        sc_dictionary_get_by_key_uint64(it->storage->input_connectors_dictionary, SC_ADDR_LOCAL_TO_INT(it->params[2].addr));
     if (typed_connectors_dictionary == null_ptr)
       goto finish;
 
@@ -349,9 +389,9 @@ current_slot:
     sc_uint64 connector_addr_hash;
     sc_uint64 written_bytes = 0;
     if (sc_io_channel_read_chars(
-            it->connectors_channel, (sc_char *)&connector_addr_hash, sizeof(sc_uint64), &written_bytes, null_ptr) !=
+            it->connectors_channel, (sc_char *)&connector_addr_hash, sizeof(sc_addr_hash), &written_bytes, null_ptr) !=
             SC_FS_IO_STATUS_NORMAL ||
-        sizeof(sc_uint64) != written_bytes)
+        sizeof(sc_addr_hash) != written_bytes)
       goto finish;
 
     SC_ADDR_LOCAL_FROM_INT(connector_addr_hash, it->results[1]);

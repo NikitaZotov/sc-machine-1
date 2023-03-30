@@ -36,7 +36,7 @@ struct _sc_iterator5
 
 typedef struct _sc_iterator5 sc_iterator5;
 
-_SC_EXTERN sc_iterator5 * sc_iterator5_new(
+_SC_EXTERN sc_iterator5 * sc_iterator5_new_ext(
     sc_storage const * storage,
     sc_iterator5_type type,
     sc_iterator_param p1,
@@ -55,8 +55,16 @@ _SC_EXTERN sc_iterator5 * sc_iterator5_new(
  * @return Pointer to created iterator. If parameters invalid for specified iterator type, or type is not a
  * sc-iterator-3, then return 0
  */
-_SC_EXTERN sc_iterator5 * sc_iterator5_a_a_f_a_f_new(
+_SC_EXTERN sc_iterator5 * sc_iterator5_a_a_f_a_f_new_ext(
     sc_storage const * storage,
+    sc_type p1,
+    sc_type p2,
+    sc_addr p3,
+    sc_type p4,
+    sc_addr p5);
+
+_SC_EXTERN sc_iterator5 * sc_iterator5_a_a_f_a_f_new(
+    sc_memory_context const * context,
     sc_type p1,
     sc_type p2,
     sc_addr p3,
@@ -73,8 +81,16 @@ _SC_EXTERN sc_iterator5 * sc_iterator5_a_a_f_a_f_new(
  * @return Pointer to created iterator. If parameters invalid for specified iterator type, or type is not a
  * sc-iterator-3, then return 0
  */
-_SC_EXTERN sc_iterator5 * sc_iterator5_f_a_a_a_f_new(
+_SC_EXTERN sc_iterator5 * sc_iterator5_f_a_a_a_f_new_ext(
     sc_storage const * storage,
+    sc_addr p1,
+    sc_type p2,
+    sc_type p3,
+    sc_type p4,
+    sc_addr p5);
+
+_SC_EXTERN sc_iterator5 * sc_iterator5_f_a_a_a_f_new(
+    sc_memory_context const * context,
     sc_addr p1,
     sc_type p2,
     sc_type p3,
@@ -91,8 +107,16 @@ _SC_EXTERN sc_iterator5 * sc_iterator5_f_a_a_a_f_new(
  * @return Pointer to created iterator. If parameters invalid for specified iterator type, or type is not a
  * sc-iterator-3, then return 0
  */
-_SC_EXTERN sc_iterator5 * sc_iterator5_f_a_f_a_f_new(
+_SC_EXTERN sc_iterator5 * sc_iterator5_f_a_f_a_f_new_ext(
     sc_storage const * storage,
+    sc_addr p1,
+    sc_type p2,
+    sc_addr p3,
+    sc_type p4,
+    sc_addr p5);
+
+_SC_EXTERN sc_iterator5 * sc_iterator5_f_a_f_a_f_new(
+    sc_memory_context const * context,
     sc_addr p1,
     sc_type p2,
     sc_addr p3,
@@ -109,8 +133,16 @@ _SC_EXTERN sc_iterator5 * sc_iterator5_f_a_f_a_f_new(
  * @return Pointer to created iterator. If parameters invalid for specified iterator type, or type is not a
  * sc-iterator-3, then return 0
  */
-_SC_EXTERN sc_iterator5 * sc_iterator5_f_a_f_a_a_new(
+_SC_EXTERN sc_iterator5 * sc_iterator5_f_a_f_a_a_new_ext(
     sc_storage const * storage,
+    sc_addr p1,
+    sc_type p2,
+    sc_addr p3,
+    sc_type p4,
+    sc_type p5);
+
+_SC_EXTERN sc_iterator5 * sc_iterator5_f_a_f_a_a_new(
+    sc_memory_context const * context,
     sc_addr p1,
     sc_type p2,
     sc_addr p3,
@@ -127,8 +159,16 @@ _SC_EXTERN sc_iterator5 * sc_iterator5_f_a_f_a_a_new(
  * @return Pointer to created iterator. If parameters invalid for specified iterator type, or type is not a
  * sc-iterator-3, then return 0
  */
-_SC_EXTERN sc_iterator5 * sc_iterator5_f_a_a_a_a_new(
+_SC_EXTERN sc_iterator5 * sc_iterator5_f_a_a_a_a_new_ext(
     sc_storage const * storage,
+    sc_addr p1,
+    sc_type p2,
+    sc_type p3,
+    sc_type p4,
+    sc_type p5);
+
+_SC_EXTERN sc_iterator5 * sc_iterator5_f_a_a_a_a_new(
+    sc_memory_context const * context,
     sc_addr p1,
     sc_type p2,
     sc_type p3,
@@ -145,8 +185,16 @@ _SC_EXTERN sc_iterator5 * sc_iterator5_f_a_a_a_a_new(
  * @return Pointer to created iterator. If parameters invalid for specified iterator type, or type is not a
  * sc-iterator-3, then return 0
  */
-_SC_EXTERN sc_iterator5 * sc_iterator5_a_a_f_a_a_new(
+_SC_EXTERN sc_iterator5 * sc_iterator5_a_a_f_a_a_new_ext(
     sc_storage const * storage,
+    sc_type p1,
+    sc_type p2,
+    sc_addr p3,
+    sc_type p4,
+    sc_type p5);
+
+_SC_EXTERN sc_iterator5 * sc_iterator5_a_a_f_a_a_new(
+    sc_memory_context const * context,
     sc_type p1,
     sc_type p2,
     sc_addr p3,

@@ -22,7 +22,7 @@
 #include "sc-container/sc-string/sc_string.h"
 #include "sc-container/sc-pair/sc_pair.h"
 
-sc_storage_status sc_storage_initialize(
+sc_result sc_storage_initialize(
     sc_storage ** storage,
     sc_char const * path,
     sc_uint64 max_searchable_string_size,
@@ -59,7 +59,7 @@ sc_storage_status sc_storage_initialize(
     {
       static sc_char const * elements_types = "elements_types" SC_FS_EXT;
       sc_fs_initialize_file_path(path, elements_types, &(*storage)->elements_types_path);
-      (*storage)->last_addr_offset = 1;
+      (*storage)->last_addr_hash = 1;
 
       static sc_char const * connectors_elements = "connectors_elements" SC_FS_EXT;
       sc_fs_initialize_file_path(path, connectors_elements, &(*storage)->connectors_elements_path);
@@ -81,23 +81,23 @@ sc_storage_status sc_storage_initialize(
 
   sc_memory_info("Successfully initialized");
 
-  return SC_STORAGE_OK;
+  return SC_RESULT_OK;
 
 error:
 {
   if (storage != null_ptr)
     *storage = null_ptr;
   sc_memory_info("Initialized with errors");
-  return SC_STORAGE_WRONG_PATH;
+  return SC_RESULT_ERROR_IO;
 }
 }
 
-sc_storage_status sc_storage_shutdown(sc_storage * storage, sc_bool save_state)
+sc_result sc_storage_shutdown(sc_storage * storage, sc_bool save_state)
 {
   if (storage == null_ptr)
   {
     sc_memory_info("Storage is empty to shutdown");
-    return SC_STORAGE_NO;
+    return SC_RESULT_NO;
   }
 
   sc_memory_info("Shutdown");
@@ -120,13 +120,13 @@ sc_storage_status sc_storage_shutdown(sc_storage * storage, sc_bool save_state)
   if (save_state == SC_TRUE)
   {
     if (sc_fs_memory_save() == SC_FALSE)
-      return SC_STORAGE_READ_ERROR;
+      return SC_RESULT_READ_ERROR;
   }
 
   if (sc_fs_memory_shutdown() == SC_FALSE)
-    return SC_STORAGE_NO;
+    return SC_RESULT_NO;
 
-  return SC_STORAGE_OK;
+  return SC_RESULT_OK;
 }
 
 sc_bool _sc_storage_write_element_new(sc_storage * storage, sc_type type, sc_uint64 connector_elements_offset)
@@ -136,19 +136,19 @@ sc_bool _sc_storage_write_element_new(sc_storage * storage, sc_type type, sc_uin
 
   sc_io_channel * channel = sc_io_new_append_channel(storage->elements_types_path, null_ptr);
   sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
-  sc_io_channel_seek(channel, storage->last_addr_offset, SC_FS_IO_SEEK_SET, null_ptr);
+  sc_io_channel_seek(channel, storage->last_addr_hash, SC_FS_IO_SEEK_SET, null_ptr);
 
   sc_uint64 written_bytes = 0;
   if (sc_io_channel_write_chars(
-          channel, (sc_char *)&storage->last_addr_offset, sizeof(sc_uint64), &written_bytes, null_ptr) !=
+          channel, (sc_char *)&storage->last_addr_hash, sizeof(sc_addr_hash), &written_bytes, null_ptr) !=
           SC_FS_IO_STATUS_NORMAL ||
-      sizeof(sc_uint64) != written_bytes)
+      sizeof(sc_addr_hash) != written_bytes)
   {
-    sc_memory_error("Error while attribute `addr_offset` writing");
+    sc_memory_error("Error while attribute `last_addr_hash` writing");
     sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
     return SC_FALSE;
   }
-  storage->last_addr_offset += written_bytes;
+  storage->last_addr_hash += written_bytes;
 
   if (sc_io_channel_write_chars(channel, (sc_char *)&type, sizeof(sc_type), &written_bytes, null_ptr) !=
           SC_FS_IO_STATUS_NORMAL ||
@@ -158,7 +158,7 @@ sc_bool _sc_storage_write_element_new(sc_storage * storage, sc_type type, sc_uin
     sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
     return SC_FALSE;
   }
-  storage->last_addr_offset += written_bytes;
+  storage->last_addr_hash += written_bytes;
 
   if (sc_io_channel_write_chars(
           channel, (sc_char *)&connector_elements_offset, sizeof(sc_uint64), &written_bytes, null_ptr) !=
@@ -169,7 +169,7 @@ sc_bool _sc_storage_write_element_new(sc_storage * storage, sc_type type, sc_uin
     sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
     return SC_FALSE;
   }
-  storage->last_addr_offset += written_bytes;
+  storage->last_addr_hash += written_bytes;
 
   if (sc_io_channel_write_chars(
           channel, (sc_char *)&storage->last_input_connectors_offset, sizeof(sc_uint64), &written_bytes, null_ptr) !=
@@ -180,7 +180,7 @@ sc_bool _sc_storage_write_element_new(sc_storage * storage, sc_type type, sc_uin
     sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
     return SC_FALSE;
   }
-  storage->last_addr_offset += written_bytes;
+  storage->last_addr_hash += written_bytes;
 
   if (sc_io_channel_write_chars(
           channel, (sc_char *)&storage->last_output_connectors_offset, sizeof(sc_uint64), &written_bytes, null_ptr) !=
@@ -191,16 +191,17 @@ sc_bool _sc_storage_write_element_new(sc_storage * storage, sc_type type, sc_uin
     sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
     return SC_FALSE;
   }
-  storage->last_addr_offset += written_bytes;
+  storage->last_addr_hash += written_bytes;
 
   sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
   return SC_TRUE;
 }
 
-sc_addr sc_storage_node_new(sc_storage * storage, sc_type type)
+sc_addr sc_storage_node_new_ext(sc_storage * storage, sc_type type)
 {
-  sc_uint64 const addr_offset = storage->last_addr_offset;
-  sc_addr const new_addr = {0, addr_offset};
+  sc_addr_hash const addr_hash = storage->last_addr_hash;
+  sc_addr new_addr;
+  SC_ADDR_LOCAL_FROM_INT(addr_hash, new_addr);
 
   if (_sc_storage_write_element_new(storage, type, 0) == SC_FALSE)
     return SC_ADDR_EMPTY;
@@ -208,9 +209,14 @@ sc_addr sc_storage_node_new(sc_storage * storage, sc_type type)
   return new_addr;
 }
 
+sc_addr sc_storage_node_new(sc_storage * storage, sc_type type)
+{
+  return sc_storage_node_new_ext(storage, sc_type_node | type);
+}
+
 sc_addr sc_storage_link_new(sc_storage * storage, sc_type type)
 {
-  return sc_storage_node_new(storage, type);
+  return sc_storage_node_new_ext(storage, sc_type_link | type);
 }
 
 sc_bool sc_storage_is_element(sc_storage * storage, sc_addr addr)
@@ -223,13 +229,13 @@ sc_bool sc_storage_is_element(sc_storage * storage, sc_addr addr)
   }
   sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
 
-  sc_uint64 addr_offset;
-  sc_io_channel_seek(channel, addr.offset, SC_FS_IO_SEEK_SET, null_ptr);
+  sc_addr_hash addr_offset;
+  sc_io_channel_seek(channel, SC_ADDR_LOCAL_TO_INT(addr), SC_FS_IO_SEEK_SET, null_ptr);
   {
     sc_uint64 read_bytes;
-    if (sc_io_channel_read_chars(channel, (sc_char *)&addr_offset, sizeof(sc_uint64), &read_bytes, null_ptr) !=
+    if (sc_io_channel_read_chars(channel, (sc_char *)&addr_offset, sizeof(sc_addr_hash), &read_bytes, null_ptr) !=
             SC_FS_IO_STATUS_NORMAL ||
-        sizeof(sc_uint64) != read_bytes)
+        sizeof(sc_addr_hash) != read_bytes)
     {
       sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
       return SC_FALSE;
@@ -237,7 +243,7 @@ sc_bool sc_storage_is_element(sc_storage * storage, sc_addr addr)
   }
 
   sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
-  return addr_offset == addr.offset;
+  return addr_offset == SC_ADDR_LOCAL_TO_INT(addr);
 }
 
 sc_bool _sc_storage_write_connector_elements(sc_storage * storage, sc_addr beg, sc_addr end)
@@ -387,11 +393,11 @@ sc_dictionary * _sc_storage_resolve_element_typed_connectors_dictionary(
     sc_addr connector_element_addr)
 {
   sc_dictionary * typed_connectors_dictionary =
-      sc_dictionary_get_by_key_uint64(dictionary, connector_element_addr.offset);
+      sc_dictionary_get_by_key_uint64(dictionary, SC_ADDR_LOCAL_TO_INT(connector_element_addr));
   if (typed_connectors_dictionary == null_ptr)
   {
     _sc_number_dictionary_initialize(&typed_connectors_dictionary);
-    sc_dictionary_append_uint64(dictionary, connector_element_addr.offset, typed_connectors_dictionary);
+    sc_dictionary_append_uint64(dictionary, SC_ADDR_LOCAL_TO_INT(connector_element_addr), typed_connectors_dictionary);
   }
 
   return typed_connectors_dictionary;
@@ -422,7 +428,9 @@ sc_pair * _sc_storage_resolve_element_connectors_slot_info(
     element_connectors_slot_info = sc_list_back(element_connectors_slots)->data;
     if ((sc_uint64)element_connectors_slot_info->second == storage->max_connectors_in_slot)
     {
-      element_connectors_slot_info = sc_make_pair((void *)last_element_connectors_offset, 0);
+      element_connectors_slot_info = sc_make_pair((void *)*last_element_connectors_offset, 0);
+      *last_element_connectors_offset += storage->max_connectors_in_slot * sizeof(sc_uint64);
+
       _sc_storage_update_all_typed_connectors(typed_connectors_dictionary, connector_subtypes, element_connectors_slot_info);
     }
   }
@@ -443,8 +451,9 @@ sc_bool _sc_storage_write_element_connector_in_slot(
   sc_io_channel_seek(channel, element_connectors_offset, SC_FS_IO_SEEK_SET, null_ptr);
 
   sc_uint64 written_bytes = 0;
+  sc_addr_hash const addr_hash = SC_ADDR_LOCAL_TO_INT(connector_addr);
   if (sc_io_channel_write_chars(
-          channel, (sc_char *)&connector_addr.offset, sizeof(sc_uint64), &written_bytes, null_ptr) !=
+          channel, (sc_char *)&addr_hash, sizeof(sc_addr_hash), &written_bytes, null_ptr) !=
           SC_FS_IO_STATUS_NORMAL ||
       sizeof(sc_addr_hash) != written_bytes)
   {
@@ -491,7 +500,7 @@ sc_addr sc_storage_connector_new(sc_storage * storage, sc_type type, sc_addr beg
     return SC_ADDR_EMPTY;
   }
 
-  sc_uint64 const addr_offset = storage->last_addr_offset;
+  sc_uint64 const addr_offset = storage->last_addr_hash;
   sc_addr const new_addr = {0, addr_offset};
 
   if (_sc_storage_write_element_new(storage, type, storage->last_connector_elements_offset) == SC_FALSE)
@@ -528,55 +537,56 @@ sc_addr sc_storage_connector_new(sc_storage * storage, sc_type type, sc_addr beg
   return new_addr;
 }
 
-sc_storage_status sc_storage_element_free(sc_storage * storage, sc_addr addr)
+sc_result sc_storage_element_free(sc_storage * storage, sc_addr addr)
 {
   if (sc_storage_is_element(storage, addr) == SC_FALSE)
   {
-    sc_memory_error("Sc-address `{0, %llu}` is not valid to remove its sc-element", addr.offset);
-    return SC_STORAGE_IS_NOT_ELEMENT;
+    sc_memory_error("Sc-address `{0, %llu}` is not valid to remove its sc-element", SC_ADDR_LOCAL_TO_INT(addr));
+    return SC_RESULT_ERROR_IS_NOT_ELEMENT;
   }
 
   sc_io_channel * channel = sc_io_new_append_channel(storage->elements_types_path, null_ptr);
   if (channel == null_ptr)
   {
     sc_memory_error("Path `%s` doesn't exist", storage->elements_types_path);
-    return SC_STORAGE_WRONG_PATH;
+    return SC_RESULT_ERROR_IO;
   }
   sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
 
-  sc_io_channel_seek(channel, addr.offset, SC_FS_IO_SEEK_SET, null_ptr);
+  sc_io_channel_seek(channel, SC_ADDR_LOCAL_TO_INT(addr), SC_FS_IO_SEEK_SET, null_ptr);
   {
     sc_uint64 read_bytes;
-    if (sc_io_channel_write_chars(channel, (sc_char *)0, sizeof(sc_uint64), &read_bytes, null_ptr) !=
+    sc_addr_hash hash = 0;
+    if (sc_io_channel_write_chars(channel, (sc_char *)&hash, sizeof(sc_addr_hash), &read_bytes, null_ptr) !=
             SC_FS_IO_STATUS_NORMAL ||
-        sizeof(sc_uint64) != read_bytes)
+        sizeof(sc_addr_hash) != read_bytes)
     {
       sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
-      return SC_STORAGE_READ_ERROR;
+      return SC_RESULT_READ_ERROR;
     }
   }
 
   sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
-  return SC_STORAGE_OK;
+  return SC_RESULT_OK;
 }
 
-sc_storage_status sc_storage_get_element_type(sc_storage * storage, sc_addr addr, sc_type * result)
+sc_result sc_storage_get_element_type(sc_storage * storage, sc_addr addr, sc_type * result)
 {
   if (sc_storage_is_element(storage, addr) == SC_FALSE)
   {
-    sc_memory_error("Sc-address `{0, %llu}` is not valid to get its sc-element type", addr.offset);
-    return SC_STORAGE_IS_NOT_ELEMENT;
+    sc_memory_error("Sc-address `{0, %llu}` is not valid to get its sc-element type", SC_ADDR_LOCAL_TO_INT(addr));
+    return SC_RESULT_ERROR_IS_NOT_ELEMENT;
   }
 
   sc_io_channel * channel = sc_io_new_read_channel(storage->elements_types_path, null_ptr);
   if (channel == null_ptr)
   {
     sc_memory_error("Path `%s` doesn't exist", storage->elements_types_path);
-    return SC_STORAGE_WRONG_PATH;
+    return SC_RESULT_ERROR_IO;
   }
   sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
 
-  sc_io_channel_seek(channel, addr.offset + sizeof(sc_uint64), SC_FS_IO_SEEK_SET, null_ptr);
+  sc_io_channel_seek(channel, SC_ADDR_LOCAL_TO_INT(addr) + sizeof(sc_uint64), SC_FS_IO_SEEK_SET, null_ptr);
   {
     sc_uint64 read_bytes;
     if (sc_io_channel_read_chars(channel, (sc_char *)result, sizeof(sc_type), &read_bytes, null_ptr) !=
@@ -585,19 +595,19 @@ sc_storage_status sc_storage_get_element_type(sc_storage * storage, sc_addr addr
     {
       *result = 0;
       sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
-      return SC_STORAGE_READ_ERROR;
+      return SC_RESULT_READ_ERROR;
     }
   }
 
   sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
-  return SC_STORAGE_OK;
+  return SC_RESULT_OK;
 }
 
-sc_storage_status sc_storage_change_element_subtype(sc_storage * storage, sc_addr addr, sc_type type)
+sc_result sc_storage_change_element_subtype(sc_storage * storage, sc_addr addr, sc_type type)
 {
   sc_type element_type;
-  sc_storage_status const status = sc_storage_get_element_type(storage, addr, &element_type);
-  if (status != SC_STORAGE_OK)
+  sc_result const status = sc_storage_get_element_type(storage, addr, &element_type);
+  if (status != SC_RESULT_OK)
     return status;
 
   element_type |= type;
@@ -606,11 +616,11 @@ sc_storage_status sc_storage_change_element_subtype(sc_storage * storage, sc_add
   if (channel == null_ptr)
   {
     sc_memory_error("Path `%s` doesn't exist", storage->elements_types_path);
-    return SC_STORAGE_WRONG_PATH;
+    return SC_RESULT_ERROR_IO;
   }
   sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
 
-  sc_io_channel_seek(channel, addr.offset + sizeof(sc_uint64), SC_FS_IO_SEEK_SET, null_ptr);
+  sc_io_channel_seek(channel, SC_ADDR_LOCAL_TO_INT(addr) + sizeof(sc_uint64), SC_FS_IO_SEEK_SET, null_ptr);
   {
     sc_uint64 read_bytes;
     if (sc_io_channel_write_chars(channel, (sc_char *)&element_type, sizeof(sc_type), &read_bytes, null_ptr) !=
@@ -618,12 +628,12 @@ sc_storage_status sc_storage_change_element_subtype(sc_storage * storage, sc_add
         sizeof(sc_type) != read_bytes)
     {
       sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
-      return SC_STORAGE_READ_ERROR;
+      return SC_RESULT_READ_ERROR;
     }
   }
 
   sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
-  return SC_STORAGE_OK;
+  return SC_RESULT_OK;
 }
 
 sc_uint64 sc_storage_get_connector_elements_offset(sc_storage * storage, sc_addr addr)
@@ -637,13 +647,13 @@ sc_uint64 sc_storage_get_connector_elements_offset(sc_storage * storage, sc_addr
   sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
 
   sc_uint64 connector_elements_offset;
-  sc_io_channel_seek(channel, addr.offset + sizeof(sc_uint64) + sizeof(sc_type), SC_FS_IO_SEEK_SET, null_ptr);
+  sc_io_channel_seek(channel, SC_ADDR_LOCAL_TO_INT(addr) + sizeof(sc_uint64) + sizeof(sc_type), SC_FS_IO_SEEK_SET, null_ptr);
   {
     sc_uint64 read_bytes;
     if (sc_io_channel_read_chars(
-            channel, (sc_char *)&connector_elements_offset, sizeof(sc_type), &read_bytes, null_ptr) !=
+            channel, (sc_char *)&connector_elements_offset, sizeof(sc_uint64), &read_bytes, null_ptr) !=
             SC_FS_IO_STATUS_NORMAL ||
-        sizeof(sc_type) != read_bytes)
+        sizeof(sc_uint64) != read_bytes)
     {
       sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
       return INVALID_OFFSET;
@@ -654,7 +664,7 @@ sc_uint64 sc_storage_get_connector_elements_offset(sc_storage * storage, sc_addr
   return connector_elements_offset;
 }
 
-sc_storage_status sc_storage_get_arc_info(
+sc_result sc_storage_get_arc_info(
     sc_storage * storage,
     sc_addr addr,
     sc_addr * result_begin_addr,
@@ -665,64 +675,64 @@ sc_storage_status sc_storage_get_arc_info(
 
   if (sc_storage_is_element(storage, addr) == SC_FALSE)
   {
-    sc_memory_error("Sc-address `{0, %llu}` is not valid to get its sc-connector begin sc-element", addr.offset);
-    return SC_STORAGE_IS_NOT_ELEMENT;
+    sc_memory_error("Sc-address `{0, %llu}` is not valid to get its sc-connector begin sc-element", SC_ADDR_LOCAL_TO_INT(addr));
+    return SC_RESULT_ERROR_IS_NOT_ELEMENT;
   }
 
   sc_uint64 const connector_elements_offset = sc_storage_get_connector_elements_offset(storage, addr);
   if (connector_elements_offset == 0)
-    return SC_STORAGE_READ_ERROR;
+    return SC_RESULT_READ_ERROR;
 
   sc_io_channel * channel = sc_io_new_read_channel(storage->connectors_elements_path, null_ptr);
   if (channel == null_ptr)
   {
     sc_memory_error("Path `%s` doesn't exist", storage->connectors_elements_path);
-    return SC_STORAGE_WRONG_PATH;
+    return SC_RESULT_ERROR_IO;
   }
   sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
 
-  sc_uint64 beg_addr_offset;
-  sc_uint64 end_addr_offset;
+  sc_addr_hash beg_addr_hash;
+  sc_addr_hash end_addr_hash;
   sc_io_channel_seek(channel, connector_elements_offset, SC_FS_IO_SEEK_SET, null_ptr);
   {
     sc_uint64 read_bytes;
-    if (sc_io_channel_read_chars(channel, (sc_char *)&beg_addr_offset, sizeof(sc_uint64), &read_bytes, null_ptr) !=
+    if (sc_io_channel_read_chars(channel, (sc_char *)&beg_addr_hash, sizeof(sc_addr_hash), &read_bytes, null_ptr) !=
             SC_FS_IO_STATUS_NORMAL ||
-        sizeof(sc_uint64) != read_bytes)
+        sizeof(sc_addr_hash) != read_bytes)
     {
       sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
-      return SC_STORAGE_READ_ERROR;
+      return SC_RESULT_READ_ERROR;
     }
 
-    if (sc_io_channel_read_chars(channel, (sc_char *)&end_addr_offset, sizeof(sc_uint64), &read_bytes, null_ptr) !=
+    if (sc_io_channel_read_chars(channel, (sc_char *)&end_addr_hash, sizeof(sc_addr_hash), &read_bytes, null_ptr) !=
             SC_FS_IO_STATUS_NORMAL ||
-        sizeof(sc_uint64) != read_bytes)
+        sizeof(sc_addr_hash) != read_bytes)
     {
       sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
-      return SC_STORAGE_READ_ERROR;
+      return SC_RESULT_READ_ERROR;
     }
   }
   sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
 
-  *result_begin_addr = (sc_addr){0, beg_addr_offset};
-  *result_end_addr = (sc_addr){0, end_addr_offset};
+  SC_ADDR_LOCAL_FROM_INT(beg_addr_hash, (*result_begin_addr));
+  SC_ADDR_LOCAL_FROM_INT(end_addr_hash, (*result_end_addr));
 
-  return SC_STORAGE_OK;
+  return SC_RESULT_OK;
 }
 
-sc_storage_status sc_storage_get_arc_begin(sc_storage * storage, sc_addr addr, sc_addr * result)
+sc_result sc_storage_get_arc_begin(sc_storage * storage, sc_addr addr, sc_addr * result)
 {
   sc_addr end_addr;
   return sc_storage_get_arc_info(storage, addr, result, &end_addr);
 }
 
-sc_storage_status sc_storage_get_arc_end(sc_storage * storage, sc_addr addr, sc_addr * result)
+sc_result sc_storage_get_arc_end(sc_storage * storage, sc_addr addr, sc_addr * result)
 {
   sc_addr beg_addr;
   return sc_storage_get_arc_info(storage, addr, &beg_addr, result);
 }
 
-sc_storage_status sc_storage_set_link_content(sc_storage * storage, sc_addr addr, const sc_stream * stream)
+sc_result sc_storage_set_link_content(sc_storage * storage, sc_addr addr, const sc_stream * stream)
 {
   sc_char * string = null_ptr;
   sc_uint32 string_size = 0;
@@ -736,13 +746,13 @@ sc_storage_status sc_storage_set_link_content(sc_storage * storage, sc_addr addr
     sc_fs_memory_link_string(SC_ADDR_LOCAL_TO_INT(addr), string, string_size);
   }
   sc_mem_free(string);
-  return SC_STORAGE_OK;
+  return SC_RESULT_OK;
 
 error:
-  return SC_STORAGE_READ_ERROR;
+  return SC_RESULT_READ_ERROR;
 }
 
-sc_storage_status sc_storage_get_link_content(sc_storage * storage, sc_addr addr, sc_stream ** stream)
+sc_result sc_storage_get_link_content(sc_storage * storage, sc_addr addr, sc_stream ** stream)
 {
   sc_uint32 sc_string_size = 0;
   sc_char * sc_string = null_ptr;
@@ -752,13 +762,14 @@ sc_storage_status sc_storage_get_link_content(sc_storage * storage, sc_addr addr
   {
     sc_string_empty(sc_string);
     *stream = sc_stream_memory_new(sc_string, sc_string_size, SC_STREAM_FLAG_READ, SC_TRUE);
-    return SC_STORAGE_NO_STRING;
+    return SC_RESULT_ERROR_NOT_FOUND;
   }
 
-  return SC_STORAGE_OK;
+  *stream = sc_stream_memory_new(sc_string, sc_string_size, SC_STREAM_FLAG_READ, SC_TRUE);
+  return SC_RESULT_OK;
 }
 
-sc_storage_status sc_storage_find_links_with_content_string(
+sc_result sc_storage_find_links_with_content_string(
     sc_storage * storage,
     const sc_stream * stream,
     sc_list ** result_hashes)
@@ -768,7 +779,7 @@ sc_storage_status sc_storage_find_links_with_content_string(
   sc_char * string = null_ptr;
   sc_uint32 string_size = 0;
   if (sc_stream_get_data(stream, &string, &string_size) == SC_FALSE)
-    return SC_STORAGE_READ_ERROR;
+    return SC_RESULT_READ_ERROR;
 
   if (string == null_ptr)
     sc_string_empty(string);
@@ -777,12 +788,12 @@ sc_storage_status sc_storage_find_links_with_content_string(
   sc_mem_free(string);
 
   if (result == SC_FALSE || result_hashes == null_ptr || *result_hashes == 0)
-    return SC_STORAGE_READ_ERROR;
+    return SC_RESULT_READ_ERROR;
 
-  return SC_STORAGE_OK;
+  return SC_RESULT_OK;
 }
 
-sc_storage_status sc_storage_find_links_by_content_substring(
+sc_result sc_storage_find_links_by_content_substring(
     sc_storage * storage,
     const sc_stream * stream,
     sc_list ** result_hashes,
@@ -793,7 +804,7 @@ sc_storage_status sc_storage_find_links_by_content_substring(
   sc_char * string = null_ptr;
   sc_uint32 string_size = 0;
   if (sc_stream_get_data(stream, &string, &string_size) == SC_FALSE)
-    return SC_STORAGE_READ_ERROR;
+    return SC_RESULT_READ_ERROR;
 
   if (string == null_ptr)
     sc_string_empty(string);
@@ -803,12 +814,12 @@ sc_storage_status sc_storage_find_links_by_content_substring(
   sc_mem_free(string);
 
   if (result == SC_FALSE)
-    return SC_STORAGE_READ_ERROR;
+    return SC_RESULT_READ_ERROR;
 
-  return SC_STORAGE_OK;
+  return SC_RESULT_OK;
 }
 
-sc_storage_status sc_storage_find_links_contents_by_content_substring(
+sc_result sc_storage_find_links_contents_by_content_substring(
     sc_storage * storage,
     sc_stream const * stream,
     sc_list ** result_strings,
@@ -819,7 +830,7 @@ sc_storage_status sc_storage_find_links_contents_by_content_substring(
   sc_char * string = null_ptr;
   sc_uint32 string_size = 0;
   if (sc_stream_get_data(stream, &string, &string_size) == SC_FALSE)
-    return SC_STORAGE_READ_ERROR;
+    return SC_RESULT_READ_ERROR;
 
   if (string == null_ptr)
     sc_string_empty(string);
@@ -828,7 +839,7 @@ sc_storage_status sc_storage_find_links_contents_by_content_substring(
       sc_fs_memory_get_strings_by_substring(string, string_size, max_length_to_search_as_prefix, result_strings);
   sc_mem_free(string);
   if (result == SC_FALSE)
-    return SC_STORAGE_READ_ERROR;
+    return SC_RESULT_READ_ERROR;
 
   return result;
 }

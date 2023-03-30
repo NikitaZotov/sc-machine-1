@@ -20,8 +20,8 @@ ScAddr::ScAddr(sc_addr const & addr)
 
 ScAddr::ScAddr(ScAddr::HashType const & hash)
 {
-  m_realAddr.offset = hash & 0xffff;
-  m_realAddr.seg = (hash >> 16) & 0xffff;
+  m_realAddr.offset = 0;
+  m_realAddr.seg = hash;
 }
 
 bool ScAddr::IsValid() const
@@ -36,7 +36,7 @@ void ScAddr::Reset()
 
 ScAddr::HashType ScAddr::Hash() const
 {
-  return ((m_realAddr.seg << 16) | m_realAddr.offset);
+  return m_realAddr.offset;
 }
 
 bool ScAddr::operator==(ScAddr const & other) const

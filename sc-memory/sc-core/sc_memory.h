@@ -44,7 +44,7 @@ _SC_EXTERN void sc_memory_shutdown_ext();
  */
 _SC_EXTERN sc_memory_context * sc_memory_context_new(sc_uint8 levels);
 
-_SC_EXTERN sc_storage * sc_memory_context_get_storage(sc_memory_context * context);
+_SC_EXTERN sc_storage * sc_memory_context_get_storage(sc_memory_context const * context);
 
 /*! Function that destroys created memory context. You can use that function
  * just for contexts, that were created with @see sc_memory_context_new

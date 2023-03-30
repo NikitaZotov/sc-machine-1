@@ -50,7 +50,7 @@ sc_memory_context * sc_memory_initialize(const sc_memory_params * params)
   sc_message("\tInit memory generated structure: %s", params->init_memory_generated_structure);
 
   if (sc_storage_initialize(&storage, params->repo_path, params->max_searchable_string_size, params->clear) !=
-      SC_STORAGE_OK)
+      SC_RESULT_OK)
   {
     sc_memory_error("Error while initialize sc-storage");
     goto error;
@@ -158,7 +158,7 @@ sc_memory_context * sc_memory_context_new(sc_uint8 levels)
   return sc_memory_context_new_impl(levels);
 }
 
-sc_storage * sc_memory_context_get_storage(sc_memory_context * context)
+sc_storage * sc_memory_context_get_storage(sc_memory_context const * context)
 {
   return context->storage;
 }
@@ -212,12 +212,9 @@ void sc_memory_context_free(sc_memory_context * ctx)
 
 void sc_memory_context_free_impl(sc_memory_context * ctx)
 {
-  sc_assert(ctx != null_ptr);
-
   g_mutex_lock(&s_concurrency_mutex);
 
   sc_memory_context * c = g_hash_table_lookup(s_context_hash_table, GINT_TO_POINTER(ctx->id));
-  sc_assert(c == ctx);
   g_hash_table_remove(s_context_hash_table, GINT_TO_POINTER(ctx->id));
   --s_context_id_count;
 
@@ -228,20 +225,17 @@ void sc_memory_context_free_impl(sc_memory_context * ctx)
 
 void sc_memory_context_pending_begin(sc_memory_context * ctx)
 {
-  sc_assert((ctx->flags & SC_CONTEXT_FLAG_PENDING_EVENTS) == 0);
   ctx->flags |= SC_CONTEXT_FLAG_PENDING_EVENTS;
 }
 
 void sc_memory_context_pending_end(sc_memory_context * ctx)
 {
-  sc_assert((ctx->flags & SC_CONTEXT_FLAG_PENDING_EVENTS) != 0);
   ctx->flags = ctx->flags & (~SC_CONTEXT_FLAG_PENDING_EVENTS);
   sc_memory_context_emit_events(ctx);
 }
 
 void sc_memory_context_pend_event(sc_memory_context * ctx, sc_event_emit_params * params)
 {
-  sc_assert((ctx->flags & SC_CONTEXT_FLAG_PENDING_EVENTS) != 0);
   ctx->pend_events = g_slist_append(ctx->pend_events, params);
 }
 
@@ -286,7 +280,7 @@ sc_addr sc_memory_link_new(sc_memory_context const * ctx)
 
 sc_addr sc_memory_link_new2(sc_memory_context const * ctx, sc_bool is_const)
 {
-  return sc_storage_link_new(storage, is_const);
+  return sc_storage_link_new(storage, is_const ? sc_type_const : sc_type_var);
 }
 
 sc_addr sc_memory_arc_new(sc_memory_context * ctx, sc_type type, sc_addr beg, sc_addr end)

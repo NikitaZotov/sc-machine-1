@@ -88,9 +88,9 @@ struct _sc_addr
 /*! Next defines help to pack local part of sc-addr (segment and offset) into int value
  * and get them back from int
  */
-#  define SC_ADDR_LOCAL_TO_INT(addr) (sc_uint64)(((addr).seg << 16) | ((addr).offset & 0xffff))
-#  define SC_ADDR_LOCAL_OFFSET_FROM_INT(v) (sc_uint64)((v)&0x0000ffff)
-#  define SC_ADDR_LOCAL_SEG_FROM_INT(v) (sc_uint8) SC_ADDR_LOCAL_OFFSET_FROM_INT(v >> 16)
+#  define SC_ADDR_LOCAL_TO_INT(addr) (sc_uint64)(addr).offset
+#  define SC_ADDR_LOCAL_OFFSET_FROM_INT(v) (sc_uint64)v
+#  define SC_ADDR_LOCAL_SEG_FROM_INT(v) 0
 #  define SC_ADDR_LOCAL_FROM_INT(hash, addr) \
     addr.seg = SC_ADDR_LOCAL_SEG_FROM_INT(hash); \
     addr.offset = SC_ADDR_LOCAL_OFFSET_FROM_INT(hash)
@@ -181,6 +181,9 @@ enum _sc_result
   SC_RESULT_ERROR_NO_READ_RIGHTS,   // no rights to read object
   SC_RESULT_NO,                     // no any result
   SC_RESULT_UNKNOWN,                // result unknown
+  SC_RESULT_ERROR_IS_NOT_ELEMENT,
+  SC_RESULT_WRITE_ERROR,
+  SC_RESULT_READ_ERROR,
 
   // add atomic types before
   SC_RESULT_COUNT,  // number of result types

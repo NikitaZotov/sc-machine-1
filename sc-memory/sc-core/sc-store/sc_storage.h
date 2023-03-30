@@ -20,24 +20,12 @@
   }
 #define INVALID_OFFSET 0
 
-typedef enum _sc_storage_status
-{
-  SC_STORAGE_OK = 0,
-
-  SC_STORAGE_NO,  // no memory, it is null_ptr or not correct
-  SC_STORAGE_NO_STRING,
-  SC_STORAGE_IS_NOT_ELEMENT,
-  SC_STORAGE_WRONG_PATH,
-  SC_STORAGE_WRITE_ERROR,
-  SC_STORAGE_READ_ERROR
-} sc_storage_status;
-
 typedef struct _sc_storage
 {
   sc_char * path;  // path to all dictionary files
 
   sc_char * elements_types_path;  // path to elements types
-  sc_uint64 last_addr_offset;     // last element addr hash
+  sc_uint64 last_addr_hash;     // last element addr hash
 
   sc_char * connectors_elements_path;  // path to connectors elements
   sc_uint64 last_connector_elements_offset;
@@ -54,14 +42,14 @@ typedef struct _sc_storage
 } sc_storage;
 
 //! Initialize sc storage in specified path
-sc_storage_status sc_storage_initialize(
+sc_result sc_storage_initialize(
     sc_storage ** storage,
     sc_char const * path,
     sc_uint64 max_searchable_string_size,
     sc_bool clear);
 
 //! Shutdown sc storage
-sc_storage_status sc_storage_shutdown(sc_storage * storage, sc_bool save_state);
+sc_result sc_storage_shutdown(sc_storage * storage, sc_bool save_state);
 
 /*! Create new sc-node
  * @param type Type of new sc-node
@@ -96,7 +84,7 @@ sc_addr sc_storage_connector_new(sc_storage * storage, sc_type type, sc_addr beg
  * @return If input params are correct and element erased, then return SC_OK;
  * otherwise return SC_ERROR
  */
-sc_storage_status sc_storage_element_free(sc_storage * storage, sc_addr addr);
+sc_result sc_storage_element_free(sc_storage * storage, sc_addr addr);
 
 /*! Get type of sc-element with specified sc-addr
  * @param addr sc-addr of element to get type
@@ -104,14 +92,14 @@ sc_storage_status sc_storage_element_free(sc_storage * storage, sc_addr addr);
  * @return If input params are correct and type resolved, then return SC_OK;
  * otherwise return SC_ERROR
  */
-sc_storage_status sc_storage_get_element_type(sc_storage * storage, sc_addr addr, sc_type * result);
+sc_result sc_storage_get_element_type(sc_storage * storage, sc_addr addr, sc_type * result);
 
 /*! Change element subtype
  * @param addr sc-addr of element to set new subtype
  * @param type New type of sc-element
  * @return If type changed, then returns SC_RESULT_OK; otherwise returns SC_RESULT_ERROR
  */
-sc_storage_status sc_storage_change_element_subtype(sc_storage * storage, sc_addr addr, sc_type type);
+sc_result sc_storage_change_element_subtype(sc_storage * storage, sc_addr addr, sc_type type);
 
 /*! Returns sc-addr of begin element of specified arc
  * @param addr sc-addr of arc to get begin element
@@ -119,7 +107,7 @@ sc_storage_status sc_storage_change_element_subtype(sc_storage * storage, sc_add
  * @return If input params are correct and begin element resolved, then return SC_OK.
  * If element with specified addr isn't an arc, then return SC_INVALID_TYPE
  */
-sc_storage_status sc_storage_get_arc_begin(sc_storage * storage, sc_addr addr, sc_addr * result);
+sc_result sc_storage_get_arc_begin(sc_storage * storage, sc_addr addr, sc_addr * result);
 
 /*! Returns sc-addr of end element of specified arc
  * @param addr sc-addr of arc to get end element
@@ -127,12 +115,12 @@ sc_storage_status sc_storage_get_arc_begin(sc_storage * storage, sc_addr addr, s
  * @return If input params are correct and end element resolved, then return SC_OK.
  * If element with specified addr isn't an arc, then return SC_INVALID_TYPE
  */
-sc_storage_status sc_storage_get_arc_end(sc_storage * storage, sc_addr addr, sc_addr * result);
+sc_result sc_storage_get_arc_end(sc_storage * storage, sc_addr addr, sc_addr * result);
 
 /*! Like a sc_storage_get_arc_begin and sc_storage_get_arc_end call
  * @see sc_storage_get_arc_begin, @see sc_storage_get_arc_end
  */
-sc_storage_status sc_storage_get_arc_info(
+sc_result sc_storage_get_arc_info(
     sc_storage * storage,
     sc_addr addr,
     sc_addr * result_begin_addr,
@@ -149,7 +137,7 @@ sc_storage_status sc_storage_get_arc_info(
  * <li>SC_ERROR - unknown error</li>
  * </ul>
  */
-sc_storage_status sc_storage_set_link_content(sc_storage * storage, sc_addr addr, const sc_stream * stream);
+sc_result sc_storage_set_link_content(sc_storage * storage, sc_addr addr, const sc_stream * stream);
 
 /*! Returns content data from specified sc-link
  * @param addr sc-addr of sc-link to get content data
@@ -162,7 +150,7 @@ sc_storage_status sc_storage_set_link_content(sc_storage * storage, sc_addr addr
  * <li>SC_ERROR - unknown error</li>
  * </ul>
  */
-sc_storage_status sc_storage_get_link_content(sc_storage * storage, sc_addr addr, sc_stream ** stream);
+sc_result sc_storage_get_link_content(sc_storage * storage, sc_addr addr, sc_stream ** stream);
 
 /*! Search sc-link addrs by specified data
  * @param stream Pointer to stream that contains data for search
@@ -172,7 +160,7 @@ sc_storage_status sc_storage_get_link_content(sc_storage * storage, sc_addr addr
  * In any case \p result_count contains number of found sc-addrs.
  * @attention \p result array need to be free after usage
  */
-sc_storage_status sc_storage_find_links_with_content_string(
+sc_result sc_storage_find_links_with_content_string(
     sc_storage * storage,
     sc_stream const * stream,
     sc_list ** result_addrs);
@@ -187,7 +175,7 @@ sc_storage_status sc_storage_find_links_with_content_string(
  * In any case \p result_count contains number of found sc-addrs.
  * @attention \p result array need to be free after usage
  */
-sc_storage_status sc_storage_find_links_by_content_substring(
+sc_result sc_storage_find_links_by_content_substring(
     sc_storage * storage,
     sc_stream const * stream,
     sc_list ** result_hashes,
@@ -202,12 +190,12 @@ sc_storage_status sc_storage_find_links_by_content_substring(
  * In any case \p result_count contains number of found sc-strings.
  * @attention \p result array need to be free after usage
  */
-sc_storage_status sc_storage_find_links_contents_by_content_substring(
+sc_result sc_storage_find_links_contents_by_content_substring(
     sc_storage * storage,
     sc_stream const * stream,
     sc_list ** result_strings,
     sc_uint32 max_length_to_search_as_prefix);
 
-sc_storage_status sc_storage_save(sc_storage * storage, sc_memory_context const * ctx);
+sc_result sc_storage_save(sc_storage * storage, sc_memory_context const * ctx);
 
 #endif
