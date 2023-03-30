@@ -256,7 +256,8 @@ sc_bool _sc_storage_write_connector_elements(sc_storage * storage, sc_addr beg, 
   sc_io_channel_seek(channel, storage->last_connector_elements_offset, SC_FS_IO_SEEK_SET, null_ptr);
 
   sc_uint64 written_bytes = 0;
-  if (sc_io_channel_write_chars(channel, (sc_char *)&beg.offset, sizeof(sc_uint64), &written_bytes, null_ptr) !=
+  sc_addr_hash const begin_addr_hash = SC_ADDR_LOCAL_TO_INT(beg);
+  if (sc_io_channel_write_chars(channel, (sc_char *)&begin_addr_hash, sizeof(sc_addr_hash), &written_bytes, null_ptr) !=
           SC_FS_IO_STATUS_NORMAL ||
       sizeof(sc_addr_hash) != written_bytes)
   {
@@ -266,9 +267,10 @@ sc_bool _sc_storage_write_connector_elements(sc_storage * storage, sc_addr beg, 
   }
   storage->last_connector_elements_offset += written_bytes;
 
-  if (sc_io_channel_write_chars(channel, (sc_char *)&end.offset, sizeof(sc_uint64), &written_bytes, null_ptr) !=
+  sc_addr_hash const end_addr_hash = SC_ADDR_LOCAL_TO_INT(end);
+  if (sc_io_channel_write_chars(channel, (sc_char *)&end_addr_hash, sizeof(sc_addr_hash), &written_bytes, null_ptr) !=
           SC_FS_IO_STATUS_NORMAL ||
-      sizeof(sc_uint64) != written_bytes)
+      sizeof(sc_addr_hash) != written_bytes)
   {
     sc_memory_error("Error while attribute `end.offset` writing");
     sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
