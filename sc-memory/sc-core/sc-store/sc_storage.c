@@ -54,26 +54,48 @@ sc_result sc_storage_initialize(
   *storage = sc_mem_new(sc_storage, 1);
   {
     sc_str_cpy((*storage)->path, path, sc_str_len(path));
+    (*storage)->max_segments = 512;
+    (*storage)->max_slots_in_segment = 65536;
     (*storage)->max_connectors_in_slot = 256;
 
     {
       static sc_char const * elements_types = "elements_types" SC_FS_EXT;
       sc_fs_initialize_file_path(path, elements_types, &(*storage)->elements_types_path);
+      if (sc_fs_is_file(path) == SC_FALSE)
+        sc_fs_create_file((*storage)->elements_types_path);
+
+      (*storage)->elements_types_channel = sc_io_new_append_channel((*storage)->elements_types_path, null_ptr);
+      sc_io_channel_set_encoding((*storage)->elements_types_channel, null_ptr, null_ptr);
       (*storage)->last_addr_hash = 1;
 
       static sc_char const * connectors_elements = "connectors_elements" SC_FS_EXT;
       sc_fs_initialize_file_path(path, connectors_elements, &(*storage)->connectors_elements_path);
+      if (sc_fs_is_file(path) == SC_FALSE)
+        sc_fs_create_file((*storage)->connectors_elements_path);
+
+      (*storage)->connectors_elements_channel = sc_io_new_append_channel((*storage)->connectors_elements_path, null_ptr);
+      sc_io_channel_set_encoding((*storage)->connectors_elements_channel, null_ptr, null_ptr);
       (*storage)->last_connector_elements_offset = 1;
     }
 
-    _sc_number_dictionary_initialize(&(*storage)->input_connectors_dictionary);
+    (*storage)->input_connectors_segments = sc_mem_new(sc_list ***, (*storage)->max_segments);
     static sc_char const * input_connectors = "input_connectors" SC_FS_EXT;
     sc_fs_initialize_file_path(path, input_connectors, &(*storage)->input_connectors_path);
+    if (sc_fs_is_file(path) == SC_FALSE)
+      sc_fs_create_file((*storage)->input_connectors_path);
+
+    (*storage)->input_connectors_channel = sc_io_new_append_channel((*storage)->input_connectors_path, null_ptr);
+    sc_io_channel_set_encoding((*storage)->input_connectors_channel, null_ptr, null_ptr);
     (*storage)->last_input_connectors_offset = 1;
 
-    _sc_number_dictionary_initialize(&(*storage)->output_connectors_dictionary);
+    (*storage)->output_connectors_segments = sc_mem_new(sc_list ***, (*storage)->max_segments);
     static sc_char const * output_connectors = "output_connectors" SC_FS_EXT;
     sc_fs_initialize_file_path(path, output_connectors, &(*storage)->output_connectors_path);
+    if (sc_fs_is_file(path) == SC_FALSE)
+      sc_fs_create_file((*storage)->output_connectors_path);
+
+    (*storage)->output_connectors_channel = sc_io_new_append_channel((*storage)->output_connectors_path, null_ptr);
+    sc_io_channel_set_encoding((*storage)->output_connectors_channel, null_ptr, null_ptr);
     (*storage)->last_output_connectors_offset = 1;
   }
   sc_memory_info("Configuration:");
@@ -106,13 +128,16 @@ sc_result sc_storage_shutdown(sc_storage * storage, sc_bool save_state)
 
     {
       sc_mem_free(storage->elements_types_path);
-      sc_mem_free(storage->connectors_elements_path);
-    }
-    sc_dictionary_destroy(storage->input_connectors_dictionary, sc_dictionary_node_destroy);
-    sc_mem_free(storage->input_connectors_path);
+      sc_io_channel_shutdown(storage->elements_types_channel, SC_TRUE, null_ptr);
 
-    sc_dictionary_destroy(storage->output_connectors_dictionary, sc_dictionary_node_destroy);
+      sc_mem_free(storage->connectors_elements_path);
+      sc_io_channel_shutdown(storage->connectors_elements_channel, SC_TRUE, null_ptr);
+    }
+    sc_mem_free(storage->input_connectors_path);
+    sc_io_channel_shutdown(storage->input_connectors_channel, SC_TRUE, null_ptr);
+
     sc_mem_free(storage->output_connectors_path);
+    sc_io_channel_shutdown(storage->output_connectors_channel, SC_TRUE, null_ptr);
   }
   sc_mem_free(storage);
   sc_memory_info("Successfully shutdown");
@@ -131,69 +156,58 @@ sc_result sc_storage_shutdown(sc_storage * storage, sc_bool save_state)
 
 sc_bool _sc_storage_write_element_new(sc_storage * storage, sc_type type, sc_uint64 connector_elements_offset)
 {
-  if (sc_fs_is_file(storage->elements_types_path) == SC_FALSE)
-    sc_fs_create_file(storage->elements_types_path);
-
-  sc_io_channel * channel = sc_io_new_append_channel(storage->elements_types_path, null_ptr);
-  sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
-  sc_io_channel_seek(channel, storage->last_addr_hash, SC_FS_IO_SEEK_SET, null_ptr);
+  sc_io_channel_seek(storage->elements_types_channel, storage->last_addr_hash, SC_FS_IO_SEEK_SET, null_ptr);
 
   sc_uint64 written_bytes = 0;
   if (sc_io_channel_write_chars(
-          channel, (sc_char *)&storage->last_addr_hash, sizeof(sc_addr_hash), &written_bytes, null_ptr) !=
+          storage->elements_types_channel, (sc_char *)&storage->last_addr_hash, sizeof(sc_addr_hash), &written_bytes, null_ptr) !=
           SC_FS_IO_STATUS_NORMAL ||
       sizeof(sc_addr_hash) != written_bytes)
   {
     sc_memory_error("Error while attribute `last_addr_hash` writing");
-    sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
     return SC_FALSE;
   }
   storage->last_addr_hash += written_bytes;
 
-  if (sc_io_channel_write_chars(channel, (sc_char *)&type, sizeof(sc_type), &written_bytes, null_ptr) !=
+  if (sc_io_channel_write_chars(storage->elements_types_channel, (sc_char *)&type, sizeof(sc_type), &written_bytes, null_ptr) !=
           SC_FS_IO_STATUS_NORMAL ||
       sizeof(sc_type) != written_bytes)
   {
     sc_memory_error("Error while attribute `type` writing");
-    sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
     return SC_FALSE;
   }
   storage->last_addr_hash += written_bytes;
 
   if (sc_io_channel_write_chars(
-          channel, (sc_char *)&connector_elements_offset, sizeof(sc_uint64), &written_bytes, null_ptr) !=
+          storage->elements_types_channel, (sc_char *)&connector_elements_offset, sizeof(sc_uint64), &written_bytes, null_ptr) !=
           SC_FS_IO_STATUS_NORMAL ||
       sizeof(sc_uint64) != written_bytes)
   {
     sc_memory_error("Error while attribute `connector_elements_offset` writing");
-    sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
     return SC_FALSE;
   }
   storage->last_addr_hash += written_bytes;
 
   if (sc_io_channel_write_chars(
-          channel, (sc_char *)&storage->last_input_connectors_offset, sizeof(sc_uint64), &written_bytes, null_ptr) !=
+          storage->elements_types_channel, (sc_char *)&storage->last_input_connectors_offset, sizeof(sc_uint64), &written_bytes, null_ptr) !=
           SC_FS_IO_STATUS_NORMAL ||
       sizeof(sc_uint64) != written_bytes)
   {
     sc_memory_error("Error while attribute `last_input_connectors_offset` writing");
-    sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
     return SC_FALSE;
   }
   storage->last_addr_hash += written_bytes;
 
   if (sc_io_channel_write_chars(
-          channel, (sc_char *)&storage->last_output_connectors_offset, sizeof(sc_uint64), &written_bytes, null_ptr) !=
+          storage->elements_types_channel, (sc_char *)&storage->last_output_connectors_offset, sizeof(sc_uint64), &written_bytes, null_ptr) !=
           SC_FS_IO_STATUS_NORMAL ||
       sizeof(sc_uint64) != written_bytes)
   {
     sc_memory_error("Error while attribute `last_output_connectors_offset` writing");
-    sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
     return SC_FALSE;
   }
   storage->last_addr_hash += written_bytes;
 
-  sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
   return SC_TRUE;
 }
 
@@ -221,140 +235,136 @@ sc_addr sc_storage_link_new(sc_storage * storage, sc_type type)
 
 sc_bool sc_storage_is_element(sc_storage * storage, sc_addr addr)
 {
-  sc_io_channel * channel = sc_io_new_read_channel(storage->elements_types_path, null_ptr);
-  if (channel == null_ptr)
+  if (storage->elements_types_channel == null_ptr)
   {
     sc_memory_error("Path `%s` doesn't exist", storage->elements_types_path);
     return SC_FALSE;
   }
-  sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
 
   sc_addr_hash addr_offset;
-  sc_io_channel_seek(channel, SC_ADDR_LOCAL_TO_INT(addr), SC_FS_IO_SEEK_SET, null_ptr);
+  sc_io_channel_seek(storage->elements_types_channel, SC_ADDR_LOCAL_TO_INT(addr), SC_FS_IO_SEEK_SET, null_ptr);
   {
     sc_uint64 read_bytes;
-    if (sc_io_channel_read_chars(channel, (sc_char *)&addr_offset, sizeof(sc_addr_hash), &read_bytes, null_ptr) !=
+    if (sc_io_channel_read_chars(storage->elements_types_channel, (sc_char *)&addr_offset, sizeof(sc_addr_hash), &read_bytes, null_ptr) !=
             SC_FS_IO_STATUS_NORMAL ||
         sizeof(sc_addr_hash) != read_bytes)
     {
-      sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
       return SC_FALSE;
     }
   }
 
-  sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
   return addr_offset == SC_ADDR_LOCAL_TO_INT(addr);
 }
 
 sc_bool _sc_storage_write_connector_elements(sc_storage * storage, sc_addr beg, sc_addr end)
 {
-  if (sc_fs_is_file(storage->connectors_elements_path) == SC_FALSE)
-    sc_fs_create_file(storage->connectors_elements_path);
-
-  sc_io_channel * channel = sc_io_new_append_channel(storage->connectors_elements_path, null_ptr);
-  sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
-  sc_io_channel_seek(channel, storage->last_connector_elements_offset, SC_FS_IO_SEEK_SET, null_ptr);
+  sc_io_channel_seek(storage->connectors_elements_channel, storage->last_connector_elements_offset, SC_FS_IO_SEEK_SET, null_ptr);
 
   sc_uint64 written_bytes = 0;
   sc_addr_hash const begin_addr_hash = SC_ADDR_LOCAL_TO_INT(beg);
-  if (sc_io_channel_write_chars(channel, (sc_char *)&begin_addr_hash, sizeof(sc_addr_hash), &written_bytes, null_ptr) !=
+  if (sc_io_channel_write_chars(storage->connectors_elements_channel, (sc_char *)&begin_addr_hash, sizeof(sc_addr_hash), &written_bytes, null_ptr) !=
           SC_FS_IO_STATUS_NORMAL ||
       sizeof(sc_addr_hash) != written_bytes)
   {
     sc_memory_error("Error while attribute `beg.offset` writing");
-    sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
     return SC_FALSE;
   }
   storage->last_connector_elements_offset += written_bytes;
 
   sc_addr_hash const end_addr_hash = SC_ADDR_LOCAL_TO_INT(end);
-  if (sc_io_channel_write_chars(channel, (sc_char *)&end_addr_hash, sizeof(sc_addr_hash), &written_bytes, null_ptr) !=
+  if (sc_io_channel_write_chars(storage->connectors_elements_channel, (sc_char *)&end_addr_hash, sizeof(sc_addr_hash), &written_bytes, null_ptr) !=
           SC_FS_IO_STATUS_NORMAL ||
       sizeof(sc_addr_hash) != written_bytes)
   {
     sc_memory_error("Error while attribute `end.offset` writing");
-    sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
     return SC_FALSE;
   }
   storage->last_connector_elements_offset += written_bytes;
 
-  sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
   return SC_TRUE;
 }
 
-sc_type _sc_storage_define_connector_syntactic_type(sc_type connector_type)
+sc_uint16 _sc_storage_define_connector_syntactic_type(sc_type connector_type)
 {
-  sc_type connector_syntactic_type;
-  if ((connector_type & sc_type_arc_common) == sc_type_arc_common)
-    connector_syntactic_type = sc_type_arc_common;
+  sc_uint16 connector_syntactic_type;
+  if ((connector_type & sc_type_arc_access) == sc_type_arc_access)
+    connector_syntactic_type = 1;
+  else if ((connector_type & sc_type_arc_common) == sc_type_arc_common)
+    connector_syntactic_type = 2;
   else if ((connector_type & sc_type_edge_common) == sc_type_edge_common)
-    connector_syntactic_type = sc_type_edge_common;
-  else if ((connector_type & sc_type_arc_access) == sc_type_arc_access)
-    connector_syntactic_type = sc_type_arc_access;
+    connector_syntactic_type = 3;
   else
     connector_syntactic_type = 0;
 
   return connector_syntactic_type;
 }
 
-sc_type _sc_storage_define_const_element_type(sc_type element_type)
+sc_uint16 _sc_storage_define_access_connector_type(sc_type connector_type)
 {
-  sc_type const_element_type;
-  if ((element_type & sc_type_const) == sc_type_const)
-    const_element_type = sc_type_const;
-  else if ((element_type & sc_type_var) == sc_type_var)
-    const_element_type = sc_type_var;
-  else
-    const_element_type = 0;
-
-  return const_element_type;
-}
-
-sc_type _sc_storage_define_access_connector_type(sc_type connector_type)
-{
-  sc_type access_connector_type;
+  sc_uint16 access_connector_type;
   if ((connector_type & sc_type_arc_pos) == sc_type_arc_pos)
-    access_connector_type = sc_type_arc_pos;
+    access_connector_type = 4;
   else if ((connector_type & sc_type_arc_fuz) == sc_type_arc_fuz)
-    access_connector_type = sc_type_arc_fuz;
+    access_connector_type = 6;
   else if ((connector_type & sc_type_arc_neg) == sc_type_arc_neg)
-    access_connector_type = sc_type_arc_neg;
+    access_connector_type = 8;
   else
     access_connector_type = 0;
 
   return access_connector_type;
 }
 
-sc_type _sc_storage_define_perm_element_type(sc_type element_type)
+sc_uint16 _sc_storage_define_const_element_type(sc_type element_type)
 {
-  sc_type perm_element_type;
+  sc_uint16 const_element_type;
+  if ((element_type & sc_type_const) == sc_type_const)
+    const_element_type = 10;
+  else if ((element_type & sc_type_var) == sc_type_var)
+    const_element_type = 14;
+  else
+    const_element_type = 0;
+
+  return const_element_type;
+}
+
+sc_uint16 _sc_storage_define_perm_element_type(sc_type element_type)
+{
+  sc_uint16 perm_element_type;
   if ((element_type & sc_type_arc_perm) == sc_type_arc_perm)
-    perm_element_type = sc_type_arc_perm;
+    perm_element_type = 18;
   else if ((element_type & sc_type_arc_temp) == sc_type_arc_temp)
-    perm_element_type = sc_type_arc_temp;
+    perm_element_type = 22;
   else
     perm_element_type = 0;
 
   return perm_element_type;
 }
 
+sc_uint16 sc_storage_define_connector_type_code(sc_type connector_type)
+{
+  return _sc_storage_define_connector_syntactic_type(connector_type) +
+         _sc_storage_define_access_connector_type(connector_type) +
+         _sc_storage_define_const_element_type(connector_type) +
+         _sc_storage_define_perm_element_type(connector_type);
+}
+
 sc_list * _sc_storage_get_all_connector_subtypes(sc_type connector_type)
 {
   sc_list * types;
   sc_list_init(&types);
-  sc_type const syntactic_connector_type = _sc_storage_define_connector_syntactic_type(connector_type);
+  sc_uint16 const syntactic_connector_type = _sc_storage_define_connector_syntactic_type(connector_type);
   if (syntactic_connector_type != 0)
     sc_list_push_back(types, (void *)(sc_uint64)syntactic_connector_type);
 
-  sc_type const const_element_type = _sc_storage_define_const_element_type(connector_type);
-  if (const_element_type != 0)
-    sc_list_push_back(types, (void *)(sc_uint64)const_element_type);
-
-  sc_type const access_connector_type = _sc_storage_define_access_connector_type(connector_type);
+  sc_uint16 const access_connector_type = _sc_storage_define_access_connector_type(connector_type);
   if (access_connector_type != 0)
     sc_list_push_back(types, (void *)(sc_uint64)access_connector_type);
 
-  sc_type const perm_element_type = _sc_storage_define_perm_element_type(connector_type);
+  sc_uint16 const const_element_type = _sc_storage_define_const_element_type(connector_type);
+  if (const_element_type != 0)
+    sc_list_push_back(types, (void *)(sc_uint64)const_element_type);
+
+  sc_uint16 const perm_element_type = _sc_storage_define_perm_element_type(connector_type);
   if (perm_element_type != 0)
     sc_list_push_back(types, (void *)(sc_uint64)perm_element_type);
 
@@ -362,68 +372,77 @@ sc_list * _sc_storage_get_all_connector_subtypes(sc_type connector_type)
 }
 
 void _sc_storage_update_all_typed_connectors(
-    sc_dictionary * typed_connectors_dictionary, sc_list * connector_subtypes, sc_pair * element_connectors_slot_info)
+    sc_list ** typed_connectors, sc_list * connector_subtypes, sc_pair * element_connectors_slot_info)
 {
   sc_uint8 card_size = (sc_uint8)pow(2, connector_subtypes->size);
   for (sc_uint8 i = 0; i < card_size; ++i)
   {
     sc_uint8 num = i;
-    sc_type subtype = 0;
+    sc_uint16 subtype = 0;
 
     sc_iterator * it = sc_list_iterator(connector_subtypes);
     for (sc_uint8 j = connector_subtypes->size - 1; j >= 0 && sc_iterator_next(it); --j) {
       if (num % 2)
-        subtype |= (sc_type)(sc_uint64)sc_iterator_get(it);
+        subtype += (sc_uint16)(sc_uint64)sc_iterator_get(it);
 
       num /= 2;
     }
     sc_iterator_destroy(it);
 
-    sc_list * element_connectors_slots = sc_dictionary_get_by_key_uint64(typed_connectors_dictionary, subtype);
+    sc_list * element_connectors_slots = typed_connectors[subtype];
     if (element_connectors_slots == null_ptr)
     {
       sc_list_init(&element_connectors_slots);
-      sc_dictionary_append_uint64(typed_connectors_dictionary, subtype, (void *)element_connectors_slots);
+      typed_connectors[subtype] = element_connectors_slots;
     }
 
     sc_list_push_back(element_connectors_slots, element_connectors_slot_info);
   }
 }
 
-sc_dictionary * _sc_storage_resolve_element_typed_connectors_dictionary(
-    sc_dictionary * dictionary,
+sc_list ** sc_storage_resolve_element_typed_connectors(
+    sc_storage * storage,
+    sc_list **** connectors_segments,
     sc_addr connector_element_addr)
 {
-  sc_dictionary * typed_connectors_dictionary =
-      sc_dictionary_get_by_key_uint64(dictionary, SC_ADDR_LOCAL_TO_INT(connector_element_addr));
-  if (typed_connectors_dictionary == null_ptr)
+  sc_addr_hash const connector_element_addr_hash = SC_ADDR_LOCAL_TO_INT(connector_element_addr);
+  sc_list *** segment = connectors_segments[connector_element_addr_hash / storage->max_slots_in_segment];
+  if (segment == null_ptr)
   {
-    _sc_number_dictionary_initialize(&typed_connectors_dictionary);
-    sc_dictionary_append_uint64(dictionary, SC_ADDR_LOCAL_TO_INT(connector_element_addr), typed_connectors_dictionary);
+    printf("max_slots_in_segment %llu", storage->last_input_connectors_offset);
+    segment = sc_mem_new(sc_list **, storage->max_slots_in_segment);
+    connectors_segments[connector_element_addr_hash / storage->max_slots_in_segment] = segment;
   }
 
-  return typed_connectors_dictionary;
+  sc_list ** typed_connectors = segment[connector_element_addr_hash / SC_ELEMENT_SIZE];
+  if (typed_connectors == null_ptr)
+  {
+    typed_connectors = sc_mem_new(sc_list *, MAX_SC_CONNECTOR_TYPE_CODE);
+    segment[connector_element_addr_hash / SC_ELEMENT_SIZE] = typed_connectors;
+  }
+
+  return typed_connectors;
 }
 
 sc_pair * _sc_storage_resolve_element_connectors_slot_info(
     sc_storage * storage,
-    sc_dictionary * element_connectors_dictionary,
+    sc_list **** element_connectors_segments,
     sc_uint64 * last_element_connectors_offset,
     sc_type connector_type,
     sc_list * connector_subtypes,
     sc_addr element_addr)
 {
-  sc_dictionary * typed_connectors_dictionary =
-      _sc_storage_resolve_element_typed_connectors_dictionary(element_connectors_dictionary, element_addr);
+  sc_list ** typed_connectors =
+      sc_storage_resolve_element_typed_connectors(storage, element_connectors_segments, element_addr);
 
   sc_pair * element_connectors_slot_info;
-  sc_list * element_connectors_slots = sc_dictionary_get_by_key_uint64(typed_connectors_dictionary, connector_type);
+  sc_list * element_connectors_slots = typed_connectors[sc_storage_define_connector_type_code(connector_type)];
   if (element_connectors_slots == null_ptr)
   {
     element_connectors_slot_info = sc_make_pair((void *)*last_element_connectors_offset, 0);
     *last_element_connectors_offset += storage->max_connectors_in_slot * sizeof(sc_uint64);
 
-    _sc_storage_update_all_typed_connectors(typed_connectors_dictionary, connector_subtypes, element_connectors_slot_info);
+    _sc_storage_update_all_typed_connectors(typed_connectors, connector_subtypes, element_connectors_slot_info);
   }
   else
   {
@@ -433,7 +452,7 @@ sc_pair * _sc_storage_resolve_element_connectors_slot_info(
       element_connectors_slot_info = sc_make_pair((void *)*last_element_connectors_offset, 0);
       *last_element_connectors_offset += storage->max_connectors_in_slot * sizeof(sc_uint64);
 
-      _sc_storage_update_all_typed_connectors(typed_connectors_dictionary, connector_subtypes, element_connectors_slot_info);
+      _sc_storage_update_all_typed_connectors(typed_connectors, connector_subtypes, element_connectors_slot_info);
     }
   }
 
@@ -441,15 +460,10 @@ sc_pair * _sc_storage_resolve_element_connectors_slot_info(
 }
 
 sc_bool _sc_storage_write_element_connector_in_slot(
-    sc_char const * element_connectors_path,
+    sc_io_channel * channel,
     sc_uint64 element_connectors_offset,
     sc_addr connector_addr)
 {
-  if (sc_fs_is_file(element_connectors_path) == SC_FALSE)
-    sc_fs_create_file(element_connectors_path);
-
-  sc_io_channel * channel = sc_io_new_append_channel(element_connectors_path, null_ptr);
-  sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
   sc_io_channel_seek(channel, element_connectors_offset, SC_FS_IO_SEEK_SET, null_ptr);
 
   sc_uint64 written_bytes = 0;
@@ -460,18 +474,16 @@ sc_bool _sc_storage_write_element_connector_in_slot(
       sizeof(sc_addr_hash) != written_bytes)
   {
     sc_memory_error("Error while attribute `beg.offset` writing");
-    sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
     return SC_FALSE;
   }
 
-  sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
   return SC_TRUE;
 }
 
 sc_bool _sc_storage_push_element_connector_in_slot(
     sc_storage * storage,
-    sc_char const * element_connectors_path,
-    sc_dictionary * element_connectors_dictionary,
+    sc_io_channel * channel,
+    sc_list **** connectors_segments,
     sc_uint64 * last_element_connectors_offset,
     sc_addr connector_addr,
     sc_type connector_type,
@@ -479,17 +491,20 @@ sc_bool _sc_storage_push_element_connector_in_slot(
     sc_addr element_addr)
 {
   sc_pair * element_connectors_slot_info = _sc_storage_resolve_element_connectors_slot_info(
-      storage, element_connectors_dictionary, last_element_connectors_offset, connector_type, connector_subtypes, element_addr);
+      storage, connectors_segments, last_element_connectors_offset, connector_type, connector_subtypes, element_addr);
 
   sc_uint64 const element_connectors_offset = (sc_uint64)element_connectors_slot_info->first +
                                               (sc_uint64)element_connectors_slot_info->second * sizeof(sc_uint64);
   element_connectors_slot_info->second = (void *)((sc_uint64)element_connectors_slot_info->second + 1);
   return _sc_storage_write_element_connector_in_slot(
-      element_connectors_path, element_connectors_offset, connector_addr);
+      channel, element_connectors_offset, connector_addr);
 }
 
 sc_addr sc_storage_connector_new(sc_storage * storage, sc_type type, sc_addr beg, sc_addr end)
 {
+  //printf("last_addr_hash %llu", storage->last_addr_hash);
+  //printf("last_input_connectors_offset %llu", storage->last_input_connectors_offset);
+
   if (sc_storage_is_element(storage, beg) == SC_FALSE)
   {
     sc_memory_error("Begin sc-address `{0, %llu}` is not valid", beg.offset);
@@ -502,8 +517,9 @@ sc_addr sc_storage_connector_new(sc_storage * storage, sc_type type, sc_addr beg
     return SC_ADDR_EMPTY;
   }
 
-  sc_uint64 const addr_offset = storage->last_addr_hash;
-  sc_addr const new_addr = {0, addr_offset};
+  sc_uint64 const addr_hash = storage->last_addr_hash;
+  sc_addr new_addr;
+  SC_ADDR_LOCAL_FROM_INT(addr_hash, new_addr);
 
   if (_sc_storage_write_element_new(storage, type, storage->last_connector_elements_offset) == SC_FALSE)
     return SC_ADDR_EMPTY;
@@ -514,8 +530,8 @@ sc_addr sc_storage_connector_new(sc_storage * storage, sc_type type, sc_addr beg
   sc_list * subtypes = _sc_storage_get_all_connector_subtypes(type);
   if (_sc_storage_push_element_connector_in_slot(
           storage,
-          storage->input_connectors_path,
-          storage->input_connectors_dictionary,
+          storage->input_connectors_channel,
+          storage->input_connectors_segments,
           &storage->last_input_connectors_offset,
           new_addr,
           type,
@@ -525,8 +541,8 @@ sc_addr sc_storage_connector_new(sc_storage * storage, sc_type type, sc_addr beg
 
   if (_sc_storage_push_element_connector_in_slot(
           storage,
-          storage->output_connectors_path,
-          storage->output_connectors_dictionary,
+          storage->output_connectors_channel,
+          storage->output_connectors_segments,
           &storage->last_output_connectors_offset,
           new_addr,
           type,
@@ -547,28 +563,24 @@ sc_result sc_storage_element_free(sc_storage * storage, sc_addr addr)
     return SC_RESULT_ERROR_IS_NOT_ELEMENT;
   }
 
-  sc_io_channel * channel = sc_io_new_append_channel(storage->elements_types_path, null_ptr);
-  if (channel == null_ptr)
+  if (storage->elements_types_channel == null_ptr)
   {
     sc_memory_error("Path `%s` doesn't exist", storage->elements_types_path);
     return SC_RESULT_ERROR_IO;
   }
-  sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
 
-  sc_io_channel_seek(channel, SC_ADDR_LOCAL_TO_INT(addr), SC_FS_IO_SEEK_SET, null_ptr);
+  sc_io_channel_seek(storage->elements_types_channel, SC_ADDR_LOCAL_TO_INT(addr), SC_FS_IO_SEEK_SET, null_ptr);
   {
     sc_uint64 read_bytes;
     sc_addr_hash hash = 0;
-    if (sc_io_channel_write_chars(channel, (sc_char *)&hash, sizeof(sc_addr_hash), &read_bytes, null_ptr) !=
+    if (sc_io_channel_write_chars(storage->elements_types_channel, (sc_char *)&hash, sizeof(sc_addr_hash), &read_bytes, null_ptr) !=
             SC_FS_IO_STATUS_NORMAL ||
         sizeof(sc_addr_hash) != read_bytes)
     {
-      sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
       return SC_RESULT_READ_ERROR;
     }
   }
 
-  sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
   return SC_RESULT_OK;
 }
 
@@ -580,28 +592,24 @@ sc_result sc_storage_get_element_type(sc_storage * storage, sc_addr addr, sc_typ
     return SC_RESULT_ERROR_IS_NOT_ELEMENT;
   }
 
-  sc_io_channel * channel = sc_io_new_read_channel(storage->elements_types_path, null_ptr);
-  if (channel == null_ptr)
+  if (storage->elements_types_channel == null_ptr)
   {
     sc_memory_error("Path `%s` doesn't exist", storage->elements_types_path);
     return SC_RESULT_ERROR_IO;
   }
-  sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
 
-  sc_io_channel_seek(channel, SC_ADDR_LOCAL_TO_INT(addr) + sizeof(sc_uint64), SC_FS_IO_SEEK_SET, null_ptr);
+  sc_io_channel_seek(storage->elements_types_channel, SC_ADDR_LOCAL_TO_INT(addr) + sizeof(sc_uint64), SC_FS_IO_SEEK_SET, null_ptr);
   {
     sc_uint64 read_bytes;
-    if (sc_io_channel_read_chars(channel, (sc_char *)result, sizeof(sc_type), &read_bytes, null_ptr) !=
+    if (sc_io_channel_read_chars(storage->elements_types_channel, (sc_char *)result, sizeof(sc_type), &read_bytes, null_ptr) !=
             SC_FS_IO_STATUS_NORMAL ||
         sizeof(sc_type) != read_bytes)
     {
       *result = 0;
-      sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
       return SC_RESULT_READ_ERROR;
     }
   }
 
-  sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
   return SC_RESULT_OK;
 }
 
@@ -614,55 +622,47 @@ sc_result sc_storage_change_element_subtype(sc_storage * storage, sc_addr addr, 
 
   element_type |= type;
 
-  sc_io_channel * channel = sc_io_new_append_channel(storage->elements_types_path, null_ptr);
-  if (channel == null_ptr)
+  if (storage->elements_types_channel == null_ptr)
   {
     sc_memory_error("Path `%s` doesn't exist", storage->elements_types_path);
     return SC_RESULT_ERROR_IO;
   }
-  sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
 
-  sc_io_channel_seek(channel, SC_ADDR_LOCAL_TO_INT(addr) + sizeof(sc_uint64), SC_FS_IO_SEEK_SET, null_ptr);
+  sc_io_channel_seek(storage->elements_types_channel, SC_ADDR_LOCAL_TO_INT(addr) + sizeof(sc_uint64), SC_FS_IO_SEEK_SET, null_ptr);
   {
     sc_uint64 read_bytes;
-    if (sc_io_channel_write_chars(channel, (sc_char *)&element_type, sizeof(sc_type), &read_bytes, null_ptr) !=
+    if (sc_io_channel_write_chars(storage->elements_types_channel, (sc_char *)&element_type, sizeof(sc_type), &read_bytes, null_ptr) !=
             SC_FS_IO_STATUS_NORMAL ||
         sizeof(sc_type) != read_bytes)
     {
-      sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
       return SC_RESULT_READ_ERROR;
     }
   }
 
-  sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
   return SC_RESULT_OK;
 }
 
 sc_uint64 sc_storage_get_connector_elements_offset(sc_storage * storage, sc_addr addr)
 {
-  sc_io_channel * channel = sc_io_new_read_channel(storage->elements_types_path, null_ptr);
-  if (channel == null_ptr)
+  if (storage->elements_types_channel == null_ptr)
   {
     sc_memory_error("Path `%s` doesn't exist", storage->elements_types_path);
     return INVALID_OFFSET;
   }
-  sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
 
   sc_uint64 connector_elements_offset;
-  sc_io_channel_seek(channel, SC_ADDR_LOCAL_TO_INT(addr) + sizeof(sc_uint64) + sizeof(sc_type), SC_FS_IO_SEEK_SET, null_ptr);
+  sc_io_channel_seek(storage->elements_types_channel, SC_ADDR_LOCAL_TO_INT(addr) + sizeof(sc_uint64) + sizeof(sc_type), SC_FS_IO_SEEK_SET, null_ptr);
   {
     sc_uint64 read_bytes;
     if (sc_io_channel_read_chars(
-            channel, (sc_char *)&connector_elements_offset, sizeof(sc_uint64), &read_bytes, null_ptr) !=
+            storage->elements_types_channel, (sc_char *)&connector_elements_offset, sizeof(sc_uint64), &read_bytes, null_ptr) !=
             SC_FS_IO_STATUS_NORMAL ||
         sizeof(sc_uint64) != read_bytes)
     {
-      sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
       return INVALID_OFFSET;
     }
   }
 
-  sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
   return connector_elements_offset;
 }
 
@@ -685,36 +685,31 @@ sc_result sc_storage_get_arc_info(
   if (connector_elements_offset == 0)
     return SC_RESULT_READ_ERROR;
 
-  sc_io_channel * channel = sc_io_new_read_channel(storage->connectors_elements_path, null_ptr);
-  if (channel == null_ptr)
+  if (storage->connectors_elements_channel == null_ptr)
   {
     sc_memory_error("Path `%s` doesn't exist", storage->connectors_elements_path);
     return SC_RESULT_ERROR_IO;
   }
-  sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
 
   sc_addr_hash beg_addr_hash;
   sc_addr_hash end_addr_hash;
-  sc_io_channel_seek(channel, connector_elements_offset, SC_FS_IO_SEEK_SET, null_ptr);
+  sc_io_channel_seek(storage->connectors_elements_channel, connector_elements_offset, SC_FS_IO_SEEK_SET, null_ptr);
   {
     sc_uint64 read_bytes;
-    if (sc_io_channel_read_chars(channel, (sc_char *)&beg_addr_hash, sizeof(sc_addr_hash), &read_bytes, null_ptr) !=
+    if (sc_io_channel_read_chars(storage->connectors_elements_channel, (sc_char *)&beg_addr_hash, sizeof(sc_addr_hash), &read_bytes, null_ptr) !=
             SC_FS_IO_STATUS_NORMAL ||
         sizeof(sc_addr_hash) != read_bytes)
     {
-      sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
       return SC_RESULT_READ_ERROR;
     }
 
-    if (sc_io_channel_read_chars(channel, (sc_char *)&end_addr_hash, sizeof(sc_addr_hash), &read_bytes, null_ptr) !=
+    if (sc_io_channel_read_chars(storage->connectors_elements_channel, (sc_char *)&end_addr_hash, sizeof(sc_addr_hash), &read_bytes, null_ptr) !=
             SC_FS_IO_STATUS_NORMAL ||
         sizeof(sc_addr_hash) != read_bytes)
     {
-      sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
       return SC_RESULT_READ_ERROR;
     }
   }
-  sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
 
   SC_ADDR_LOCAL_FROM_INT(beg_addr_hash, (*result_begin_addr));
   SC_ADDR_LOCAL_FROM_INT(end_addr_hash, (*result_end_addr));

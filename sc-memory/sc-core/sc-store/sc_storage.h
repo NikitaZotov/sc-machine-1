@@ -20,24 +20,33 @@
   }
 #define INVALID_OFFSET 0
 
+#define SC_ELEMENT_SIZE 34
+#define MAX_SC_CONNECTOR_TYPE_CODE 45
+
 typedef struct _sc_storage
 {
   sc_char * path;  // path to all dictionary files
 
   sc_char * elements_types_path;  // path to elements types
+  void * elements_types_channel;
   sc_uint64 last_addr_hash;     // last element addr hash
 
   sc_char * connectors_elements_path;  // path to connectors elements
+  void * connectors_elements_channel;
   sc_uint64 last_connector_elements_offset;
 
   sc_char * input_connectors_path;
-  sc_dictionary * input_connectors_dictionary;
+  sc_list **** input_connectors_segments;
+  void * input_connectors_channel;
   sc_uint64 last_input_connectors_offset;
 
   sc_char * output_connectors_path;
-  sc_dictionary * output_connectors_dictionary;
+  sc_list **** output_connectors_segments;
+  void * output_connectors_channel;
   sc_uint64 last_output_connectors_offset;
 
+  sc_uint32 max_segments;
+  sc_uint32 max_slots_in_segment;
   sc_uint32 max_connectors_in_slot;
 } sc_storage;
 
@@ -78,6 +87,13 @@ sc_bool sc_storage_is_element(sc_storage * storage, sc_addr addr);
  * @return Return sc-addr of created sc-arc or empty sc-addr if sc-arc wasn't created
  */
 sc_addr sc_storage_connector_new(sc_storage * storage, sc_type type, sc_addr beg, sc_addr end);
+
+sc_uint16 sc_storage_define_connector_type_code(sc_type connector_type);
+
+sc_list ** sc_storage_resolve_element_typed_connectors(
+    sc_storage * storage,
+    sc_list **** connectors_segments,
+    sc_addr connector_element_addr);
 
 /*! Remove sc-element from storage
  * @param addr sc-addr of element to erase

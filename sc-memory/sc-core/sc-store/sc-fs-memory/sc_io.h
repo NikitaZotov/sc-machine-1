@@ -29,9 +29,11 @@ typedef GIOChannel sc_io_channel;
 
 #define sc_io_channel_set_encoding(channel, encoding, errors) g_io_channel_set_encoding(channel, encoding, errors)
 
+#define sc_io_channel_unref(channel) g_io_channel_unref(channel)
+
 #define sc_io_channel_shutdown(channel, flush, errors) \
   g_io_channel_shutdown(channel, flush, errors); \
-  g_io_channel_unref(channel)
+  sc_io_channel_unref(channel)
 
 #define sc_io_channel_write_chars(channel, chars, count, written_bytes, errors) \
   g_io_channel_write_chars(channel, (sc_char *)chars, count, (gsize *)written_bytes, errors)
