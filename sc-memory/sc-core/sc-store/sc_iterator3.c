@@ -383,15 +383,16 @@ current_slot:
         sizeof(sc_addr_hash) != written_bytes)
       goto finish;
 
+    ++it->current_connector_position_in_slot;
+
     SC_ADDR_LOCAL_FROM_INT(connector_addr_hash, it->results[1]);
-    sc_storage_get_arc_begin(it->storage, it->results[1], &it->results[0]);
+    if (sc_storage_get_arc_begin(it->storage, it->results[1], &it->results[0]) != SC_RESULT_OK)
+      continue;
 
     sc_type type;
     sc_storage_get_element_type(it->storage, it->results[0], &type);
     if ((it->params[0].type & type) == it->params[0].type)
       return SC_TRUE;
-
-    ++it->current_connector_position_in_slot;
   }
 
 next_slot:

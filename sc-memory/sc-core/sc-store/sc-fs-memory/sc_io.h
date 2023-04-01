@@ -29,6 +29,8 @@ typedef GIOChannel sc_io_channel;
 
 #define sc_io_channel_set_encoding(channel, encoding, errors) g_io_channel_set_encoding(channel, encoding, errors)
 
+#define sc_io_channel_set_min_buffer_size(channel) g_io_channel_set_buffer_size(channel, 64)
+
 #define sc_io_channel_unref(channel) g_io_channel_unref(channel)
 
 #define sc_io_channel_shutdown(channel, flush, errors) \

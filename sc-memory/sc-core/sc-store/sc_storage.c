@@ -65,6 +65,7 @@ sc_result sc_storage_initialize(
         sc_fs_create_file((*storage)->elements_types_path);
 
       (*storage)->elements_types_channel = sc_io_new_append_channel((*storage)->elements_types_path, null_ptr);
+      sc_io_channel_set_min_buffer_size((*storage)->elements_types_channel);
       sc_io_channel_set_encoding((*storage)->elements_types_channel, null_ptr, null_ptr);
       (*storage)->last_addr_hash = 1;
 
@@ -74,29 +75,41 @@ sc_result sc_storage_initialize(
         sc_fs_create_file((*storage)->connectors_elements_path);
 
       (*storage)->connectors_elements_channel = sc_io_new_append_channel((*storage)->connectors_elements_path, null_ptr);
+      sc_io_channel_set_min_buffer_size((*storage)->connectors_elements_channel);
       sc_io_channel_set_encoding((*storage)->connectors_elements_channel, null_ptr, null_ptr);
       (*storage)->last_connector_elements_offset = 1;
     }
 
-    (*storage)->input_connectors_segments = sc_mem_new(sc_list ***, (*storage)->max_segments);
     static sc_char const * input_connectors = "input_connectors" SC_FS_EXT;
     sc_fs_initialize_file_path(path, input_connectors, &(*storage)->input_connectors_path);
     if (sc_fs_is_file(path) == SC_FALSE)
       sc_fs_create_file((*storage)->input_connectors_path);
-
     (*storage)->input_connectors_channel = sc_io_new_append_channel((*storage)->input_connectors_path, null_ptr);
+    sc_io_channel_set_min_buffer_size((*storage)->input_connectors_channel);
     sc_io_channel_set_encoding((*storage)->input_connectors_channel, null_ptr, null_ptr);
     (*storage)->last_input_connectors_offset = 1;
 
-    (*storage)->output_connectors_segments = sc_mem_new(sc_list ***, (*storage)->max_segments);
+    (*storage)->input_connectors_segments = sc_mem_new(sc_list ***, (*storage)->max_segments);
+    static sc_char const * input_connectors_segments = "input_connectors_segments" SC_FS_EXT;
+    sc_fs_initialize_file_path(path, input_connectors_segments, &(*storage)->input_connectors_segments_path);
+    if (sc_fs_is_file(path) == SC_FALSE)
+      sc_fs_create_file((*storage)->input_connectors_segments_path);
+
     static sc_char const * output_connectors = "output_connectors" SC_FS_EXT;
     sc_fs_initialize_file_path(path, output_connectors, &(*storage)->output_connectors_path);
     if (sc_fs_is_file(path) == SC_FALSE)
       sc_fs_create_file((*storage)->output_connectors_path);
-
     (*storage)->output_connectors_channel = sc_io_new_append_channel((*storage)->output_connectors_path, null_ptr);
+    sc_io_channel_set_min_buffer_size((*storage)->output_connectors_channel);
     sc_io_channel_set_encoding((*storage)->output_connectors_channel, null_ptr, null_ptr);
     (*storage)->last_output_connectors_offset = 1;
+
+    (*storage)->output_connectors_segments = sc_mem_new(sc_list ***, (*storage)->max_segments);
+    static sc_char const * output_connectors_segments = "output_connectors_segments" SC_FS_EXT;
+    sc_fs_initialize_file_path(path, output_connectors_segments, &(*storage)->output_connectors_segments_path);
+    if (sc_fs_is_file(path) == SC_FALSE)
+      sc_fs_create_file((*storage)->output_connectors_segments_path);
+
   }
   sc_memory_info("Configuration:");
   sc_message("\tRepo path: %s", path);
@@ -112,6 +125,37 @@ error:
   sc_memory_info("Initialized with errors");
   return SC_RESULT_ERROR_IO;
 }
+}
+
+void _sc_storage_remove_segments(sc_storage * storage, sc_list **** segments)
+{
+  for (sc_uint64 i = 0; i < storage->max_segments; ++i)
+  {
+    sc_list *** segment = *segments;
+    if (segment == null_ptr)
+      continue;
+
+    for (sc_uint64 j = 0; j < storage->max_slots_in_segment; ++j)
+    {
+      sc_list ** slots = *segment;
+      if (*segment == null_ptr)
+        continue;
+
+      for (sc_uint64 k = 0; k < MAX_SC_CONNECTOR_TYPE_CODE; ++k)
+      {
+        sc_list * slot = *slots;
+        if (slot == null_ptr)
+          continue;
+
+        sc_list_destroy(slot);
+        ++slots;
+      }
+      sc_mem_free(slots);
+      ++segment;
+    }
+    sc_mem_free(segment);
+    ++segments;
+  }
 }
 
 sc_result sc_storage_shutdown(sc_storage * storage, sc_bool save_state)
@@ -136,8 +180,16 @@ sc_result sc_storage_shutdown(sc_storage * storage, sc_bool save_state)
     sc_mem_free(storage->input_connectors_path);
     sc_io_channel_shutdown(storage->input_connectors_channel, SC_TRUE, null_ptr);
 
+    _sc_storage_remove_segments(storage, storage->input_connectors_segments);
+    sc_mem_free(storage->input_connectors_segments);
+    sc_mem_free(storage->input_connectors_segments_path);
+
     sc_mem_free(storage->output_connectors_path);
     sc_io_channel_shutdown(storage->output_connectors_channel, SC_TRUE, null_ptr);
+
+    _sc_storage_remove_segments(storage, storage->output_connectors_segments);
+    sc_mem_free(storage->output_connectors_segments);
+    sc_mem_free(storage->output_connectors_segments_path);
   }
   sc_mem_free(storage);
   sc_memory_info("Successfully shutdown");
@@ -240,6 +292,9 @@ sc_bool sc_storage_is_element(sc_storage * storage, sc_addr addr)
     sc_memory_error("Path `%s` doesn't exist", storage->elements_types_path);
     return SC_FALSE;
   }
+
+  if (SC_ADDR_IS_EMPTY(addr))
+    return SC_FALSE;
 
   sc_addr_hash addr_offset;
   sc_io_channel_seek(storage->elements_types_channel, SC_ADDR_LOCAL_TO_INT(addr), SC_FS_IO_SEEK_SET, null_ptr);
@@ -406,19 +461,21 @@ sc_list ** sc_storage_resolve_element_typed_connectors(
     sc_addr connector_element_addr)
 {
   sc_addr_hash const connector_element_addr_hash = SC_ADDR_LOCAL_TO_INT(connector_element_addr);
-  sc_list *** segment = connectors_segments[connector_element_addr_hash / storage->max_slots_in_segment];
+  sc_uint64 const segment_idx = connector_element_addr_hash / SC_ELEMENT_SIZE / storage->max_slots_in_segment;
+  sc_list *** segment = connectors_segments[segment_idx];
   if (segment == null_ptr)
   {
-    printf("max_slots_in_segment %llu", storage->last_input_connectors_offset);
     segment = sc_mem_new(sc_list **, storage->max_slots_in_segment);
-    connectors_segments[connector_element_addr_hash / storage->max_slots_in_segment] = segment;
+    connectors_segments[segment_idx] = segment;
   }
 
-  sc_list ** typed_connectors = segment[connector_element_addr_hash / SC_ELEMENT_SIZE];
+  sc_uint64 const typed_connectors_idx
+      = (connector_element_addr_hash - SC_ELEMENT_SIZE * storage->max_slots_in_segment * segment_idx) / SC_ELEMENT_SIZE;
+  sc_list ** typed_connectors = segment[typed_connectors_idx];
   if (typed_connectors == null_ptr)
   {
     typed_connectors = sc_mem_new(sc_list *, MAX_SC_CONNECTOR_TYPE_CODE);
-    segment[connector_element_addr_hash / SC_ELEMENT_SIZE] = typed_connectors;
+    segment[typed_connectors_idx] = typed_connectors;
   }
 
   return typed_connectors;
@@ -436,7 +493,8 @@ sc_pair * _sc_storage_resolve_element_connectors_slot_info(
       sc_storage_resolve_element_typed_connectors(storage, element_connectors_segments, element_addr);
 
   sc_pair * element_connectors_slot_info;
-  sc_list * element_connectors_slots = typed_connectors[sc_storage_define_connector_type_code(connector_type)];
+  sc_uint64 const connector_type_code = sc_storage_define_connector_type_code(connector_type);
+  sc_list * element_connectors_slots = typed_connectors[connector_type_code];
   if (element_connectors_slots == null_ptr)
   {
     element_connectors_slot_info = sc_make_pair((void *)*last_element_connectors_offset, 0);
@@ -677,7 +735,7 @@ sc_result sc_storage_get_arc_info(
 
   if (sc_storage_is_element(storage, addr) == SC_FALSE)
   {
-    sc_memory_error("Sc-address `{0, %llu}` is not valid to get its sc-connector begin sc-element", SC_ADDR_LOCAL_TO_INT(addr));
+    sc_memory_error("Sc-address `{0, %llu}` is not valid to get its sc-connector begin and end sc-elements", SC_ADDR_LOCAL_TO_INT(addr));
     return SC_RESULT_ERROR_IS_NOT_ELEMENT;
   }
 
@@ -839,4 +897,9 @@ sc_result sc_storage_find_links_contents_by_content_substring(
     return SC_RESULT_READ_ERROR;
 
   return result;
+}
+
+sc_result sc_storage_save(sc_storage * storage)
+{
+
 }

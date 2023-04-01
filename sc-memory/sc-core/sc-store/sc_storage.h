@@ -36,14 +36,18 @@ typedef struct _sc_storage
   sc_uint64 last_connector_elements_offset;
 
   sc_char * input_connectors_path;
-  sc_list **** input_connectors_segments;
   void * input_connectors_channel;
   sc_uint64 last_input_connectors_offset;
 
+  sc_char * input_connectors_segments_path;
+  sc_list **** input_connectors_segments;
+
   sc_char * output_connectors_path;
-  sc_list **** output_connectors_segments;
   void * output_connectors_channel;
   sc_uint64 last_output_connectors_offset;
+
+  sc_char * output_connectors_segments_path;
+  sc_list **** output_connectors_segments;
 
   sc_uint32 max_segments;
   sc_uint32 max_slots_in_segment;
@@ -212,6 +216,6 @@ sc_result sc_storage_find_links_contents_by_content_substring(
     sc_list ** result_strings,
     sc_uint32 max_length_to_search_as_prefix);
 
-sc_result sc_storage_save(sc_storage * storage, sc_memory_context const * ctx);
+sc_result sc_storage_save(sc_storage * storage);
 
 #endif
