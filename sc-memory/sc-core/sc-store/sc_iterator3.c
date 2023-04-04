@@ -245,6 +245,7 @@ void sc_iterator3_free(sc_iterator3 * it)
   if (it == null_ptr)
     return;
 
+  sc_iterator_destroy(it->connectors_slots_iterator);
   sc_mem_free(it);
 }
 
@@ -254,7 +255,8 @@ sc_bool _sc_iterator3_f_a_a_next(sc_iterator3 * it)
 
   if (it->connectors_slots_iterator == null_ptr)
   {
-    sc_list ** typed_connectors = sc_storage_resolve_element_typed_connectors(it->storage, it->storage->output_connectors_segments, it->params[0].addr);
+    sc_list ** typed_connectors = sc_storage_resolve_element_typed_connectors(
+        it->storage, it->storage->output_connectors_segments, it->params[0].addr);
     if (typed_connectors == null_ptr)
       goto finish;
 
@@ -298,6 +300,7 @@ next_slot:
 
 finish:
   sc_iterator_destroy(it->connectors_slots_iterator);
+  it->connectors_slots_iterator = null_ptr;
   it->finished = SC_TRUE;
   return SC_FALSE;
 }
@@ -309,8 +312,8 @@ sc_bool _sc_iterator3_f_a_f_next(sc_iterator3 * it)
 
   if (it->connectors_slots_iterator == null_ptr)
   {
-    sc_list ** typed_connectors =
-        sc_storage_resolve_element_typed_connectors(it->storage, it->storage->input_connectors_segments, it->params[2].addr);
+    sc_list ** typed_connectors = sc_storage_resolve_element_typed_connectors(
+        it->storage, it->storage->input_connectors_segments, it->params[2].addr);
     if (typed_connectors == null_ptr)
       goto finish;
 
@@ -351,6 +354,7 @@ next_slot:
 
 finish:
   sc_iterator_destroy(it->connectors_slots_iterator);
+  it->connectors_slots_iterator = null_ptr;
   it->finished = SC_TRUE;
   return SC_FALSE;
 }
@@ -361,7 +365,8 @@ sc_bool _sc_iterator3_a_a_f_next(sc_iterator3 * it)
 
   if (it->connectors_slots_iterator == null_ptr)
   {
-    sc_list ** typed_connectors = sc_storage_resolve_element_typed_connectors(it->storage, it->storage->input_connectors_segments, it->params[2].addr);
+    sc_list ** typed_connectors = sc_storage_resolve_element_typed_connectors(
+        it->storage, it->storage->input_connectors_segments, it->params[2].addr);
     if (typed_connectors == null_ptr)
       goto finish;
 
@@ -406,6 +411,7 @@ next_slot:
 
 finish:
   sc_iterator_destroy(it->connectors_slots_iterator);
+  it->connectors_slots_iterator = null_ptr;
   it->finished = SC_TRUE;
   return SC_FALSE;
 }

@@ -12,16 +12,28 @@
 #include "sc_stream.h"
 #include "sc-container/sc-list/sc_list.h"
 #include "sc-container/sc-dictionary/sc_dictionary.h"
+#include "sc-container/sc-pair/sc_pair.h"
 
-#define SC_ADDR_EMPTY \
-  (sc_addr) \
-  { \
-    0, 0 \
-  }
+#define SC_ADDR_EMPTY (sc_addr) { 0, 0 }
 #define INVALID_OFFSET 0
 
 #define SC_ELEMENT_SIZE 34
 #define MAX_SC_CONNECTOR_TYPE_CODE 45
+
+typedef struct _sc_storage_segment_section_connectors
+{
+  sc_list * connectors;
+} sc_storage_typed_connectors;
+
+typedef struct _sc_storage_segment_section
+{
+  sc_storage_typed_connectors ** typed_connectors;
+} sc_storage_segment_section;
+
+typedef struct _sc_storage_segment
+{
+  sc_storage_segment_section ** sections;
+} sc_storage_segment;
 
 typedef struct _sc_storage
 {

@@ -109,7 +109,6 @@ sc_result sc_storage_initialize(
     sc_fs_initialize_file_path(path, output_connectors_segments, &(*storage)->output_connectors_segments_path);
     if (sc_fs_is_file(path) == SC_FALSE)
       sc_fs_create_file((*storage)->output_connectors_segments_path);
-
   }
   sc_memory_info("Configuration:");
   sc_message("\tRepo path: %s", path);
@@ -150,10 +149,10 @@ void _sc_storage_remove_segments(sc_storage * storage, sc_list **** segments)
         sc_list_destroy(slot);
         ++slots;
       }
-      sc_mem_free(slots);
+      sc_mem_free(*segment);
       ++segment;
     }
-    sc_mem_free(segment);
+    sc_mem_free(*segments);
     ++segments;
   }
 }
@@ -164,6 +163,15 @@ sc_result sc_storage_shutdown(sc_storage * storage, sc_bool save_state)
   {
     sc_memory_info("Storage is empty to shutdown");
     return SC_RESULT_NO;
+  }
+
+  if (save_state == SC_TRUE)
+  {
+    if (sc_storage_save(storage) != SC_RESULT_OK)
+      return SC_RESULT_WRITE_ERROR;
+
+    if (sc_fs_memory_save() == SC_FALSE)
+      return SC_RESULT_WRITE_ERROR;
   }
 
   sc_memory_info("Shutdown");
@@ -193,12 +201,6 @@ sc_result sc_storage_shutdown(sc_storage * storage, sc_bool save_state)
   }
   sc_mem_free(storage);
   sc_memory_info("Successfully shutdown");
-
-  if (save_state == SC_TRUE)
-  {
-    if (sc_fs_memory_save() == SC_FALSE)
-      return SC_RESULT_READ_ERROR;
-  }
 
   if (sc_fs_memory_shutdown() == SC_FALSE)
     return SC_RESULT_NO;
@@ -899,7 +901,88 @@ sc_result sc_storage_find_links_contents_by_content_substring(
   return result;
 }
 
+sc_result _sc_storage_save_segments(sc_storage * storage, sc_list **** segments, sc_char * path)
+{
+  sc_io_channel * channel = sc_io_new_write_channel(path, null_ptr);
+  if (channel == null_ptr)
+  {
+    sc_memory_error("Path `%s` doesn't exist", path);
+    return SC_RESULT_ERROR_IO;
+  }
+  sc_io_channel_set_encoding(channel, null_ptr, null_ptr);
+
+  for (sc_uint64 segment_idx = 0; segment_idx < storage->max_segments; ++segment_idx)
+  {
+    sc_list *** segment = *segments;
+    if (segment == null_ptr)
+      continue;
+
+    for (sc_uint64 slot_idx = 0; slot_idx < storage->max_slots_in_segment; ++slot_idx)
+    {
+      sc_list ** slots = *segment;
+      if (*segment == null_ptr)
+        continue;
+
+      sc_uint64 written_bytes;
+      sc_addr_hash const connector_element_addr_hash = (slot_idx + storage->max_slots_in_segment * segment_idx) * SC_ELEMENT_SIZE;
+      if (sc_io_channel_write_chars(
+              channel, (sc_char *)&connector_element_addr_hash, sizeof(sc_addr_hash), &written_bytes, null_ptr) !=
+              SC_FS_IO_STATUS_NORMAL ||
+          sizeof(sc_addr_hash) != written_bytes)
+      {
+        sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
+        return SC_RESULT_WRITE_ERROR;
+      }
+
+      for (sc_uint64 k = 0; k < MAX_SC_CONNECTOR_TYPE_CODE; ++k)
+      {
+        sc_list * slot = *slots;
+        if (slot == null_ptr)
+          continue;
+
+        if (sc_io_channel_write_chars(
+                channel, (sc_char *)&slot->size, sizeof(sc_uint64), &written_bytes, null_ptr) !=
+                SC_FS_IO_STATUS_NORMAL ||
+            sizeof(sc_uint64) != written_bytes)
+        {
+          sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
+          return SC_RESULT_WRITE_ERROR;
+        }
+
+        sc_iterator * it = sc_list_iterator(slot);
+        while (sc_iterator_next(it))
+        {
+          sc_uint64 const offset = (sc_uint64)sc_iterator_get(it);
+          if (sc_io_channel_write_chars(
+                  channel, (sc_char *)&offset, sizeof(sc_uint64), &written_bytes, null_ptr) !=
+                  SC_FS_IO_STATUS_NORMAL ||
+              sizeof(sc_uint64) != written_bytes)
+          {
+            sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
+            return SC_RESULT_WRITE_ERROR;
+          }
+        }
+        sc_iterator_destroy(it);
+        ++slots;
+      }
+      ++segment;
+    }
+    ++segments;
+  }
+
+  sc_io_channel_shutdown(channel, SC_TRUE, null_ptr);
+  return SC_RESULT_OK;
+}
+
 sc_result sc_storage_save(sc_storage * storage)
 {
+  sc_result result = _sc_storage_save_segments(storage, storage->input_connectors_segments, storage->input_connectors_segments_path);
+  if (result != SC_RESULT_OK)
+    return result;
 
+  result = _sc_storage_save_segments(storage, storage->output_connectors_segments, storage->output_connectors_segments_path);
+  if (result != SC_RESULT_OK)
+    return result;
+
+  return SC_RESULT_OK;
 }
