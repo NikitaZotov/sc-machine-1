@@ -20,14 +20,14 @@
 #define SC_ELEMENT_SIZE 34
 #define MAX_SC_CONNECTOR_TYPE_CODE 45
 
-typedef struct _sc_storage_segment_section_connectors
+typedef struct _sc_storage_typed_connectors
 {
   sc_list * connectors;
 } sc_storage_typed_connectors;
 
 typedef struct _sc_storage_segment_section
 {
-  sc_storage_typed_connectors ** typed_connectors;
+  sc_storage_typed_connectors ** all_typed_connectors;
 } sc_storage_segment_section;
 
 typedef struct _sc_storage_segment
@@ -52,18 +52,18 @@ typedef struct _sc_storage
   sc_uint64 last_input_connectors_offset;
 
   sc_char * input_connectors_segments_path;
-  sc_list **** input_connectors_segments;
+  sc_storage_segment ** input_connectors_segments;
 
   sc_char * output_connectors_path;
   void * output_connectors_channel;
   sc_uint64 last_output_connectors_offset;
 
   sc_char * output_connectors_segments_path;
-  sc_list **** output_connectors_segments;
+  sc_storage_segment ** output_connectors_segments;
 
   sc_uint32 max_segments;
-  sc_uint32 max_slots_in_segment;
-  sc_uint32 max_connectors_in_slot;
+  sc_uint32 max_sections_in_segment;
+  sc_uint32 max_connectors_in_segment_section;
 } sc_storage;
 
 //! Initialize sc storage in specified path
@@ -106,9 +106,9 @@ sc_addr sc_storage_connector_new(sc_storage * storage, sc_type type, sc_addr beg
 
 sc_uint16 sc_storage_define_connector_type_code(sc_type connector_type);
 
-sc_list ** sc_storage_resolve_element_typed_connectors(
+sc_storage_typed_connectors ** sc_storage_resolve_element_typed_connectors(
     sc_storage * storage,
-    sc_list **** connectors_segments,
+    sc_storage_segment ** connectors_segments,
     sc_addr connector_element_addr);
 
 /*! Remove sc-element from storage

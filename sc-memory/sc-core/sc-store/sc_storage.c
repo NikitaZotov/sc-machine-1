@@ -55,8 +55,8 @@ sc_result sc_storage_initialize(
   {
     sc_str_cpy((*storage)->path, path, sc_str_len(path));
     (*storage)->max_segments = 512;
-    (*storage)->max_slots_in_segment = 65536;
-    (*storage)->max_connectors_in_slot = 256;
+    (*storage)->max_sections_in_segment = 65536;
+    (*storage)->max_connectors_in_segment_section = 256;
 
     {
       static sc_char const * elements_types = "elements_types" SC_FS_EXT;
@@ -89,7 +89,7 @@ sc_result sc_storage_initialize(
     sc_io_channel_set_encoding((*storage)->input_connectors_channel, null_ptr, null_ptr);
     (*storage)->last_input_connectors_offset = 1;
 
-    (*storage)->input_connectors_segments = sc_mem_new(sc_list ***, (*storage)->max_segments);
+    (*storage)->input_connectors_segments = sc_mem_new(sc_storage_segment *, (*storage)->max_segments);
     static sc_char const * input_connectors_segments = "input_connectors_segments" SC_FS_EXT;
     sc_fs_initialize_file_path(path, input_connectors_segments, &(*storage)->input_connectors_segments_path);
     if (sc_fs_is_file(path) == SC_FALSE)
@@ -104,7 +104,7 @@ sc_result sc_storage_initialize(
     sc_io_channel_set_encoding((*storage)->output_connectors_channel, null_ptr, null_ptr);
     (*storage)->last_output_connectors_offset = 1;
 
-    (*storage)->output_connectors_segments = sc_mem_new(sc_list ***, (*storage)->max_segments);
+    (*storage)->output_connectors_segments = sc_mem_new(sc_storage_segment *, (*storage)->max_segments);
     static sc_char const * output_connectors_segments = "output_connectors_segments" SC_FS_EXT;
     sc_fs_initialize_file_path(path, output_connectors_segments, &(*storage)->output_connectors_segments_path);
     if (sc_fs_is_file(path) == SC_FALSE)
@@ -126,33 +126,47 @@ error:
 }
 }
 
-void _sc_storage_remove_segments(sc_storage * storage, sc_list **** segments)
+void _sc_storage_remove_segments(sc_storage * storage, sc_storage_segment ** segments)
 {
   for (sc_uint64 i = 0; i < storage->max_segments; ++i)
   {
-    sc_list *** segment = *segments;
+    sc_storage_segment * segment = *segments;
     if (segment == null_ptr)
-      continue;
-
-    for (sc_uint64 j = 0; j < storage->max_slots_in_segment; ++j)
     {
-      sc_list ** slots = *segment;
-      if (*segment == null_ptr)
-        continue;
+      ++segments;
+      continue;
+    }
 
+    sc_storage_segment_section ** segment_sections = segment->sections;
+    for (sc_uint64 j = 0; j < storage->max_sections_in_segment; ++j)
+    {
+      sc_storage_segment_section * section = *segment_sections;
+      if (section == null_ptr)
+      {
+        ++segment_sections;
+        continue;
+      }
+
+      sc_storage_typed_connectors ** all_typed_connectors = section->all_typed_connectors;
       for (sc_uint64 k = 0; k < MAX_SC_CONNECTOR_TYPE_CODE; ++k)
       {
-        sc_list * slot = *slots;
-        if (slot == null_ptr)
+        sc_storage_typed_connectors * typed_connectors = *all_typed_connectors;
+        if (typed_connectors == null_ptr)
+        {
+          ++all_typed_connectors;
           continue;
+        }
 
-        sc_list_destroy(slot);
-        ++slots;
+        sc_list_destroy(typed_connectors->connectors);
+        sc_mem_free(typed_connectors);
+        ++all_typed_connectors;
       }
-      sc_mem_free(*segment);
-      ++segment;
+      sc_mem_free(section->all_typed_connectors);
+      sc_mem_free(section);
+      ++segment_sections;
     }
-    sc_mem_free(*segments);
+    sc_mem_free(segment->sections);
+    sc_mem_free(segment);
     ++segments;
   }
 }
@@ -429,7 +443,7 @@ sc_list * _sc_storage_get_all_connector_subtypes(sc_type connector_type)
 }
 
 void _sc_storage_update_all_typed_connectors(
-    sc_list ** typed_connectors, sc_list * connector_subtypes, sc_pair * element_connectors_slot_info)
+    sc_storage_typed_connectors ** all_typed_connectors, sc_list * connector_subtypes, sc_pair * element_connectors_slot_info)
 {
   sc_uint8 card_size = (sc_uint8)pow(2, connector_subtypes->size);
   for (sc_uint8 i = 0; i < card_size; ++i)
@@ -446,77 +460,80 @@ void _sc_storage_update_all_typed_connectors(
     }
     sc_iterator_destroy(it);
 
-    sc_list * element_connectors_slots = typed_connectors[subtype];
+    sc_storage_typed_connectors * element_connectors_slots = all_typed_connectors[subtype];
     if (element_connectors_slots == null_ptr)
     {
-      sc_list_init(&element_connectors_slots);
-      typed_connectors[subtype] = element_connectors_slots;
+      element_connectors_slots = sc_mem_new(sc_storage_typed_connectors, 1);
+      sc_list_init(&element_connectors_slots->connectors);
+      all_typed_connectors[subtype] = element_connectors_slots;
     }
 
-    sc_list_push_back(element_connectors_slots, element_connectors_slot_info);
+    sc_list_push_back(element_connectors_slots->connectors, element_connectors_slot_info);
   }
 }
 
-sc_list ** sc_storage_resolve_element_typed_connectors(
+sc_storage_typed_connectors ** sc_storage_resolve_element_typed_connectors(
     sc_storage * storage,
-    sc_list **** connectors_segments,
+    sc_storage_segment ** connectors_segments,
     sc_addr connector_element_addr)
 {
   sc_addr_hash const connector_element_addr_hash = SC_ADDR_LOCAL_TO_INT(connector_element_addr);
-  sc_uint64 const segment_idx = connector_element_addr_hash / SC_ELEMENT_SIZE / storage->max_slots_in_segment;
-  sc_list *** segment = connectors_segments[segment_idx];
+  sc_uint64 const segment_idx = connector_element_addr_hash / SC_ELEMENT_SIZE / storage->max_sections_in_segment;
+  sc_storage_segment * segment = connectors_segments[segment_idx];
   if (segment == null_ptr)
   {
-    segment = sc_mem_new(sc_list **, storage->max_slots_in_segment);
+    segment = sc_mem_new(sc_storage_segment, 1);
+    segment->sections = sc_mem_new(sc_storage_segment_section *, storage->max_sections_in_segment);
     connectors_segments[segment_idx] = segment;
   }
 
-  sc_uint64 const typed_connectors_idx
-      = (connector_element_addr_hash - SC_ELEMENT_SIZE * storage->max_slots_in_segment * segment_idx) / SC_ELEMENT_SIZE;
-  sc_list ** typed_connectors = segment[typed_connectors_idx];
-  if (typed_connectors == null_ptr)
+  sc_uint64 const segment_section_idx
+      = (connector_element_addr_hash - SC_ELEMENT_SIZE * storage->max_sections_in_segment * segment_idx) / SC_ELEMENT_SIZE;
+  sc_storage_segment_section * segment_section = segment->sections[segment_section_idx];
+  if (segment_section == null_ptr)
   {
-    typed_connectors = sc_mem_new(sc_list *, MAX_SC_CONNECTOR_TYPE_CODE);
-    segment[typed_connectors_idx] = typed_connectors;
+    segment_section = sc_mem_new(sc_storage_segment_section, 1);
+    segment_section->all_typed_connectors = sc_mem_new(sc_storage_typed_connectors *, MAX_SC_CONNECTOR_TYPE_CODE);
+    segment->sections[segment_section_idx] = segment_section;
   }
 
-  return typed_connectors;
+  return segment_section->all_typed_connectors;
 }
 
 sc_pair * _sc_storage_resolve_element_connectors_slot_info(
     sc_storage * storage,
-    sc_list **** element_connectors_segments,
+    sc_storage_segment ** connectors_segments,
     sc_uint64 * last_element_connectors_offset,
     sc_type connector_type,
     sc_list * connector_subtypes,
     sc_addr element_addr)
 {
-  sc_list ** typed_connectors =
-      sc_storage_resolve_element_typed_connectors(storage, element_connectors_segments, element_addr);
+  sc_storage_typed_connectors ** typed_connectors =
+      sc_storage_resolve_element_typed_connectors(storage, connectors_segments, element_addr);
 
-  sc_pair * element_connectors_slot_info;
+  sc_pair * connectors_info;
   sc_uint64 const connector_type_code = sc_storage_define_connector_type_code(connector_type);
-  sc_list * element_connectors_slots = typed_connectors[connector_type_code];
-  if (element_connectors_slots == null_ptr)
+  sc_storage_typed_connectors * connectors = typed_connectors[connector_type_code];
+  if (connectors == null_ptr)
   {
-    element_connectors_slot_info = sc_make_pair((void *)*last_element_connectors_offset, 0);
-    *last_element_connectors_offset += storage->max_connectors_in_slot * sizeof(sc_uint64);
+    connectors_info = sc_make_pair((void *)*last_element_connectors_offset, 0);
+    *last_element_connectors_offset += storage->max_connectors_in_segment_section * sizeof(sc_uint64);
 
-    _sc_storage_update_all_typed_connectors(typed_connectors, connector_subtypes, element_connectors_slot_info);
+    _sc_storage_update_all_typed_connectors(typed_connectors, connector_subtypes, connectors_info);
   }
   else
   {
-    element_connectors_slot_info = sc_list_back(element_connectors_slots)->data;
-    if ((sc_uint64)element_connectors_slot_info->second == storage->max_connectors_in_slot)
+    connectors_info = sc_list_back(connectors->connectors)->data;
+    if ((sc_uint64)connectors_info->second == storage->max_connectors_in_segment_section)
     {
-      element_connectors_slot_info = sc_make_pair((void *)*last_element_connectors_offset, 0);
-      *last_element_connectors_offset += storage->max_connectors_in_slot * sizeof(sc_uint64);
+      connectors_info = sc_make_pair((void *)*last_element_connectors_offset, 0);
+      *last_element_connectors_offset += storage->max_connectors_in_segment_section * sizeof(sc_uint64);
 
-      _sc_storage_update_all_typed_connectors(typed_connectors, connector_subtypes, element_connectors_slot_info);
+      _sc_storage_update_all_typed_connectors(typed_connectors, connector_subtypes, connectors_info);
     }
   }
 
-  return element_connectors_slot_info;
+  return connectors_info;
 }
 
 sc_bool _sc_storage_write_element_connector_in_slot(
@@ -543,7 +560,7 @@ sc_bool _sc_storage_write_element_connector_in_slot(
 sc_bool _sc_storage_push_element_connector_in_slot(
     sc_storage * storage,
     sc_io_channel * channel,
-    sc_list **** connectors_segments,
+    sc_storage_segment ** connectors_segments,
     sc_uint64 * last_element_connectors_offset,
     sc_addr connector_addr,
     sc_type connector_type,
@@ -562,9 +579,6 @@ sc_bool _sc_storage_push_element_connector_in_slot(
 
 sc_addr sc_storage_connector_new(sc_storage * storage, sc_type type, sc_addr beg, sc_addr end)
 {
-  //printf("last_addr_hash %llu", storage->last_addr_hash);
-  //printf("last_input_connectors_offset %llu", storage->last_input_connectors_offset);
-
   if (sc_storage_is_element(storage, beg) == SC_FALSE)
   {
     sc_memory_error("Begin sc-address `{0, %llu}` is not valid", beg.offset);
@@ -901,7 +915,7 @@ sc_result sc_storage_find_links_contents_by_content_substring(
   return result;
 }
 
-sc_result _sc_storage_save_segments(sc_storage * storage, sc_list **** segments, sc_char * path)
+sc_result _sc_storage_save_segments(sc_storage * storage, sc_storage_segment ** segments, sc_char * path)
 {
   sc_io_channel * channel = sc_io_new_write_channel(path, null_ptr);
   if (channel == null_ptr)
@@ -913,18 +927,25 @@ sc_result _sc_storage_save_segments(sc_storage * storage, sc_list **** segments,
 
   for (sc_uint64 segment_idx = 0; segment_idx < storage->max_segments; ++segment_idx)
   {
-    sc_list *** segment = *segments;
+    sc_storage_segment * segment = *segments;
     if (segment == null_ptr)
-      continue;
-
-    for (sc_uint64 slot_idx = 0; slot_idx < storage->max_slots_in_segment; ++slot_idx)
     {
-      sc_list ** slots = *segment;
-      if (*segment == null_ptr)
+      ++segments;
+      continue;
+    }
+
+    sc_storage_segment_section ** segment_sections = segment->sections;
+    for (sc_uint64 slot_idx = 0; slot_idx < storage->max_sections_in_segment; ++slot_idx)
+    {
+      sc_storage_segment_section * section = *segment_sections;
+      if (section == null_ptr)
+      {
+        ++segment_sections;
         continue;
+      }
 
       sc_uint64 written_bytes;
-      sc_addr_hash const connector_element_addr_hash = (slot_idx + storage->max_slots_in_segment * segment_idx) * SC_ELEMENT_SIZE;
+      sc_addr_hash const connector_element_addr_hash = (slot_idx + storage->max_sections_in_segment * segment_idx) * SC_ELEMENT_SIZE;
       if (sc_io_channel_write_chars(
               channel, (sc_char *)&connector_element_addr_hash, sizeof(sc_addr_hash), &written_bytes, null_ptr) !=
               SC_FS_IO_STATUS_NORMAL ||
@@ -934,14 +955,18 @@ sc_result _sc_storage_save_segments(sc_storage * storage, sc_list **** segments,
         return SC_RESULT_WRITE_ERROR;
       }
 
+      sc_storage_typed_connectors ** all_typed_connectors = section->all_typed_connectors;
       for (sc_uint64 k = 0; k < MAX_SC_CONNECTOR_TYPE_CODE; ++k)
       {
-        sc_list * slot = *slots;
-        if (slot == null_ptr)
+        sc_storage_typed_connectors * typed_connectors = *all_typed_connectors;
+        if (typed_connectors == null_ptr)
+        {
+          ++all_typed_connectors;
           continue;
+        }
 
         if (sc_io_channel_write_chars(
-                channel, (sc_char *)&slot->size, sizeof(sc_uint64), &written_bytes, null_ptr) !=
+                channel, (sc_char *)&typed_connectors->connectors->size, sizeof(sc_uint64), &written_bytes, null_ptr) !=
                 SC_FS_IO_STATUS_NORMAL ||
             sizeof(sc_uint64) != written_bytes)
         {
@@ -949,7 +974,7 @@ sc_result _sc_storage_save_segments(sc_storage * storage, sc_list **** segments,
           return SC_RESULT_WRITE_ERROR;
         }
 
-        sc_iterator * it = sc_list_iterator(slot);
+        sc_iterator * it = sc_list_iterator(typed_connectors->connectors);
         while (sc_iterator_next(it))
         {
           sc_uint64 const offset = (sc_uint64)sc_iterator_get(it);
@@ -963,9 +988,9 @@ sc_result _sc_storage_save_segments(sc_storage * storage, sc_list **** segments,
           }
         }
         sc_iterator_destroy(it);
-        ++slots;
+        ++all_typed_connectors;
       }
-      ++segment;
+      ++segment_sections;
     }
     ++segments;
   }

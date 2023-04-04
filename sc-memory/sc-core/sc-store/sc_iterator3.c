@@ -255,12 +255,12 @@ sc_bool _sc_iterator3_f_a_a_next(sc_iterator3 * it)
 
   if (it->connectors_slots_iterator == null_ptr)
   {
-    sc_list ** typed_connectors = sc_storage_resolve_element_typed_connectors(
+    sc_storage_typed_connectors ** typed_connectors = sc_storage_resolve_element_typed_connectors(
         it->storage, it->storage->output_connectors_segments, it->params[0].addr);
     if (typed_connectors == null_ptr)
       goto finish;
 
-    sc_list * element_connectors_slots = typed_connectors[sc_storage_define_connector_type_code(it->params[1].type)];
+    sc_list * element_connectors_slots = typed_connectors[sc_storage_define_connector_type_code(it->params[1].type)]->connectors;
     it->connectors_slots_iterator = sc_list_iterator(element_connectors_slots);
     it->connectors_channel = it->storage->output_connectors_channel;
 
@@ -312,12 +312,12 @@ sc_bool _sc_iterator3_f_a_f_next(sc_iterator3 * it)
 
   if (it->connectors_slots_iterator == null_ptr)
   {
-    sc_list ** typed_connectors = sc_storage_resolve_element_typed_connectors(
+    sc_storage_typed_connectors ** typed_connectors = sc_storage_resolve_element_typed_connectors(
         it->storage, it->storage->input_connectors_segments, it->params[2].addr);
     if (typed_connectors == null_ptr)
       goto finish;
 
-    sc_list * element_connectors_slots = typed_connectors[sc_storage_define_connector_type_code(it->params[1].type)];
+    sc_list * element_connectors_slots = typed_connectors[sc_storage_define_connector_type_code(it->params[1].type)]->connectors;
     it->connectors_slots_iterator = sc_list_iterator(element_connectors_slots);
     it->connectors_channel = it->storage->input_connectors_channel;
     goto next_slot;
@@ -365,12 +365,12 @@ sc_bool _sc_iterator3_a_a_f_next(sc_iterator3 * it)
 
   if (it->connectors_slots_iterator == null_ptr)
   {
-    sc_list ** typed_connectors = sc_storage_resolve_element_typed_connectors(
+    sc_storage_typed_connectors ** typed_connectors = sc_storage_resolve_element_typed_connectors(
         it->storage, it->storage->input_connectors_segments, it->params[2].addr);
     if (typed_connectors == null_ptr)
       goto finish;
 
-    sc_list * element_connectors_slots = typed_connectors[sc_storage_define_connector_type_code(it->params[1].type)];
+    sc_list * element_connectors_slots = typed_connectors[sc_storage_define_connector_type_code(it->params[1].type)]->connectors;
     it->connectors_slots_iterator = sc_list_iterator(element_connectors_slots);
     it->connectors_channel = it->storage->input_connectors_channel;
 
