@@ -13,7 +13,7 @@
 #include "../sc-container/sc-list/sc_list.h"
 #include "../sc-container/sc-dictionary/sc_dictionary.h"
 
-#define SC_FS_EXT ".scdb";
+#define SC_FS_EXT ".scdb"
 #define INVALID_STRING_OFFSET LONG_MAX
 
 #define SC_FS_MEMORY_PREFIX "[sc-fs-memory] "

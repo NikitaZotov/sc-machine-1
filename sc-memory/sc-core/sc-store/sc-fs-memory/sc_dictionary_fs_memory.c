@@ -57,6 +57,7 @@ sc_dictionary_fs_memory_status sc_dictionary_fs_memory_initialize_ext(
       else
         (*memory)->strings_channel = sc_io_new_append_channel((*memory)->strings_path, null_ptr);
       sc_io_channel_set_encoding((*memory)->strings_channel, null_ptr, null_ptr);
+      g_io_channel_set_buffered((*memory)->strings_channel, SC_FALSE);
       (*memory)->last_string_offset = 0;
     }
 
