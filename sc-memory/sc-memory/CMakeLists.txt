@@ -19,6 +19,8 @@ set(SOURCES_PARSER
     "${CMAKE_CURRENT_LIST_DIR}/scs/scsLexer.h"
     "${CMAKE_CURRENT_LIST_DIR}/scs/scsParser.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/scs/scsParser.h"
+    "${CMAKE_CURRENT_LIST_DIR}/scs/ASTJsonListener.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/scs/ASTJsonListener.hpp"
 )
 
 file(GLOB_RECURSE SOURCES "*.cpp" "*.hpp")
