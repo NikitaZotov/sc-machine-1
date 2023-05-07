@@ -339,7 +339,7 @@ std::string Parser::BuildAST(std::string const & str)
   lexer.removeErrorListener(&astErrorListener);
   parser.removeErrorListener(&astErrorListener);
 
-  return astJson.dump();
+  return parseResult.dump();
 }
 
 ParsedElement & Parser::GetParsedElementRef(ElementHandle const & elID)
