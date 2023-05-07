@@ -331,10 +331,9 @@ std::string Parser::BuildAST(std::string const & str)
     m_lastError = e.Message();
   }
 
-  ScJson astJson;
-  astListener.buildAST(astJson);
-
-  astJson["errors"] = astErrorListener.getErrors();
+  ScJson parseResult;
+  astListener.buildAST(parseResult["root"]);
+  parseResult["errors"] = astErrorListener.getErrors();
 
   parser.removeParseListener(&astListener);
   lexer.removeErrorListener(&astErrorListener);
