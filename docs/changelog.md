@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- View kb fragment in scn if it is keyword
 - Support for deprecated memory binaries build in 0.7.0 version
 - Synchronize processes that works with file memory and sc-dictionary
 - Get replacements in template result by variable address
@@ -62,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Decrease wait time for sc-element referencing in iterators
 - Unite ScTemplateGenResult and ScTemplateSearchResultItem into ScTemplateResultItem
 - Remove list to array translations in C API for fs-memory
 - Upload text and binary files in realtime by get API
