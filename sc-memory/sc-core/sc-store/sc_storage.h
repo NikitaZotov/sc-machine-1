@@ -153,6 +153,9 @@ sc_result sc_storage_get_arc_info(
  */
 sc_result sc_storage_set_link_content(sc_memory_context * ctx, sc_addr addr, const sc_stream * stream);
 
+sc_result sc_storage_set_link_content_ext(
+    sc_memory_context * ctx, sc_addr addr, const sc_stream * stream, sc_bool to_search, sc_bool to_search_by_substring);
+
 /*! Returns content data from specified sc-link
  * @param addr sc-addr of sc-link to get content data
  * @param stream Pointer to returned data stream

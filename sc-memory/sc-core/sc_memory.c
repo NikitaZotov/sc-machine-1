@@ -344,6 +344,12 @@ sc_result sc_memory_set_link_content(sc_memory_context * ctx, sc_addr addr, cons
   return sc_storage_set_link_content(ctx, addr, stream);
 }
 
+sc_result sc_memory_set_link_content_ext(
+    sc_memory_context * ctx, sc_addr addr, sc_stream const * stream, sc_bool to_search, sc_bool to_search_by_substring)
+{
+  return sc_storage_set_link_content_ext(ctx, addr, stream, to_search, to_search_by_substring);
+}
+
 sc_result sc_memory_get_link_content(sc_memory_context const * ctx, sc_addr addr, sc_stream ** stream)
 {
   return sc_storage_get_link_content(ctx, addr, stream);

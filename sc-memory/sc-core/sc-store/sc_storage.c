@@ -961,6 +961,12 @@ unlock:
 
 sc_result sc_storage_set_link_content(sc_memory_context * ctx, sc_addr addr, const sc_stream * stream)
 {
+  return sc_storage_set_link_content_ext(ctx, addr, stream, SC_TRUE, SC_TRUE);
+}
+
+sc_result sc_storage_set_link_content_ext(
+    sc_memory_context * ctx, sc_addr addr, const sc_stream * stream, sc_bool to_search, sc_bool to_search_by_substring)
+{
   sc_assert(ctx != null_ptr);
   sc_assert(stream != null_ptr);
 
@@ -1007,7 +1013,7 @@ sc_result sc_storage_set_link_content(sc_memory_context * ctx, sc_addr addr, con
     if (string == null_ptr)
       sc_string_empty(string);
 
-    sc_fs_memory_link_string(SC_ADDR_LOCAL_TO_INT(addr), string, string_size);
+    sc_fs_memory_link_string_ext(SC_ADDR_LOCAL_TO_INT(addr), string, string_size, to_search, to_search_by_substring);
     result = SC_RESULT_OK;
   }
   sc_mem_free(string);

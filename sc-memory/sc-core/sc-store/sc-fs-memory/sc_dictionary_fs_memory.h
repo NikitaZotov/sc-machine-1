@@ -86,6 +86,14 @@ sc_dictionary_fs_memory_status sc_dictionary_fs_memory_link_string(
     sc_char const * string,
     sc_uint64 string_size);
 
+sc_dictionary_fs_memory_status sc_dictionary_fs_memory_link_string_ext(
+    sc_dictionary_fs_memory * memory,
+    sc_addr_hash link_hash,
+    sc_char const * string,
+    sc_uint64 string_size,
+    sc_bool to_search,
+    sc_bool to_search_by_substring);
+
 /*! Removes sc-link content string from file system memory.
  * @param memory A pointer to sc-memory instance
  * @param link_hash A sc-link hash
