@@ -1,9 +1,8 @@
 #pragma once
 
+#include "nlohmann/json.hpp"
 #include "antlr4-runtime.h"
 
-#include <cstdio>
-#include "nlohmann/json.hpp"
 using ScJson = nlohmann::json;
 
 namespace scs
