@@ -30,7 +30,6 @@
 
 #include "scsLexer.h"
 #include "scsParser.h"
-#include "ASTJsonListener.hpp"
 
 #include <iostream>
 
