@@ -6,24 +6,21 @@
 
 #include "sc_event.h"
 
+#include "sc_storage.h"
 #include "sc_event/sc_event_private.h"
 #include "sc_event/sc_event_queue.h"
 
 #include "../sc_memory_private.h"
 
 #include "sc-base/sc_allocator.h"
-#include "sc-base/sc_message.h"
 #include "sc-base/sc_mutex.h"
-
-sc_mutex events_table_mutex;
-#define EVENTS_TABLE_LOCK sc_mutex_lock(&events_table_mutex)
-#define EVENTS_TABLE_UNLOCK sc_mutex_unlock(&events_table_mutex)
 
 #define TABLE_KEY(__Addr) GUINT_TO_POINTER(SC_ADDR_LOCAL_TO_INT(__Addr))
 
 // Pointer to hash table that contains events
 GHashTable * events_table = null_ptr;
 sc_event_queue * event_queue = null_ptr;
+sc_monitor events_table_monitor;
 
 guint events_table_hash_func(gconstpointer pointer)
 {
@@ -40,7 +37,7 @@ sc_result insert_event_into_table(sc_event * event)
 {
   GSList * element_events_list = null_ptr;
 
-  EVENTS_TABLE_LOCK;
+  sc_monitor_start_write(&events_table_monitor);
 
   // the first, if table doesn't exist, then create it
   if (events_table == null_ptr)
@@ -51,7 +48,7 @@ sc_result insert_event_into_table(sc_event * event)
   element_events_list = g_slist_append(element_events_list, (gpointer)event);
   g_hash_table_insert(events_table, TABLE_KEY(event->element), (gpointer)element_events_list);
 
-  EVENTS_TABLE_UNLOCK;
+  sc_monitor_end_write(&events_table_monitor);
 
   return SC_RESULT_OK;
 }
@@ -61,14 +58,11 @@ sc_result remove_event_from_table(sc_event * event)
 {
   GSList * element_events_list = null_ptr;
 
-  EVENTS_TABLE_LOCK;
+  sc_monitor_start_write(&events_table_monitor);
 
   element_events_list = (GSList *)g_hash_table_lookup(events_table, TABLE_KEY(event->element));
   if (element_events_list == null_ptr)
-  {
-    EVENTS_TABLE_UNLOCK;
-    return SC_RESULT_ERROR_INVALID_PARAMS;
-  }
+    goto error;
 
   // remove event from list of events for specified sc-element
   element_events_list = g_slist_remove(element_events_list, (gconstpointer)event);
@@ -84,8 +78,11 @@ sc_result remove_event_from_table(sc_event * event)
     events_table = null_ptr;
   }
 
-  EVENTS_TABLE_UNLOCK;
+  sc_monitor_end_write(&events_table_monitor);
   return SC_RESULT_OK;
+error:
+  sc_monitor_end_write(&events_table_monitor);
+  return SC_RESULT_ERROR_INVALID_PARAMS;
 }
 
 // TODO: remove in 0.4.0
@@ -167,8 +164,6 @@ sc_result sc_event_destroy(sc_event * evt)
 
   sc_monitor_end_write(&evt->monitor);
 
-  sc_monitor_destroy(&evt->monitor);
-
   sc_mem_free(evt);
   evt = null_ptr;
 
@@ -177,8 +172,6 @@ sc_result sc_event_destroy(sc_event * evt)
 
 sc_result sc_event_notify_element_deleted(sc_addr element)
 {
-  EVENTS_TABLE_LOCK;
-
   GSList * element_events_list = null_ptr;
   sc_event * evt = null_ptr;
 
@@ -187,10 +180,15 @@ sc_result sc_event_notify_element_deleted(sc_addr element)
     goto result;
 
   // sc_set_lookup for all registered to specified sc-element events
+  sc_monitor_start_read(&events_table_monitor);
   element_events_list = (GSList *)g_hash_table_lookup(events_table, TABLE_KEY(element));
+  sc_monitor_end_read(&events_table_monitor);
+
   if (element_events_list)
   {
+    sc_monitor_start_write(&events_table_monitor);
     g_hash_table_remove(events_table, TABLE_KEY(element));
+    sc_monitor_end_write(&events_table_monitor);
 
     while (element_events_list != null_ptr)
     {
@@ -205,8 +203,6 @@ sc_result sc_event_notify_element_deleted(sc_addr element)
   }
 
 result:
-  EVENTS_TABLE_UNLOCK;
-
   return SC_RESULT_OK;
 }
 
@@ -226,6 +222,7 @@ sc_result sc_event_emit(
     params->type = type;
     params->edge = edge;
     params->other_el = other_el;
+    sc_monitor_init(&params->monitor);
 
     sc_memory_context_pend_event(ctx, params);
     return SC_RESULT_OK;
@@ -248,32 +245,26 @@ sc_result sc_event_emit_impl(
   if (SC_ADDR_IS_EMPTY(el))
     return SC_RESULT_ERROR_ADDR_IS_NOT_VALID;
 
-  EVENTS_TABLE_LOCK;
-
   // if table is empty, then do nothing
   if (events_table == null_ptr)
     goto result;
 
   // sc_set_lookup for all registered to specified sc-element events
+  sc_monitor_start_read(&events_table_monitor);
   element_events_list = (GSList *)g_hash_table_lookup(events_table, TABLE_KEY(el));
+  sc_monitor_end_read(&events_table_monitor);
 
   while (element_events_list != null_ptr)
   {
     event = (sc_event *)element_events_list->data;
 
-    sc_monitor_start_read(&event->monitor);
     if (event->type == type)
       sc_event_queue_append(event_queue, event, edge, other_el);
-    sc_monitor_end_read(&event->monitor);
 
     element_events_list = element_events_list->next;
   }
 
 result:
-{
-  EVENTS_TABLE_UNLOCK;
-}
-
   return SC_RESULT_OK;
 }
 
