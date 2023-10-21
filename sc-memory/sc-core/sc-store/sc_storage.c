@@ -47,7 +47,11 @@ sc_bool sc_storage_initialize(sc_memory_params const * params)
 
   sc_result result = SC_TRUE;
   if (params->clear == SC_FALSE)
+  {
+    sc_monitor_acquire_write(&storage->segments_monitor);
     result = sc_fs_memory_load(storage);
+    sc_monitor_release_write(&storage->segments_monitor);
+  }
 
   storage->event_queue = sc_events_initialize_ext(params->max_events_and_agents_threads);
 

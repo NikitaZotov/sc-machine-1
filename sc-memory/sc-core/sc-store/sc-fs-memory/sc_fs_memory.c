@@ -268,13 +268,8 @@ error:
 
 sc_bool sc_fs_memory_load(sc_storage * storage)
 {
-  sc_monitor_acquire_write(&storage->segments_monitor);
-
   sc_bool const sc_memory_result = _sc_fs_memory_load_sc_memory_segments(storage);
   sc_bool const sc_fs_memory_result = manager->load(manager->fs_memory) == SC_FS_MEMORY_OK;
-
-  sc_monitor_release_write(&storage->segments_monitor);
-
   return sc_memory_result && sc_fs_memory_result;
 }
 
