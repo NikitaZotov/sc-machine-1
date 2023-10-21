@@ -248,6 +248,7 @@ sc_bool _sc_fs_memory_load_sc_memory_segments(sc_storage * storage)
   sc_io_channel_shutdown(segments_channel, SC_FALSE, null_ptr);
 
   sc_message("\tLoaded segments count: %d", storage->segments_count);
+  sc_message("\tSc-segments size: %ld", storage->segments_count * sizeof(sc_segment));
   sc_message("\tLast not engaged segment num: %d", storage->last_not_engaged_segment_num);
   sc_message("\tLast released segment num: %d", storage->last_released_segment_num);
 
@@ -385,6 +386,7 @@ sc_bool _sc_fs_memory_save_sc_memory_segments(sc_storage * storage)
   }
 
   sc_message("\tLoaded segments count: %d", storage->segments_count);
+  sc_message("\tSc-segments size: %ld", storage->segments_count * sizeof(sc_segment));
   sc_message("\tLast not engaged segment num: %d", storage->last_not_engaged_segment_num);
   sc_message("\tLast released segment num: %d", storage->last_released_segment_num);
 
