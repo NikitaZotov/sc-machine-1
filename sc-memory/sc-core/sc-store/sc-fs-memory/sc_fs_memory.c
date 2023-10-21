@@ -247,12 +247,15 @@ sc_bool _sc_fs_memory_load_sc_memory_segments(sc_storage * storage)
 
   sc_io_channel_shutdown(segments_channel, SC_FALSE, null_ptr);
 
+  sc_message("\tLoaded segments count: %d", storage->segments_count);
+  sc_message("\tLast not engaged segment num: %d", storage->last_not_engaged_segment_num);
+  sc_message("\tLast released segment num: %d", storage->last_released_segment_num);
+
   if (is_no_deprecated_segments)
     sc_fs_memory_info("Sc-memory segments loaded");
   else
     sc_fs_memory_warning("Deprecated sc-memory segments loaded");
 
-  sc_message("\tSc-memory segments: %u", storage->segments_count);
   return SC_TRUE;
 
 error:
@@ -264,8 +267,13 @@ error:
 
 sc_bool sc_fs_memory_load(sc_storage * storage)
 {
+  sc_monitor_acquire_write(&storage->segments_monitor);
+
   sc_bool const sc_memory_result = _sc_fs_memory_load_sc_memory_segments(storage);
   sc_bool const sc_fs_memory_result = manager->load(manager->fs_memory) == SC_FS_MEMORY_OK;
+
+  sc_monitor_release_write(&storage->segments_monitor);
+
   return sc_memory_result && sc_fs_memory_result;
 }
 
@@ -375,6 +383,10 @@ sc_bool _sc_fs_memory_save_sc_memory_segments(sc_storage * storage)
       goto error;
     }
   }
+
+  sc_message("\tLoaded segments count: %d", storage->segments_count);
+  sc_message("\tLast not engaged segment num: %d", storage->last_not_engaged_segment_num);
+  sc_message("\tLast released segment num: %d", storage->last_released_segment_num);
 
   sc_mem_free(tmp_filename);
   sc_io_channel_shutdown(segments_channel, SC_TRUE, null_ptr);
