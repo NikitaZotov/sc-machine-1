@@ -692,8 +692,8 @@ sc_uint32 sc_storage_get_element_output_arcs_count(sc_memory_context const * ctx
 
   count = el->output_arcs_count;
 
-  sc_monitor_release_read(monitor);
 error:
+  sc_monitor_release_read(monitor);
   return count;
 }
 
@@ -712,9 +712,8 @@ sc_uint32 sc_storage_get_element_input_arcs_count(sc_memory_context const * ctx,
 
   count = el->input_arcs_count;
 
-  sc_monitor_release_read(monitor);
-
 error:
+  sc_monitor_release_read(monitor);
   return count;
 }
 
