@@ -427,6 +427,7 @@ sc_result sc_storage_element_free(sc_memory_context const * ctx, sc_addr addr)
           break;
 
         sc_hash_table_insert(cache_table, p_addr, el2);
+        sc_queue_push(remove_queue, p_addr);
         sc_queue_push(iter_queue, p_addr);
       }
 
@@ -446,6 +447,7 @@ sc_result sc_storage_element_free(sc_memory_context const * ctx, sc_addr addr)
           break;
 
         sc_hash_table_insert(cache_table, p_addr, el2);
+        sc_queue_push(remove_queue, p_addr);
         sc_queue_push(iter_queue, p_addr);
       }
 
