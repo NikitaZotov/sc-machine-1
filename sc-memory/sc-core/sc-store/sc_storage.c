@@ -527,8 +527,9 @@ sc_result sc_storage_element_free(sc_memory_context const * ctx, sc_addr addr)
           b_el->first_out_arc = next_out_arc;
 
         --b_el->output_arcs_count;
-        sc_event_emit(ctx, begin, b_el->flags.access_levels, SC_EVENT_REMOVE_OUTPUT_ARC, addr, end);
       }
+
+      sc_event_emit(ctx, begin, element->flags.access_levels, SC_EVENT_REMOVE_OUTPUT_ARC, addr, end);
 
       if (SC_ADDR_IS_NOT_EMPTY(prev_in_arc))
       {
@@ -554,8 +555,9 @@ sc_result sc_storage_element_free(sc_memory_context const * ctx, sc_addr addr)
           e_el->first_in_arc = next_in_arc;
 
         --e_el->input_arcs_count;
-        sc_event_emit(ctx, end, e_el->flags.access_levels, SC_EVENT_REMOVE_INPUT_ARC, addr, begin);
       }
+
+      sc_event_emit(ctx, end, element->flags.access_levels, SC_EVENT_REMOVE_INPUT_ARC, addr, begin);
 
       sc_monitor_release_write_n(
           6,
