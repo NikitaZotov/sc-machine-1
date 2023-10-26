@@ -91,22 +91,13 @@ sc_bool sc_event_ref(sc_event * evt)
 {
   sc_bool res = SC_TRUE;
 
-  sc_monitor_acquire_write(&evt->monitor);
+  sc_monitor_acquire_read(&evt->monitor);
 
   if (evt->ref_count & SC_EVENT_REQUEST_DESTROY)
     res = SC_FALSE;
-  else
-    evt->ref_count++;
 
-  sc_monitor_release_write(&evt->monitor);
+  sc_monitor_release_read(&evt->monitor);
   return res;
-}
-
-void sc_event_unref(sc_event * evt)
-{
-  sc_monitor_acquire_write(&evt->monitor);
-  --evt->ref_count;
-  sc_monitor_release_write(&evt->monitor);
 }
 
 sc_event * sc_event_new(
@@ -170,12 +161,6 @@ sc_event * sc_event_new_ex(
 sc_result sc_event_destroy(sc_event * evt)
 {
   sc_monitor_acquire_write(&evt->monitor);
-  if (evt->ref_count & SC_EVENT_REQUEST_DESTROY)
-  {
-    sc_monitor_release_write(&evt->monitor);
-    goto unref;
-  }
-
   if (remove_event_from_table(evt) != SC_RESULT_OK)
   {
     sc_monitor_release_write(&evt->monitor);
@@ -185,7 +170,7 @@ sc_result sc_event_destroy(sc_event * evt)
   if (evt->delete_callback != null_ptr)
     evt->delete_callback(evt);
 
-  evt->ref_count |= SC_EVENT_REQUEST_DESTROY;
+  evt->ref_count = SC_EVENT_REQUEST_DESTROY;
   evt->element = SC_ADDR_EMPTY;
   evt->type = 0;
   evt->callback_ex = null_ptr;
@@ -193,30 +178,11 @@ sc_result sc_event_destroy(sc_event * evt)
   evt->data = null_ptr;
   evt->access_levels = 0;
 
+  sc_monitor_acquire_write(&sc_storage_get()->event_queue->monitor);
+  sc_queue_push(sc_storage_get()->event_queue->deletable_events, evt);
+  sc_monitor_release_write(&sc_storage_get()->event_queue->monitor);
+
   sc_monitor_release_write(&evt->monitor);
-
-unref:
-  sc_event_unref(evt);
-
-  // wait while will be available for destroy
-  while (SC_TRUE)
-  {
-    sc_monitor_acquire_write(&evt->monitor);
-    sc_uint32 const refs = evt->ref_count;
-    if (refs == SC_EVENT_REQUEST_DESTROY)  // no refs
-    {
-      if (evt->delete_callback != null_ptr)
-        evt->delete_callback(evt);
-
-      sc_monitor_release_write(&evt->monitor);
-      sc_monitor_destroy(&evt->monitor);
-      sc_mem_free(evt);
-      break;
-    }
-    sc_monitor_release_write(&evt->monitor);
-
-    g_usleep(10000);
-  }
 
   return SC_RESULT_OK;
 }
@@ -248,7 +214,11 @@ sc_result sc_event_notify_element_deleted(sc_addr element)
 
       // mark event for deletion
       sc_monitor_acquire_write(&evt->monitor);
-      evt->ref_count |= SC_EVENT_REQUEST_DESTROY;
+
+      sc_monitor_acquire_write(&sc_storage_get()->event_queue->monitor);
+      sc_queue_push(sc_storage_get()->event_queue->deletable_events, evt);
+      sc_monitor_release_write(&sc_storage_get()->event_queue->monitor);
+
       sc_monitor_release_write(&evt->monitor);
 
       element_events_list = sc_hash_table_list_remove_sublist(element_events_list, element_events_list);
