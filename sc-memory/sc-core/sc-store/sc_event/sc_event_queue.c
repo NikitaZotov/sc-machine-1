@@ -124,7 +124,6 @@ void sc_event_queue_destroy_wait(sc_event_queue * queue)
     g_thread_pool_free(queue->thread_pool, SC_FALSE, SC_TRUE);
     queue->thread_pool = null_ptr;
   }
-  sc_monitor_release_write(&queue->monitor);
 
   while (!sc_queue_empty(queue->deletable_events))
   {
@@ -134,8 +133,10 @@ void sc_event_queue_destroy_wait(sc_event_queue * queue)
   }
   sc_queue_destroy(queue->deletable_events);
 
-  sc_monitor_destroy(&queue->monitor);
+  sc_monitor_release_write(&queue->monitor);
+
   sc_monitor_destroy(&queue->processes_monitor);
+  sc_monitor_destroy(&queue->monitor);
   sc_mem_free(queue);
 }
 
@@ -145,6 +146,13 @@ void sc_event_queue_append(sc_event_queue * queue, sc_event * evt, sc_addr edge,
     return;
 
   sc_monitor_acquire_write(&queue->monitor);
+
+  sc_bool is_running = queue->running;
+  if (is_running == SC_FALSE)
+  {
+    sc_monitor_release_write(&queue->monitor);
+    return;
+  }
 
   sc_event_pool_worker_data * data = sc_event_pool_worker_data_new(evt, edge, other_el);
   g_thread_pool_push(queue->thread_pool, data, null_ptr);

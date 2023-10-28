@@ -190,17 +190,19 @@ sc_result sc_event_destroy(sc_event * evt)
 sc_result sc_event_notify_element_deleted(sc_addr element)
 {
   sc_hash_table_list * element_events_list = null_ptr;
-  sc_event * evt = null_ptr;
+  sc_event * event = null_ptr;
 
   // do nothing, if there are no registered events
   if (events_table == null_ptr)
     goto result;
 
   // sc_set_lookup for all registered to specified sc-element events
-  sc_monitor_acquire_read(&events_table_monitor);
   if (events_table != null_ptr)
+  {
+    sc_monitor_acquire_read(&events_table_monitor);
     element_events_list = (sc_hash_table_list *)sc_hash_table_get(events_table, TABLE_KEY(element));
-  sc_monitor_release_read(&events_table_monitor);
+    sc_monitor_release_read(&events_table_monitor);
+  }
 
   if (element_events_list != null_ptr)
   {
@@ -210,16 +212,16 @@ sc_result sc_event_notify_element_deleted(sc_addr element)
 
     while (element_events_list != null_ptr)
     {
-      evt = (sc_event *)element_events_list->data;
+      event = (sc_event *)element_events_list->data;
 
       // mark event for deletion
-      sc_monitor_acquire_write(&evt->monitor);
+      sc_monitor_acquire_write(&event->monitor);
 
       sc_monitor_acquire_write(&sc_storage_get()->event_queue->monitor);
-      sc_queue_push(sc_storage_get()->event_queue->deletable_events, evt);
+      sc_queue_push(sc_storage_get()->event_queue->deletable_events, event);
       sc_monitor_release_write(&sc_storage_get()->event_queue->monitor);
 
-      sc_monitor_release_write(&evt->monitor);
+      sc_monitor_release_write(&event->monitor);
 
       element_events_list = sc_hash_table_list_remove_sublist(element_events_list, element_events_list);
     }
