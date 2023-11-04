@@ -233,14 +233,12 @@ sc_result sc_storage_find_links_contents_by_content_substring(
 /*! Get statistics information about elements
  * @param stat Pointer to structure that store statistic
  * @return If statistics info collect without any errors, then return SC_OK;
- * otherwise return SC_ERROR
+ * otherwise return SC_RESULT_ERROR
  */
 sc_result sc_storage_get_elements_stat(sc_stat * stat);
 
 // ----- Locks -----
 //! Locks specified sc-element. Pointer to locked sc-element stores in el
-sc_result sc_storage_get_element_by_addr(sc_addr addr, sc_element ** el);
-
 sc_result sc_storage_get_element_by_addr(sc_addr addr, sc_element ** el);
 
 sc_result sc_storage_remove_element_by_addr(sc_addr addr);

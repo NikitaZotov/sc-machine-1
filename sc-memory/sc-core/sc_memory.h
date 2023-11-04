@@ -41,11 +41,13 @@ _SC_EXTERN void sc_memory_shutdown_ext();
 
 /*! Function that create memory context with specified params
  * @param levels Access levels, you can create it with macros @see sc_access_level_make
- * @returns Retursn pointer to create memory context. If there were any errors during
+ * @returns Returns pointer to create memory context. If there were any errors during
  * context creation, then function returns 0
  * @note Do not use one context in different threads.
  */
 _SC_EXTERN sc_memory_context * sc_memory_context_new(sc_uint8 levels);
+
+_SC_EXTERN sc_memory_context * sc_memory_context_new_ext(sc_addr actor_addr);
 
 /*! Function that destroys created memory context. You can use that function
  * just for contexts, that were created with @see sc_memory_context_new

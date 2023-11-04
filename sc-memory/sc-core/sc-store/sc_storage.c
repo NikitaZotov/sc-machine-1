@@ -616,7 +616,7 @@ error:
 
 sc_addr sc_storage_node_new(sc_memory_context const * ctx, sc_type type)
 {
-  return sc_storage_node_new_ext(ctx, type, ctx->access_levels);
+  return sc_storage_node_new_ext(ctx, type, sc_access_lvl_make_max);
 }
 
 sc_addr sc_storage_node_new_ext(sc_memory_context const * ctx, sc_type type, sc_access_levels access_levels)
@@ -635,7 +635,7 @@ sc_addr sc_storage_node_new_ext(sc_memory_context const * ctx, sc_type type, sc_
 
 sc_addr sc_storage_link_new(sc_memory_context const * ctx, sc_type type)
 {
-  return sc_storage_link_new_ext(ctx, ctx->access_levels, type);
+  return sc_storage_link_new_ext(ctx, sc_access_lvl_make_max, type);
 }
 
 sc_addr sc_storage_link_new_ext(sc_memory_context const * ctx, sc_access_levels access_levels, sc_type type)
@@ -654,7 +654,7 @@ sc_addr sc_storage_link_new_ext(sc_memory_context const * ctx, sc_access_levels 
 
 sc_addr sc_storage_arc_new(sc_memory_context const * ctx, sc_type type, sc_addr beg, sc_addr end)
 {
-  return sc_storage_arc_new_ext(ctx, type, beg, end, ctx->access_levels);
+  return sc_storage_arc_new_ext(ctx, type, beg, end, sc_access_lvl_make_max);
 }
 
 sc_addr sc_storage_arc_new_ext(

@@ -135,6 +135,10 @@ typedef sc_uint16 sc_type;
 #  define sc_type_node_abstract (sc_type)(0x1000)
 #  define sc_type_node_material (sc_type)(0x2000)
 
+#  define sc_type_node_const (sc_type)(sc_type_node | sc_type_const)
+
+#  define sc_type_arc_common_const (sc_type)(sc_type_arc_common | sc_type_const)
+
 #  define sc_type_arc_pos_const_perm (sc_type)(sc_type_arc_access | sc_type_const | sc_type_arc_pos | sc_type_arc_perm)
 #  define sc_type_arc_pos_var_perm (sc_type)(sc_type_arc_access | sc_type_var | sc_type_arc_pos | sc_type_arc_perm)
 
@@ -219,7 +223,6 @@ struct _sc_stat
 
 #endif
 
-typedef struct _sc_arc sc_arc;
 typedef struct _sc_arc_info sc_arc_info;
 typedef sc_uint8 sc_access_levels;
 typedef struct _sc_element_flags sc_element_flags;
