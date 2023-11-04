@@ -87,6 +87,8 @@ struct _sc_addr
       0, 0 \
     }
 
+#  define TABLE_KEY(__Addr) GUINT_TO_POINTER(SC_ADDR_LOCAL_TO_INT(__Addr))
+
 //! Check if specified sc-addr is empty
 #  define SC_ADDR_IS_EMPTY(addr) (((addr).seg == 0) && ((addr).offset == 0))
 #  define SC_ADDR_IS_NOT_EMPTY(addr) (!SC_ADDR_IS_EMPTY(addr))

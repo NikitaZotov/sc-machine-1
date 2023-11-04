@@ -15,8 +15,6 @@
 #include "sc-base/sc_allocator.h"
 #include "sc-base/sc_mutex.h"
 
-#define TABLE_KEY(__Addr) GUINT_TO_POINTER(SC_ADDR_LOCAL_TO_INT(__Addr))
-
 // Pointer to hash table that contains events
 sc_hash_table * events_table = null_ptr;
 sc_monitor events_table_monitor;
