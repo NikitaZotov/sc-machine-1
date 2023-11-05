@@ -43,18 +43,8 @@ public:
   _SC_EXTERN static void LogMute();
   _SC_EXTERN static void LogUnmute();
 
-protected:
-  static void RegisterContext(ScMemoryContext const * ctx);
-  static void UnregisterContext(ScMemoryContext const * ctx);
-
-private:
-  static bool HasMemoryContext(ScMemoryContext const * ctx);
-
 private:
   static sc_memory_context * ms_globalContext;
-
-  using MemoryContextList = std::list<ScMemoryContext const *>;
-  static MemoryContextList ms_contexts;
 };
 
 //! Class used to work with memory. It provides functions to create/erase elements
@@ -78,6 +68,7 @@ public:
 public:
   _SC_EXTERN explicit ScMemoryContext(sc_uint8 accessLevels, std::string const & name = "");
   _SC_EXTERN explicit ScMemoryContext(std::string const & name);
+  _SC_EXTERN explicit ScMemoryContext(ScAddr const & actorAddr);
   _SC_EXTERN ~ScMemoryContext();
 
   // Disable object copying
@@ -101,12 +92,6 @@ public:
 
   //! End events pending mode
   void EndEventsPending();
-
-  // returns copy, because of Python wrapper
-  std::string const & GetName() const
-  {
-    return m_name;
-  }
 
   _SC_EXTERN bool IsValid() const;
 
@@ -448,7 +433,6 @@ public:
 
 private:
   sc_memory_context * m_context;
-  std::string m_name;
 };
 
 class ScMemoryContextEventsPendingGuard

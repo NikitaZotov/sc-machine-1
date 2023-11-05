@@ -10,7 +10,7 @@ protected:
   virtual void SetUp()
   {
     ScMemoryTest::Initialize();
-    m_ctx = std::make_unique<ScMemoryContext>(sc_access_lvl_make_min, "test");
+    m_ctx = std::make_unique<ScMemoryContext>(sc_access_lvl_make_max, "test");
   }
 
   virtual void TearDown()

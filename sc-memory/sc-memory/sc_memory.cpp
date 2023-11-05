@@ -19,29 +19,20 @@
 
 extern "C"
 {
-#include "sc-core/sc-store/sc-base/sc_mutex.h"
+#include "glib.h"
 }
 
 namespace
 {
-sc_mutex gContextMutex;
-struct ContextMutexLock
-{
-  ContextMutexLock()
-  {
-    sc_mutex_lock(&gContextMutex);
-  }
-  ~ContextMutexLock()
-  {
-    sc_mutex_unlock(&gContextMutex);
-  }
-};
+bool isLogMuted = false;
 
-bool gIsLogMuted = false;
-
-void _logPrintHandler(gchar const * log_domain, GLogLevelFlags log_level, gchar const * message, gpointer user_data)
+void _logPrintHandler(
+    sc_char const * log_domain,
+    GLogLevelFlags log_level,
+    sc_char const * message,
+    sc_pointer user_data)
 {
-  if (gIsLogMuted)
+  if (isLogMuted)
     return;
 
   std::string stype;
@@ -67,8 +58,6 @@ void _logPrintHandler(gchar const * log_domain, GLogLevelFlags log_level, gchar 
   }
 }
 
-unsigned int gContextCounter;
-
 #define CHECK_CONTEXT SC_ASSERT(IsValid(), "Used context is invalid. Make sure that it's initialized")
 
 }  // namespace
@@ -76,12 +65,10 @@ unsigned int gContextCounter;
 // ------------------
 
 sc_memory_context * ScMemory::ms_globalContext = nullptr;
-ScMemory::MemoryContextList ScMemory::ms_contexts;
 
 bool ScMemory::Initialize(sc_memory_params const & params)
 {
   std::srand(unsigned(std::time(nullptr)));
-  gContextCounter = 0;
 
   g_log_set_default_handler(_logPrintHandler, nullptr);
 
@@ -107,8 +94,6 @@ void ScMemory::Shutdown(bool saveState /* = true */)
 {
   utils::ScLog::SetUp("Console", "", "Info");
 
-  sc_memory_shutdown_ext();
-
   ScKeynodes::Shutdown();
 
   sc_memory_shutdown(saveState);
@@ -120,72 +105,30 @@ void ScMemory::Shutdown(bool saveState /* = true */)
 
 void ScMemory::LogMute()
 {
-  gIsLogMuted = true;
+  isLogMuted = true;
   utils::ScLog::GetInstance()->SetMuted(true);
 }
 
 void ScMemory::LogUnmute()
 {
-  gIsLogMuted = false;
+  isLogMuted = false;
   utils::ScLog::GetInstance()->SetMuted(false);
-}
-
-void ScMemory::RegisterContext(ScMemoryContext const * ctx)
-{
-  SC_ASSERT(!HasMemoryContext(ctx), "Specified context is already registered. You can't register it twice");
-
-  ContextMutexLock lock;
-  ms_contexts.push_back(ctx);
-}
-
-void ScMemory::UnregisterContext(ScMemoryContext const * ctx)
-{
-  SC_ASSERT(HasMemoryContext(ctx), "Specified context must be registered to unregister it");
-
-  ContextMutexLock lock;
-  for (auto it = ms_contexts.begin(); it != ms_contexts.end(); ++it)
-  {
-    if (*it == ctx)
-    {
-      ms_contexts.erase(it);
-      return;
-    }
-  }
-}
-
-bool ScMemory::HasMemoryContext(ScMemoryContext const * ctx)
-{
-  ContextMutexLock lock;
-  for (auto const it : ms_contexts)
-  {
-    if (it == ctx)
-      return true;
-  }
-  return false;
 }
 
 // ---------------
 
 ScMemoryContext::ScMemoryContext(sc_uint8 accessLevels, std::string const & name)
-  : m_context(nullptr)
+  : m_context(sc_memory_context_new3(accessLevels, name.c_str()))
 {
-  m_context = sc_memory_context_new(accessLevels);
-  if (name.empty())
-  {
-    std::stringstream ss;
-    ss << "Context_" << ++gContextCounter;
-    m_name = ss.str();
-  }
-  else
-  {
-    m_name = name;
-  }
-
-  ScMemory::RegisterContext(this);
 }
 
 ScMemoryContext::ScMemoryContext(std::string const & name)
   : ScMemoryContext(sc_access_lvl_make_max, name)
+{
+}
+
+ScMemoryContext::ScMemoryContext(ScAddr const & actorAddr)
+  : m_context(sc_memory_context_new2(actorAddr.GetRealAddr()))
 {
 }
 
@@ -198,8 +141,6 @@ void ScMemoryContext::Destroy()
 {
   if (m_context)
   {
-    ScMemory::UnregisterContext(this);
-
     sc_memory_context_free(m_context);
     m_context = nullptr;
   }
@@ -223,7 +164,7 @@ bool ScMemoryContext::IsValid() const
 bool ScMemoryContext::IsElement(ScAddr const & addr) const
 {
   CHECK_CONTEXT;
-  return (sc_memory_is_element(m_context, *addr) == SC_TRUE);
+  return sc_memory_is_element(m_context, *addr) == SC_TRUE;
 }
 
 size_t ScMemoryContext::GetElementOutputArcsCount(ScAddr const & addr) const
@@ -322,10 +263,10 @@ bool ScMemoryContext::GetEdgeInfo(ScAddr const & edgeAddr, ScAddr & outSourceAdd
     outSourceAddr.Reset();
     outTargetAddr.Reset();
 
-    return false;
+    return SC_FALSE;
   }
 
-  return true;
+  return SC_TRUE;
 }
 
 bool ScMemoryContext::SetLinkContent(ScAddr const & addr, ScStreamPtr const & stream, bool isSearchableString)

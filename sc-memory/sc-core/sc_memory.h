@@ -47,7 +47,9 @@ _SC_EXTERN void sc_memory_shutdown_ext();
  */
 _SC_EXTERN sc_memory_context * sc_memory_context_new(sc_uint8 levels);
 
-_SC_EXTERN sc_memory_context * sc_memory_context_new_ext(sc_addr actor_addr);
+_SC_EXTERN sc_memory_context * sc_memory_context_new2(sc_addr actor_addr);
+
+_SC_EXTERN sc_memory_context * sc_memory_context_new3(sc_access_levels levels, sc_char const * name);
 
 /*! Function that destroys created memory context. You can use that function
  * just for contexts, that were created with @see sc_memory_context_new

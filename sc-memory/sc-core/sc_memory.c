@@ -16,6 +16,7 @@
 #include "sc_helper.h"
 #include "sc_helper_private.h"
 #include "sc_memory_ext.h"
+#include "sc-store/sc-container/sc-string/sc_string.h"
 
 typedef struct _sc_memory
 {
@@ -146,9 +147,19 @@ sc_memory_context * sc_memory_context_new(sc_access_levels levels)
   return _sc_memory_context_new_impl(memory->context_manager, levels, SC_ADDR_EMPTY);
 }
 
-sc_memory_context * sc_memory_context_new_ext(sc_addr actor_addr)
+sc_memory_context * sc_memory_context_new2(sc_addr actor_addr)
 {
   return _sc_memory_context_new_impl(memory->context_manager, 0, actor_addr);
+}
+
+sc_memory_context * sc_memory_context_new3(sc_access_levels levels, sc_char const * name)
+{
+  sc_addr actor_addr;
+  if (sc_helper_find_element_by_system_identifier(s_memory_default_ctx, name, sc_str_len(name), &actor_addr) ==
+      SC_RESULT_OK)
+    return _sc_memory_context_new_impl(memory->context_manager, 0, actor_addr);
+
+  return _sc_memory_context_new_impl(memory->context_manager, levels, SC_ADDR_EMPTY);
 }
 
 void sc_memory_context_free(sc_memory_context * ctx)
