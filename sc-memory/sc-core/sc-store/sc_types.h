@@ -198,6 +198,7 @@ enum _sc_result
   SC_RESULT_ERROR_ADDR_IS_NOT_VALID,
   SC_RESULT_ERROR_ELEMENT_IS_NOT_CONNECTOR,
   SC_RESULT_ERROR_ELEMENT_IS_NOT_LINK,
+  SC_RESULT_NO_RIGHTS,
 
   // add atomic types before
   SC_RESULT_COUNT,  // number of result types

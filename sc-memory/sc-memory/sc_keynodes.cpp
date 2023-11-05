@@ -53,7 +53,7 @@ bool ScKeynodes::Init(bool force, sc_char const * init_memory_generated_structur
   if (ms_isInitialized && !force)
     return true;
 
-  ScMemoryContext ctx(sc_access_lvl_make_min, "ScKeynodes::Init");
+  ScMemoryContext ctx(sc_access_lvl_make_max, "ScKeynodes::Init");
 
   ScAddr initMemoryGeneratedStructure;
   bool initMemoryGeneratedStructureValid = SC_FALSE;

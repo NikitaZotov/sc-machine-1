@@ -19,6 +19,8 @@ extern sc_memory_context * s_memory_default_ctx;
 
 void _sc_memory_context_manager_initialize(sc_memory_context_manager ** manager);
 
+void _sc_memory_context_manager_load_actors_and_actions(sc_memory_context_manager * manager);
+
 void _sc_memory_context_manager_shutdown(sc_memory_context_manager * manager);
 
 /*! Function that create memory context with specified params
@@ -27,13 +29,21 @@ void _sc_memory_context_manager_shutdown(sc_memory_context_manager * manager);
  * context creation, then function returns 0
  * @note Do not use one context in different threads.
  */
-sc_memory_context * _sc_memory_context_new_impl(sc_memory_context_manager * manager, sc_addr actor_addr);
+sc_memory_context * _sc_memory_context_new_impl(
+    sc_memory_context_manager * manager,
+    sc_access_levels levels,
+    sc_addr actor_addr);
 
 /*! Function that destroys created memory context. You can use that function
  * just for contexts, that were created with @see sc_memory_context_new
  */
 
 void _sc_memory_context_free_impl(sc_memory_context_manager * manager, sc_memory_context * ctx);
+
+sc_bool _sc_memory_context_check_rights(
+    sc_memory_context_manager * manager,
+    sc_memory_context const * ctx,
+    sc_addr action_addr);
 
 sc_bool _sc_memory_context_is_pending(sc_memory_context const * ctx);
 

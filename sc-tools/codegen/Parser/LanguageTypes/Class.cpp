@@ -145,7 +145,7 @@ void Class::GenerateCode(std::string const & fileId, std::stringstream & outCode
 #define _GENERATE_INIT_CODE(FuncName, Method, PreModifier, PostModifier) \
   outCode << PreModifier << " bool " << FuncName << "(ScAddr const & outputStructure = ScAddr::Empty) " \
           << PostModifier << " \\\n{ \\\n"; \
-  outCode << "    ScMemoryContext ctx(sc_access_lvl_make_min, \"" << m_name << "::" << FuncName << "\"); \\\n"; \
+  outCode << "    ScMemoryContext ctx(sc_access_lvl_make_max, \"" << m_name << "::" << FuncName << "\"); \\\n"; \
   outCode << "    ScSystemIdentifierFiver fiver; \\\n"; \
   outCode << "    bool result = true; \\\n"; \
   Method(outCode); \

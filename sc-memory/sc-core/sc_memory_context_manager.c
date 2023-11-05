@@ -25,7 +25,7 @@ struct _sc_memory_context_manager
   sc_hash_table * actor_hash_table;
   sc_monitor actor_monitor;
   sc_hash_table * action_hash_table;
-  sc_uint64 last_action_bit;
+  sc_access_levels last_action_bit;
   sc_monitor action_monitor;
 };
 
@@ -81,14 +81,14 @@ sc_result _sc_memory_context_manager_add_action_actor(
       sc_addr const action_class_addr = sc_iterator5_value(actor_superclass_action_it, 2);
       sc_monitor_acquire_read(&manager->action_monitor);
       sc_pointer key = TABLE_KEY(action_class_addr);
-      sc_uint64 const action_bit = (sc_uint64)sc_hash_table_get(manager->action_hash_table, key);
+      sc_access_levels const action_bit = (sc_uint64)sc_hash_table_get(manager->action_hash_table, key);
       sc_monitor_release_read(&manager->action_monitor);
 
       sc_monitor_acquire_write(&manager->actor_monitor);
       key = TABLE_KEY(actor_class_addr);
-      sc_uint64 action_rights = (sc_uint64)sc_hash_table_get(manager->actor_hash_table, key);
+      sc_access_levels action_rights = (sc_uint64)sc_hash_table_get(manager->actor_hash_table, key);
       action_rights |= action_bit;
-      sc_hash_table_insert(manager->actor_hash_table, key, (sc_pointer)action_rights);
+      sc_hash_table_insert(manager->actor_hash_table, key, (sc_pointer)(sc_uint64)action_rights);
       sc_monitor_release_write(&manager->actor_monitor);
     }
     sc_iterator5_free(actor_superclass_action_it);
@@ -116,7 +116,7 @@ void _sc_memory_context_manager_register_events(sc_memory_context_manager * mana
 {
   sc_helper_resolve_system_identifier(s_memory_default_ctx, "action_actor", &action_actor_addr);
   sc_helper_resolve_system_identifier(s_memory_default_ctx, "nrel_action_in_sc_memory", &nrel_action_in_sc_memory_addr);
-  sc_helper_resolve_system_identifier(s_memory_default_ctx, "action_in_sc_memory", &nrel_action_in_sc_memory_addr);
+  sc_helper_resolve_system_identifier(s_memory_default_ctx, "action_in_sc_memory", &action_in_sc_memory_class_addr);
 
   action_actor_add_event = sc_event_new_ex(
       s_memory_default_ctx,
@@ -141,6 +141,20 @@ void _sc_memory_context_manager_unregister_events()
   sc_event_destroy(action_actor_remove_event);
 }
 
+void _sc_memory_context_manager_init_actors_table(sc_memory_context_manager * manager)
+{
+  sc_iterator3 * actor_it =
+      sc_iterator3_f_a_a_new(s_memory_default_ctx, action_actor_addr, sc_type_arc_pos_const_perm, sc_type_node_const);
+  while (sc_iterator3_next(actor_it))
+  {
+    sc_addr const actor_class_edge_addr = sc_iterator3_value(actor_it, 1);
+    sc_addr const actor_class_addr = sc_iterator3_value(actor_it, 2);
+
+    _sc_memory_context_manager_add_action_actor(action_actor_add_event, actor_class_edge_addr, actor_class_addr);
+  }
+  sc_iterator3_free(actor_it);
+}
+
 void _sc_memory_context_manager_init_actions_table(sc_memory_context_manager * manager)
 {
   sc_iterator3 * action_it = sc_iterator3_f_a_a_new(
@@ -153,7 +167,7 @@ void _sc_memory_context_manager_init_actions_table(sc_memory_context_manager * m
     sc_pointer key = TABLE_KEY(action_class_addr);
     if (sc_hash_table_get(manager->action_hash_table, key) == null_ptr)
     {
-      sc_hash_table_insert(manager->action_hash_table, key, (sc_pointer)manager->last_action_bit);
+      sc_hash_table_insert(manager->action_hash_table, key, (sc_pointer)(sc_uint64)manager->last_action_bit);
       manager->last_action_bit = manager->last_action_bit << 1;
     }
     sc_monitor_release_write(&manager->action_monitor);
@@ -172,18 +186,24 @@ void _sc_memory_context_manager_initialize(sc_memory_context_manager ** manager)
   sc_monitor_init(&(*manager)->context_monitor);
 
   s_memory_default_ctx = sc_memory_context_new(sc_access_lvl_make_max);
-  sc_helper_resolve_system_identifier(s_memory_default_ctx, "my_self", &(*manager)->system_addr);
-  s_memory_default_ctx->actor_addr = (*manager)->system_addr;
 
   (*manager)->actor_hash_table = sc_hash_table_init(g_direct_hash, g_direct_equal, null_ptr, null_ptr);
   sc_monitor_init(&(*manager)->actor_monitor);
 
-  _sc_memory_context_manager_register_events(*manager);
-
   (*manager)->action_hash_table = sc_hash_table_init(g_direct_hash, g_direct_equal, null_ptr, null_ptr);
+  (*manager)->last_action_bit = 1;
   sc_monitor_init(&(*manager)->action_monitor);
+}
 
-  _sc_memory_context_manager_init_actions_table(*manager);
+void _sc_memory_context_manager_load_actors_and_actions(sc_memory_context_manager * manager)
+{
+  _sc_memory_context_manager_register_events(manager);
+  sc_helper_resolve_system_identifier(s_memory_default_ctx, "my_self", &manager->system_addr);
+  s_memory_default_ctx->actor_addr = manager->system_addr;
+
+  _sc_memory_context_manager_register_events(manager);
+  _sc_memory_context_manager_init_actors_table(manager);
+  _sc_memory_context_manager_init_actions_table(manager);
 }
 
 void _sc_memory_context_manager_shutdown(sc_memory_context_manager * manager)
@@ -272,7 +292,10 @@ result:
   return ctx;
 }
 
-sc_memory_context * _sc_memory_context_new_impl(sc_memory_context_manager * manager, sc_addr actor_addr)
+sc_memory_context * _sc_memory_context_new_impl(
+    sc_memory_context_manager * manager,
+    sc_access_levels levels,
+    sc_addr actor_addr)
 {
   if (manager == null_ptr)
     return null_ptr;
@@ -280,6 +303,9 @@ sc_memory_context * _sc_memory_context_new_impl(sc_memory_context_manager * mana
   sc_memory_context * ctx = _sc_memory_context_new(manager);
   if (ctx == null_ptr)
     return null_ptr;
+
+  ctx->access_levels = levels;
+  ctx->actor_addr = actor_addr;
 
   return ctx;
 }
@@ -306,6 +332,34 @@ error:
   sc_monitor_release_write(&manager->context_monitor);
 
   sc_mem_free(ctx);
+}
+
+sc_bool _sc_memory_context_check_rights(
+    sc_memory_context_manager * manager,
+    sc_memory_context const * ctx,
+    sc_addr action_addr)
+{
+  sc_bool result = SC_TRUE;
+  sc_monitor_acquire_read((sc_monitor *)&ctx->monitor);
+
+  if (ctx->access_levels == sc_access_lvl_make_max)
+    goto result;
+
+  sc_pointer actor_key = TABLE_KEY(ctx->actor_addr);
+  sc_monitor_acquire_read(&manager->actor_monitor);
+  sc_access_levels actor_rights = (sc_uint64)sc_hash_table_get(manager->actor_hash_table, actor_key);
+  sc_monitor_release_read(&manager->actor_monitor);
+
+  sc_pointer action_key = TABLE_KEY(action_addr);
+  sc_monitor_acquire_read(&manager->action_monitor);
+  sc_access_levels action_rights = (sc_uint64)sc_hash_table_get(manager->action_hash_table, action_key);
+  sc_monitor_release_read(&manager->action_monitor);
+
+  result = ((actor_rights & action_rights) == action_rights);
+
+result:
+  sc_monitor_release_read((sc_monitor *)&ctx->monitor);
+  return result;
 }
 
 sc_bool _sc_memory_context_is_pending(sc_memory_context const * ctx)
