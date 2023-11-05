@@ -9,7 +9,7 @@
 ScMemoryJsonEventsHandler::ScMemoryJsonEventsHandler(ScServer * server)
   : ScMemoryJsonHandler(server)
 {
-  m_context = new ScMemoryContext("sc-json-socket-events-handler");
+  m_context = new ScMemoryContext("my_self");
   m_manager = ScMemoryJsonEventsManager::GetInstance();
 }
 

@@ -15,7 +15,7 @@ ScServer::ScServer(std::string hostName, size_t port, sc_memory_params params)
 {
   m_memoryState = ScMemory::Initialize(params);
   if (m_memoryState)
-    m_context = new ScMemoryContext("sc-server");
+    m_context = new ScMemoryContext("my_self");
 
   m_instance = new ScServerCore();
   ResetLogger();

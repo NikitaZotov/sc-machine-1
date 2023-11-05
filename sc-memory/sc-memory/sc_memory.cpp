@@ -123,7 +123,7 @@ ScMemoryContext::ScMemoryContext(sc_uint8 accessLevels, std::string const & name
 }
 
 ScMemoryContext::ScMemoryContext(std::string const & name)
-  : ScMemoryContext(sc_access_lvl_make_max, name)
+  : ScMemoryContext(sc_access_lvl_make_min, name)
 {
 }
 

@@ -14,7 +14,7 @@ TEST_F(ScMemoryTest, AccessRights)
       "action_actor -> manager;;"
       "writer -> manager;;"
       "writer => nrel_accessible_action_in_sc_memory: add_action; search_action;;"
-      "manager -> manager_1;;"
+      "manager -> my_self; manager_1;;"
   ));
 
   ScAddr const actorAddr = m_ctx->HelperFindBySystemIdtf("manager_1");
@@ -38,6 +38,7 @@ TEST_F(ScMemoryTest, AccessRights)
       "writer => nrel_accessible_action_in_sc_memory: remove_action;;"
   ));
 
+  sleep(1);
   EXPECT_TRUE(ctx.EraseElement(node));
   EXPECT_FALSE(ctx.IsElement(node));
 }

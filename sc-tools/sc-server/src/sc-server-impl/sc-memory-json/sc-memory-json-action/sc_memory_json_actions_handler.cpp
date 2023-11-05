@@ -9,7 +9,7 @@
 ScMemoryJsonActionsHandler::ScMemoryJsonActionsHandler(ScServer * server)
   : ScMemoryJsonHandler(server)
 {
-  m_context = new ScMemoryContext("sc-json-socket-actions-handler");
+  m_context = new ScMemoryContext("my_self");
 }
 
 ScMemoryJsonActionsHandler::~ScMemoryJsonActionsHandler()
