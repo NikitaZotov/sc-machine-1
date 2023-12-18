@@ -88,7 +88,7 @@ void ScServer::Stop()
     {
       try
       {
-        m_instance->close(it, websocketpp::close::status::normal, "Sc-server is finishing work");
+        m_instance->close(it.first, websocketpp::close::status::normal, "Sc-server is finishing work");
       }
       catch (std::exception const & ex)
       {

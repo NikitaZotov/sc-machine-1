@@ -37,10 +37,12 @@ protected:
   ScServerMutex m_connectionLock;
   ScServerCondVar m_actionCond;
   sc_bool m_syncActions;
-
   std::atomic<sc_bool> m_actionsRun;
-
   ScServerActions * m_actions;
+
+  ScEvent * m_authorizeUserProcessSubscription;
+  ScEvent * m_unauthorizeUserProcessSubscription;
+  std::set<ScAddr, ScAddrLessFunc> m_authorizedUserProcesses;
 
   void Initialize() override;
 

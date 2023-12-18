@@ -18,6 +18,8 @@
 class ScServer
 {
 public:
+  ScMemoryContext * m_context;
+
   explicit ScServer(std::string hostName, size_t port, sc_memory_params params);
 
   void Run();
@@ -59,7 +61,6 @@ protected:
   size_t m_saveMemoryPeriod;
 
   sc_bool m_memoryState;
-  ScMemoryContext * m_context;
 
   ScServerLogger * m_logger;
   ScServerCore * m_instance;
