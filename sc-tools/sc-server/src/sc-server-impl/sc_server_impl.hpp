@@ -30,6 +30,8 @@ public:
 
   sc_bool IsWorkable() override;
 
+  sc_bool CheckConnectionHandle(ScServerConnectionHandle const & hdl) override;
+
   ~ScServerImpl() override;
 
 protected:
