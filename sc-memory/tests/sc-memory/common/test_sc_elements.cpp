@@ -12,7 +12,7 @@ extern "C"
 
 TEST_F(ScMemoryTest, Elements)
 {
-  ScMemoryContext ctx(sc_access_lvl_make_min, "elements");
+  ScMemoryContext ctx("elements");
 
   ScAddr const node = ctx.CreateNode(ScType::NodeConst);
   EXPECT_TRUE(node.IsValid());
@@ -56,7 +56,7 @@ TEST_F(ScMemoryTest, Elements)
 
 TEST_F(ScMemoryTest, InvalidElements)
 {
-  ScMemoryContext ctx(sc_access_lvl_make_min, "elements");
+  ScMemoryContext ctx("elements");
 
   ScAddr const node{454545454455444};
   EXPECT_FALSE(ctx.IsElement(node));
@@ -117,7 +117,7 @@ TEST_F(ScMemoryTest, InvalidElements)
 
 TEST_F(ScMemoryTest, NotEdge)
 {
-  ScMemoryContext ctx(sc_access_lvl_make_min, "elements");
+  ScMemoryContext ctx("elements");
 
   ScAddr const node = ctx.CreateNode(ScType::NodeConst);
   EXPECT_THROW(ctx.GetEdgeSource(node), utils::ExceptionInvalidParams);
@@ -130,7 +130,7 @@ TEST_F(ScMemoryTest, NotEdge)
 
 TEST_F(ScMemoryTest, NotLink)
 {
-  ScMemoryContext ctx(sc_access_lvl_make_min, "elements");
+  ScMemoryContext ctx("elements");
 
   ScAddr const node = ctx.CreateNode(ScType::NodeConst);
   EXPECT_THROW(ctx.GetLinkContent(node), utils::ExceptionInvalidParams);
@@ -140,7 +140,7 @@ TEST_F(ScMemoryTest, NotLink)
 
 TEST_F(ScMemoryTest, CreateDeleteCountArcs)
 {
-  ScMemoryContext ctx(sc_access_lvl_make_min, "CreateDeleteCountArcs");
+  ScMemoryContext ctx("CreateDeleteCountArcs");
 
   ScAddr const node = ctx.CreateNode(ScType::Const);
   EXPECT_TRUE(node.IsValid());
@@ -184,7 +184,7 @@ TEST_F(ScMemoryTest, CreateDeleteCountArcs)
 
 TEST_F(ScMemoryTest, CreateDeleteCountArcs2)
 {
-  ScMemoryContext ctx(sc_access_lvl_make_min, "CreateDeleteCountArcs");
+  ScMemoryContext ctx("CreateDeleteCountArcs");
 
   ScAddr const node = ctx.CreateNode(ScType::Const);
   EXPECT_TRUE(node.IsValid());
@@ -217,7 +217,7 @@ TEST_F(ScMemoryTest, CreateDeleteCountArcs2)
 
 TEST_F(ScMemoryTest, CreateDeleteCountEdges)
 {
-  ScMemoryContext ctx(sc_access_lvl_make_min, "CreateDeleteCountEdges");
+  ScMemoryContext ctx("CreateDeleteCountEdges");
 
   ScAddr const node = ctx.CreateNode(ScType::Const);
   EXPECT_TRUE(node.IsValid());
@@ -272,7 +272,7 @@ TEST_F(ScMemoryTest, CreateDeleteCountEdges)
 
 TEST_F(ScMemoryTest, CreateEdges)
 {
-  ScMemoryContext ctx(sc_access_lvl_make_min, "CreateEdges");
+  ScMemoryContext ctx("CreateEdges");
 
   ScAddr const nodeAddr = ctx.CreateNode(ScType::NodeConst);
   EXPECT_TRUE(nodeAddr.IsValid());
@@ -312,7 +312,7 @@ TEST(SmallScMemoryTest, FullMemory)
   ScMemory::Initialize(params);
   ScMemory::LogUnmute();
 
-  ScMemoryContext ctx(sc_access_lvl_make_min);
+  ScMemoryContext ctx("FullMemory");
 
   ScAddrList addrs;
 
@@ -482,10 +482,11 @@ TEST(SmallScMemoryTest, EmptyMemory)
   EXPECT_TRUE(sc_storage_is_initialized());
   ScMemory::LogUnmute();
 
-  ScMemoryContext ctx(sc_access_lvl_make_min);
+  ScMemoryContext ctx("EmptyMemory");
+  EXPECT_FALSE(ctx.IsValid());
 
-  EXPECT_THROW(ctx.CreateNode(ScType::Const), utils::ExceptionCritical);
-  EXPECT_THROW(ctx.CreateNode(ScType::Const), utils::ExceptionCritical);
+  EXPECT_THROW(ctx.CreateNode(ScType::Const), utils::ExceptionAssert);
+  EXPECT_THROW(ctx.CreateNode(ScType::Const), utils::ExceptionAssert);
 
   ctx.Destroy();
   ScMemory::LogMute();
@@ -508,7 +509,7 @@ TEST(SmallScMemoryTest, DistributedMemory)
   ScMemory::Initialize(params);
   ScMemory::LogUnmute();
 
-  ScMemoryContext ctx(sc_access_lvl_make_min);
+  ScMemoryContext ctx("DistributedMemory");
 
   sc_storage_start_new_process();
   ScAddr node = ctx.CreateNode(ScType::Const);
