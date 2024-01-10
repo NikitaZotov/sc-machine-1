@@ -26,7 +26,7 @@ TEST_F(ScAgentTest, ATestResultOk)
 
     SC_AGENT_REGISTER(ATestResultOk);
 
-    ScMemoryContext ctx("ATestResultOk");
+    ScMemoryContext ctx;
 
     ScAddr const cmdAddr = ctx.CreateNode(ScType::NodeConst);
     EXPECT_TRUE(cmdAddr.IsValid());
@@ -36,7 +36,7 @@ TEST_F(ScAgentTest, ATestResultOk)
 
     ScWaitActionFinished waiter(ctx, cmdAddr);
     EXPECT_TRUE(waiter.Wait(5000, [&cmdAddr]() {
-      ScMemoryContext ctxLocal("ATestResultOk_init");
+      ScMemoryContext ctxLocal;
       ScAgentAction::InitiateCommand(ctxLocal, cmdAddr);
     }));
 

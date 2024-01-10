@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include "sc-memory/sc_memory.hpp"
+#include "sc-memory/sc_keynodes.hpp"
 
 class ScMemoryTest : public testing::Test
 {
@@ -47,7 +48,7 @@ protected:
     params.repo_path = "repo";
     params.log_level = "Debug";
 
-    params.user_mode = true;
+    params.user_mode = SC_TRUE;
 
     ScMemory::LogMute();
     ScMemory::Initialize(params);
@@ -70,7 +71,7 @@ class ScMemoryTestWithInitMemoryGeneratedStructure : public ScMemoryTest
   virtual void SetUp()
   {
     ScMemoryTestWithInitMemoryGeneratedStructure::Initialize("result_structure");
-    m_ctx = std::make_unique<ScMemoryContext>("test");
+    m_ctx = std::make_unique<ScMemoryContext>();
   }
 };
 
@@ -79,6 +80,6 @@ class ScMemoryTestWithUserMode : public ScMemoryTest
   virtual void SetUp()
   {
     ScMemoryTestWithUserMode::InitializeWithUserMode();
-    m_ctx = std::make_unique<ScMemoryContext>("my_self");
+    m_ctx = std::make_unique<ScMemoryContext>(ScKeynodes::kMySelf);
   }
 };
