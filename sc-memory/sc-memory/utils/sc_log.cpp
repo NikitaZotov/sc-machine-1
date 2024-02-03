@@ -41,13 +41,8 @@ ScLog * ScLog::GetInstance()
 }
 
 ScLog::ScLog()
+  : ScLog("Console", "", "Info")
 {
-  m_isMuted = false;
-
-  m_mode = Type::Info;
-  m_output_mode = OutputType::Console;
-
-  ms_instance = this;
 }
 
 ScLog::ScLog(std::string const & logType, std::string const & logFile, std::string const & logLevel)
@@ -61,9 +56,7 @@ ScLog::ScLog(std::string const & logType, std::string const & logFile, std::stri
   m_output_mode = outputTypeIndex != -1 ? OutputType(outputTypeIndex) : OutputType::Console;
 
   if (m_output_mode == OutputType::File)
-  {
     Initialize(logFile);
-  }
 
   ms_instance = this;
 }

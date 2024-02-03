@@ -1,0 +1,62 @@
+@sc_memory = {
+  initial_memory_structure_system_identifier: [result_structure];
+
+  rrel_sc_storage: {
+    max_sc_element_segments: [1000];
+
+    rrel_fs_storage: {
+      max_file_strings_channels: [1000];
+      max_file_strings_channel_size: [100000];
+      search_files_by_substring: max_searchable_file_string_size: [1000];
+      string_term_separators: [ _]
+    };
+
+    rrel_sc_event_emission_manager: {
+      limit_max_threads_by_max_physical_cores: max_events_and_agents_threads: [32]
+    }
+  };
+
+  rrel_sc_memory_loader: {
+    load_sc_memory_path: [./kb.bin];
+    load_extensions_path: [./bin/extensions]
+  };
+
+  rrel_sc_memory_dumper: {
+    dump_sc_memory_path: [./kb.bin];
+    dump_sc_memory_period: [3600];
+    dump_sc_memory_statistics_period: [1800]
+  };
+
+  rrel_logger: {
+    log_type: [Console];
+    log_file: [./sc-memory.log];
+    log_level: [Info]
+  }
+};;
+
+@sc_server = {
+  host: [127.0.0.1];
+  port: [8090];
+
+  parallel_actions: [true];
+
+  rrel_logger: {
+    log_type: [File];
+    log_file: [./sc-server.log];
+    log_level: [Info]
+  }
+};;
+
+@sc_builder = {
+  input_path: [./kb];
+  output_path: [./kb.bin];
+
+  error_file: [./scripts/sc_builder.log]
+};;
+
+@sc_machine = {
+  @sc_memory (* <- sc_memory;; *);
+  @sc_server (* <- sc_server;; *);
+  @sc_builder (* <- sc_builder;; *)
+};;
+@sc_machine <- sc_machine;;
