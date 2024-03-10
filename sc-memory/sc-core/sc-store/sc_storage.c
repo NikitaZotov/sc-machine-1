@@ -16,6 +16,7 @@
 #include "../sc_memory_private.h"
 
 #include "sc_stream_memory.h"
+
 #include "sc-base/sc_allocator.h"
 #include "sc-container/sc-string/sc_string.h"
 
@@ -23,10 +24,10 @@ sc_storage * storage;
 
 sc_result sc_storage_initialize(sc_memory_params const * params)
 {
-  if (sc_fs_memory_initialize_ext(params) != SC_FS_MEMORY_OK)
+  storage = sc_mem_new(sc_storage, 1);
+  if (sc_fs_memory_initialize_ext(params, &storage->fs_memory_manager) != SC_FS_MEMORY_OK)
     return SC_RESULT_ERROR;
 
-  storage = sc_mem_new(sc_storage, 1);
   storage->max_segments_count = params->max_loaded_segments;
   storage->segments_count = 0;
   storage->last_not_engaged_segment_num = 0;
@@ -50,7 +51,7 @@ sc_result sc_storage_initialize(sc_memory_params const * params)
   if (params->clear == SC_FALSE)
   {
     sc_monitor_acquire_write(&storage->segments_monitor);
-    result = sc_fs_memory_load(storage) == SC_FS_MEMORY_OK;
+    result = sc_fs_memory_load(storage, storage->fs_memory_manager) == SC_FS_MEMORY_OK;
     sc_monitor_release_write(&storage->segments_monitor);
   }
 
@@ -77,11 +78,11 @@ sc_result sc_storage_shutdown(sc_bool save_state)
 
   if (save_state == SC_TRUE)
   {
-    if (sc_fs_memory_save(storage) != SC_FS_MEMORY_OK)
+    if (sc_fs_memory_save(storage, storage->fs_memory_manager) != SC_FS_MEMORY_OK)
       return SC_RESULT_ERROR;
   }
 
-  if (sc_fs_memory_shutdown() != SC_FS_MEMORY_OK)
+  if (sc_fs_memory_shutdown(storage->fs_memory_manager) != SC_FS_MEMORY_OK)
     return SC_RESULT_ERROR;
 
   sc_monitor_acquire_write(&storage->processes_monitor);
@@ -556,7 +557,7 @@ sc_result sc_storage_element_free(sc_memory_context const * ctx, sc_addr addr)
     sc_monitor_release_write(monitor);
 
     if (sc_type_has_subtype(type, sc_type_link))
-      sc_fs_memory_unlink_string(SC_ADDR_LOCAL_TO_INT(addr));
+      sc_fs_memory_unlink_string(storage->fs_memory_manager, SC_ADDR_LOCAL_TO_INT(addr));
     else if (sc_type_has_subtype_in_mask(type, sc_type_arc_mask))
     {
       sc_bool const is_edge = sc_type_has_subtype(type, sc_type_edge_common);
@@ -1170,7 +1171,8 @@ sc_result sc_storage_set_link_content(
     goto error;
   }
 
-  if (sc_fs_memory_link_string_ext(SC_ADDR_LOCAL_TO_INT(addr), string, string_size, is_searchable_string)
+  if (sc_fs_memory_link_string_ext(
+          storage->fs_memory_manager, SC_ADDR_LOCAL_TO_INT(addr), string, string_size, is_searchable_string)
       != SC_FS_MEMORY_OK)
   {
     result = SC_RESULT_ERROR_FILE_MEMORY_IO;
@@ -1212,8 +1214,8 @@ sc_result sc_storage_get_link_content(sc_memory_context const * ctx, sc_addr add
     goto error;
   }
 
-  sc_fs_memory_status const fs_memory_status =
-      sc_fs_memory_get_string_by_link_hash(SC_ADDR_LOCAL_TO_INT(addr), &string, &string_size);
+  sc_fs_memory_status const fs_memory_status = sc_fs_memory_get_string_by_link_hash(
+      storage->fs_memory_manager, SC_ADDR_LOCAL_TO_INT(addr), &string, &string_size);
   if (fs_memory_status != SC_FS_MEMORY_OK && fs_memory_status != SC_FS_MEMORY_NO_STRING)
   {
     result = SC_RESULT_ERROR_FILE_MEMORY_IO;
@@ -1259,7 +1261,7 @@ sc_result sc_storage_find_links_with_content_string(
   }
 
   sc_fs_memory_status const fs_memory_status =
-      sc_fs_memory_get_link_hashes_by_string(string, string_size, data, callback);
+      sc_fs_memory_get_link_hashes_by_string(storage->fs_memory_manager, string, string_size, data, callback);
   if (fs_memory_status != SC_FS_MEMORY_OK && fs_memory_status != SC_FS_MEMORY_NO_STRING)
     result = SC_RESULT_ERROR_FILE_MEMORY_IO;
 
@@ -1289,8 +1291,8 @@ sc_result sc_storage_find_links_by_content_substring(
   if (string == null_ptr)
     sc_string_empty(string);
 
-  sc_fs_memory_status const fs_memory_status =
-      sc_fs_memory_get_link_hashes_by_substring(string, string_size, max_length_to_search_as_prefix, data, callback);
+  sc_fs_memory_status const fs_memory_status = sc_fs_memory_get_link_hashes_by_substring(
+      storage->fs_memory_manager, string, string_size, max_length_to_search_as_prefix, data, callback);
   if (fs_memory_status != SC_FS_MEMORY_OK && fs_memory_status != SC_FS_MEMORY_NO_STRING)
     result = SC_RESULT_ERROR_FILE_MEMORY_IO;
 
@@ -1320,8 +1322,8 @@ sc_result sc_storage_find_links_contents_by_content_substring(
   if (string == null_ptr)
     sc_string_empty(string);
 
-  sc_fs_memory_status const fs_memory_status =
-      sc_fs_memory_get_strings_by_substring(string, string_size, max_length_to_search_as_prefix, data, callback);
+  sc_fs_memory_status const fs_memory_status = sc_fs_memory_get_strings_by_substring(
+      storage->fs_memory_manager, string, string_size, max_length_to_search_as_prefix, data, callback);
   if (fs_memory_status != SC_FS_MEMORY_OK && fs_memory_status != SC_FS_MEMORY_NO_STRING)
     result = SC_RESULT_ERROR_FILE_MEMORY_IO;
   sc_mem_free(string);
@@ -1352,5 +1354,5 @@ sc_result sc_storage_get_elements_stat(sc_stat * stat)
 
 sc_result sc_storage_save(sc_memory_context const * ctx)
 {
-  return sc_fs_memory_save(storage) == SC_FS_MEMORY_OK ? SC_RESULT_OK : SC_RESULT_ERROR;
+  return sc_fs_memory_save(storage, storage->fs_memory_manager) == SC_FS_MEMORY_OK ? SC_RESULT_OK : SC_RESULT_ERROR;
 }

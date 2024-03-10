@@ -5,6 +5,7 @@
  */
 
 #include "sc_fs_memory.h"
+#include "sc_fs_memory_private.h"
 #include "sc_fs_memory_builder.h"
 
 #include "sc_file_system.h"
@@ -15,46 +16,44 @@
 
 #include "sc_io.h"
 
-sc_fs_memory_manager * manager;
-
-sc_fs_memory_status sc_fs_memory_initialize_ext(sc_memory_params const * params)
+sc_fs_memory_status sc_fs_memory_initialize_ext(sc_memory_params const * params, sc_fs_memory_manager ** manager)
 {
-  manager = sc_fs_memory_build();
-  manager->version = params->version;
-  manager->path = params->repo_path;
+  (*manager) = sc_fs_memory_build();
+  (*manager)->version = params->version;
+  (*manager)->path = params->repo_path;
 
-  if (manager->path == null_ptr)
+  if ((*manager)->path == null_ptr)
   {
     sc_fs_memory_error("Empty repo path to initialize memory");
     return SC_FS_MEMORY_NO;
   }
 
   static sc_char const * segments_postfix = "segments" SC_FS_EXT;
-  sc_fs_concat_path(manager->path, segments_postfix, &manager->segments_path);
+  sc_fs_concat_path((*manager)->path, segments_postfix, &(*manager)->segments_path);
 
-  if (manager->initialize(&manager->fs_memory, params) != SC_FS_MEMORY_OK)
+  if ((*manager)->initialize(&(*manager)->fs_memory, params) != SC_FS_MEMORY_OK)
     return SC_FS_MEMORY_NO;
 
   // clear repository if it needs
   if (params->clear == SC_TRUE)
   {
     sc_fs_memory_info("Clear sc-memory segments");
-    if (sc_fs_remove_file(manager->segments_path) == SC_FALSE)
-      sc_fs_memory_info("Can't remove segments file: %s", manager->segments_path);
+    if (sc_fs_remove_file((*manager)->segments_path) == SC_FALSE)
+      sc_fs_memory_info("Can't remove segments file: %s", (*manager)->segments_path);
   }
 
   return SC_FS_MEMORY_OK;
 }
 
-sc_fs_memory_status sc_fs_memory_initialize(sc_char const * path, sc_bool clear)
+sc_fs_memory_status sc_fs_memory_initialize(sc_char const * path, sc_bool clear, sc_fs_memory_manager ** manager)
 {
   sc_memory_params * params = _sc_dictionary_fs_memory_get_default_params(path, clear);
-  sc_fs_memory_status const status = sc_fs_memory_initialize_ext(params);
+  sc_fs_memory_status const status = sc_fs_memory_initialize_ext(params, manager);
   sc_mem_free(params);
   return status;
 }
 
-sc_fs_memory_status sc_fs_memory_shutdown()
+sc_fs_memory_status sc_fs_memory_shutdown(sc_fs_memory_manager * manager)
 {
   sc_fs_memory_status const result = manager->shutdown(manager->fs_memory);
   sc_mem_free(manager->segments_path);
@@ -63,6 +62,7 @@ sc_fs_memory_status sc_fs_memory_shutdown()
 }
 
 sc_fs_memory_status sc_fs_memory_link_string(
+    sc_fs_memory_manager * manager,
     sc_addr_hash const link_hash,
     sc_char const * string,
     sc_uint32 const string_size)
@@ -71,6 +71,7 @@ sc_fs_memory_status sc_fs_memory_link_string(
 }
 
 sc_fs_memory_status sc_fs_memory_link_string_ext(
+    sc_fs_memory_manager * manager,
     sc_addr_hash const link_hash,
     sc_char const * string,
     sc_uint32 const string_size,
@@ -80,6 +81,7 @@ sc_fs_memory_status sc_fs_memory_link_string_ext(
 }
 
 sc_fs_memory_status sc_fs_memory_get_string_by_link_hash(
+    sc_fs_memory_manager * manager,
     sc_addr_hash const link_hash,
     sc_char ** string,
     sc_uint32 * string_size)
@@ -91,6 +93,7 @@ sc_fs_memory_status sc_fs_memory_get_string_by_link_hash(
 }
 
 sc_fs_memory_status sc_fs_memory_get_link_hashes_by_string(
+    sc_fs_memory_manager * manager,
     sc_char const * string,
     sc_uint32 const string_size,
     void * data,
@@ -100,6 +103,7 @@ sc_fs_memory_status sc_fs_memory_get_link_hashes_by_string(
 }
 
 sc_fs_memory_status sc_fs_memory_get_link_hashes_by_substring(
+    sc_fs_memory_manager * manager,
     sc_char const * substring,
     sc_uint32 const substring_size,
     sc_uint32 const max_length_to_search_as_prefix,
@@ -111,8 +115,9 @@ sc_fs_memory_status sc_fs_memory_get_link_hashes_by_substring(
 }
 
 sc_fs_memory_status sc_fs_memory_get_strings_by_substring(
+    sc_fs_memory_manager * manager,
     sc_char const * substring,
-    const sc_uint32 substring_size,
+    sc_uint32 const substring_size,
     sc_uint32 const max_length_to_search_as_prefix,
     void * data,
     void (*callback)(void * data, sc_addr const link_addr, sc_char const * link_content))
@@ -121,13 +126,13 @@ sc_fs_memory_status sc_fs_memory_get_strings_by_substring(
       manager->fs_memory, substring, substring_size, max_length_to_search_as_prefix, data, callback);
 }
 
-sc_fs_memory_status sc_fs_memory_unlink_string(sc_addr_hash link_hash)
+sc_fs_memory_status sc_fs_memory_unlink_string(sc_fs_memory_manager * manager, sc_addr_hash link_hash)
 {
   return manager->unlink_string(manager->fs_memory, link_hash);
 }
 
 // read, write and save methods
-sc_fs_memory_status _sc_fs_memory_load_sc_memory_segments(sc_storage * storage)
+sc_fs_memory_status _sc_fs_memory_load_sc_memory_segments(sc_storage * storage, sc_fs_memory_manager * manager)
 {
   if (sc_fs_is_file(manager->segments_path) == SC_FALSE)
   {
@@ -275,9 +280,9 @@ error:
 }
 }
 
-sc_fs_memory_status sc_fs_memory_load(sc_storage * storage)
+sc_fs_memory_status sc_fs_memory_load(sc_storage * storage, sc_fs_memory_manager * manager)
 {
-  if (_sc_fs_memory_load_sc_memory_segments(storage) != SC_FS_MEMORY_OK)
+  if (_sc_fs_memory_load_sc_memory_segments(storage, manager) != SC_FS_MEMORY_OK)
     return SC_FS_MEMORY_READ_ERROR;
   if (manager->load(manager->fs_memory) != SC_FS_MEMORY_OK)
     return SC_FS_MEMORY_READ_ERROR;
@@ -285,7 +290,7 @@ sc_fs_memory_status sc_fs_memory_load(sc_storage * storage)
   return SC_FS_MEMORY_OK;
 }
 
-sc_fs_memory_status _sc_fs_memory_save_sc_memory_segments(sc_storage * storage)
+sc_fs_memory_status _sc_fs_memory_save_sc_memory_segments(sc_storage * storage, sc_fs_memory_manager * manager)
 {
   sc_fs_memory_info("Save sc-memory segments");
 
@@ -414,7 +419,7 @@ error:
 }
 }
 
-sc_fs_memory_status sc_fs_memory_save(sc_storage * storage)
+sc_fs_memory_status sc_fs_memory_save(sc_storage * storage, sc_fs_memory_manager * manager)
 {
   if (manager->path == null_ptr)
   {
@@ -422,7 +427,7 @@ sc_fs_memory_status sc_fs_memory_save(sc_storage * storage)
     return SC_FS_MEMORY_NO;
   }
 
-  if (_sc_fs_memory_save_sc_memory_segments(storage) != SC_FS_MEMORY_OK)
+  if (_sc_fs_memory_save_sc_memory_segments(storage, manager) != SC_FS_MEMORY_OK)
     return SC_FS_MEMORY_WRITE_ERROR;
   if (manager->save(manager->fs_memory) != SC_FS_MEMORY_OK)
     return SC_FS_MEMORY_WRITE_ERROR;

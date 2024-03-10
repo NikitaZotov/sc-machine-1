@@ -21,70 +21,25 @@
 typedef struct _sc_dictionary_fs_memory sc_fs_memory;
 #endif
 
-typedef struct _sc_fs_memory_manager
-{
-  sc_fs_memory * fs_memory;  // file system memory instance
-  sc_char const * path;      // repo path
-  sc_char * segments_path;   // file path to sc-memory segments
-
-  sc_version version;
-  sc_fs_memory_header header;
-
-  sc_fs_memory_status (*initialize)(sc_fs_memory ** memory, sc_memory_params const * params);
-  sc_fs_memory_status (*shutdown)(sc_fs_memory * memory);
-  sc_fs_memory_status (*load)(sc_fs_memory * memory);
-  sc_fs_memory_status (*save)(sc_fs_memory const * memory);
-  sc_fs_memory_status (*link_string)(
-      sc_fs_memory * memory,
-      sc_addr_hash const link_hash,
-      sc_char const * string,
-      sc_uint64 const string_size,
-      sc_bool is_searchable_string);
-  sc_fs_memory_status (*get_string_by_link_hash)(
-      sc_fs_memory * memory,
-      sc_addr_hash const link_hash,
-      sc_char ** string,
-      sc_uint64 * string_size);
-  sc_fs_memory_status (*get_link_hashes_by_string)(
-      sc_fs_memory * memory,
-      sc_char const * string,
-      sc_uint64 const string_size,
-      void * data,
-      void (*callback)(void * data, sc_addr const link_addr));
-  sc_fs_memory_status (*get_link_hashes_by_substring)(
-      sc_fs_memory * memory,
-      sc_char const * substring,
-      sc_uint64 const substring_size,
-      sc_uint32 const max_length_to_search_as_prefix,
-      void * data,
-      void (*callback)(void * data, sc_addr const link_addr));
-  sc_fs_memory_status (*get_strings_by_substring)(
-      sc_fs_memory * memory,
-      sc_char const * substring,
-      sc_uint64 const substring_size,
-      sc_uint32 const max_length_to_search_as_prefix,
-      void * data,
-      void (*callback)(void * data, sc_addr const link_addr, sc_char const * link_content));
-  sc_fs_memory_status (*unlink_string)(sc_fs_memory * memory, sc_addr_hash const link_hash);
-} sc_fs_memory_manager;
+typedef struct _sc_fs_memory_manager sc_fs_memory_manager;
 
 /*! Initialize file system memory in specified path.
  * @param params Memory configure params
  * @returns SC_TRUE, if file system memory initialized.
  */
-sc_fs_memory_status sc_fs_memory_initialize_ext(sc_memory_params const * params);
+sc_fs_memory_status sc_fs_memory_initialize_ext(sc_memory_params const * params, sc_fs_memory_manager ** manager);
 
 /*! Initialize file system memory in specified path.
  * @param path Path to store on file system
  * @param clear Flag to initialize empty memory
  * @returns SC_TRUE, if file system memory initialized.
  */
-sc_fs_memory_status sc_fs_memory_initialize(sc_char const * path, sc_bool clear);
+sc_fs_memory_status sc_fs_memory_initialize(sc_char const * path, sc_bool clear, sc_fs_memory_manager ** manager);
 
 /*! Shutdowns file system memory.
  * @return SC_TRUE, if file system memory shutdown.
  */
-sc_fs_memory_status sc_fs_memory_shutdown();
+sc_fs_memory_status sc_fs_memory_shutdown(sc_fs_memory_manager * manager);
 
 /*! Appends sc-link hash to file system memory with its string content.
  * @param link_hash An appendable sc-link hash
@@ -92,7 +47,11 @@ sc_fs_memory_status sc_fs_memory_shutdown();
  * @param string_size A sc-link string content size
  * @returns SC_TRUE, if are no writing errors.
  */
-sc_fs_memory_status sc_fs_memory_link_string(sc_addr_hash link_hash, sc_char const * string, sc_uint32 string_size);
+sc_fs_memory_status sc_fs_memory_link_string(
+    sc_fs_memory_manager * manager,
+    sc_addr_hash link_hash,
+    sc_char const * string,
+    sc_uint32 string_size);
 
 /*! Appends sc-link hash to file system memory with its string content.
  * @param link_hash An appendable sc-link hash
@@ -102,6 +61,7 @@ sc_fs_memory_status sc_fs_memory_link_string(sc_addr_hash link_hash, sc_char con
  * @returns SC_TRUE, if are no writing errors.
  */
 sc_fs_memory_status sc_fs_memory_link_string_ext(
+    sc_fs_memory_manager * manager,
     sc_addr_hash link_hash,
     sc_char const * string,
     sc_uint32 string_size,
@@ -111,7 +71,7 @@ sc_fs_memory_status sc_fs_memory_link_string_ext(
  * @param link_hash A sc-link hash
  * @returns SC_TRUE, if such sc-string content exists.
  */
-sc_fs_memory_status sc_fs_memory_unlink_string(sc_addr_hash link_hash);
+sc_fs_memory_status sc_fs_memory_unlink_string(sc_fs_memory_manager * manager, sc_addr_hash link_hash);
 
 /*! Gets sc-link content string with its size by sc-link hash.
  * @param link_hash A sc-link hash
@@ -120,6 +80,7 @@ sc_fs_memory_status sc_fs_memory_unlink_string(sc_addr_hash link_hash);
  * @returns SC_TRUE, if sc-link content exists.
  */
 sc_fs_memory_status sc_fs_memory_get_string_by_link_hash(
+    sc_fs_memory_manager * manager,
     sc_addr_hash link_hash,
     sc_char ** string,
     sc_uint32 * string_size);
@@ -131,6 +92,7 @@ sc_fs_memory_status sc_fs_memory_get_string_by_link_hash(
  * @returns SC_TRUE, if sc-link hashes exist.
  */
 sc_fs_memory_status sc_fs_memory_get_link_hashes_by_string(
+    sc_fs_memory_manager * manager,
     sc_char const * string,
     sc_uint32 string_size,
     void * result,
@@ -144,6 +106,7 @@ sc_fs_memory_status sc_fs_memory_get_link_hashes_by_string(
  * @returns SC_TRUE, if such sc-link hashes exist.
  */
 sc_fs_memory_status sc_fs_memory_get_link_hashes_by_substring(
+    sc_fs_memory_manager * manager,
     sc_char const * substring,
     sc_uint32 substring_size,
     sc_uint32 max_length_to_search_as_prefix,
@@ -158,6 +121,7 @@ sc_fs_memory_status sc_fs_memory_get_link_hashes_by_substring(
  * @returns SC_TRUE, if such sc-strings exist.
  */
 sc_fs_memory_status sc_fs_memory_get_strings_by_substring(
+    sc_fs_memory_manager * manager,
     sc_char const * substring,
     sc_uint32 string_size,
     sc_uint32 max_length_to_search_as_prefix,
@@ -167,11 +131,11 @@ sc_fs_memory_status sc_fs_memory_get_strings_by_substring(
 /*! Load file system memory from file system
  * @returns SC_TRUE, if file system loaded.
  */
-sc_fs_memory_status sc_fs_memory_load(sc_storage * storage);
+sc_fs_memory_status sc_fs_memory_load(sc_storage * storage, sc_fs_memory_manager * manager);
 
 /*! Save file system memory to file system
  * @returns SC_TRUE, if file system saved.
  */
-sc_fs_memory_status sc_fs_memory_save(sc_storage * storage);
+sc_fs_memory_status sc_fs_memory_save(sc_storage * storage, sc_fs_memory_manager * manager);
 
 #endif
