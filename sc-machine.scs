@@ -1,0 +1,112 @@
+.sc_memory_configuration_specification = [*
+<- concept_configuration_specification;;
+
+@sc_memory = {
+  rrel_sc_storage: {
+    rrel_sc_segments: ... (*
+      <~ 0 (*
+        <- .sc_segments_count (*
+          <= nrel_inclusion: power_of_set;;
+          -> rrel_max_bound: 1000;;
+        *);;
+      *);;
+    *);
+
+    rrel_fs_storage: {
+      rrel_sc_file_channels: ... (*
+        <~ 0 (*
+          <- .sc_file_channels_count (*
+            <= nrel_inclusion: power_of_set;;
+            -> rrel_max_bound: 1000;;
+          *);;
+        *);;
+        => nrel_sc_file_term_separators: [ _];;
+      *);
+      rrel_program_interface: ... (*
+        ~> search_files_by_file_substring (*
+          => nrel_first_domain: file;;
+          => nrel_second_domain: ... (*
+            <= nrel_inclusion: file;;
+            => nrel_max_content_size: [1000];;
+          *);;
+        *);;
+      *)
+    };
+
+    rrel_sc_event_emission_manager: {
+      rrel_sc_agent_threads: ... (*
+        <~ 0 (*
+          <- .threads_count (*
+            <= nrel_inclusion: power_of_set;;
+            -> rrel_max_bound: 32;; // or physical_cores_count
+          *);;
+        *);;
+      *)
+    };
+
+    rrel_sc_memory_dumper: {
+      rrel_dump_sc_memory_path: [./kb.bin];
+      rrel_dump_sc_memory_period: [3600]; // seconds
+      rrel_dump_sc_memory_statistics_period: [1800] // seconds
+    };
+
+    rrel_sc_memory_loader: {
+      rrel_load_sc_memory_path: [./kb.bin];
+      rrel_load_extensions_path: [./bin/extensions]
+    };
+
+    rrel_program_interface: ...
+  };
+
+  rrel_logger: {
+    rrel_log_type: [Console];
+    rrel_log_file: [./sc-memory.log];
+    rrel_log_level: [Info]
+  }
+};;
+
+@sc_memory => nrel_initial_memory_structure: result_structure;;
+
+*];;
+
+.sc_server_configuration_specification = [*
+<- concept_configuration_specification;;
+
+@sc_server = {
+  host: [127.0.0.1];
+  port: [8090];
+
+  rrel_logger: {
+    rrel_log_type: [File];
+    rrel_log_file: [./sc-server.log];
+    rrel_log_level: [Info]
+  }
+};;
+
+@sc_server <~ parallel_mode;;
+
+*];;
+
+.sc_builder_configuration_specification = [*
+<- concept_configuration_specification;;
+
+@sc_builder = {
+  rrel_input_path: [./kb];
+  rrel_output_path: [./kb.bin];
+
+  rrel_error_file: [./scripts/sc_builder.log]
+};;
+
+*];;
+
+.sc_machine_configuration_specification = [*
+<- concept_configuration_specification;;
+
+@sc_machine = {
+  @sc_memory (* <- sc_memory;; *);
+  @sc_server (* <- sc_server;; *);
+  @sc_builder (* <- sc_builder;; *)
+};;
+@sc_machine <- sc_machine;;
+
+*];;
