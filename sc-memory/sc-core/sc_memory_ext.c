@@ -56,6 +56,21 @@ gint sc_priority_great(gconstpointer a, gconstpointer b)
   return sc_priority_less(b, a);
 }
 
+sc_char * _sc_module_build_path(sc_char const * directory, sc_char const * module_name)
+{
+  if (directory && *directory)
+  {
+    if (strncmp(module_name, "lib", 3) == 0)
+      return g_strconcat(directory, "/", module_name, null_ptr);
+
+    return g_strconcat(directory, "/lib", module_name, "." G_MODULE_SUFFIX, null_ptr);
+  }
+  else if (strncmp(module_name, "lib", 3) == 0)
+    return g_strdup(module_name);
+
+  return g_strconcat("lib", module_name, "." G_MODULE_SUFFIX, null_ptr);
+}
+
 sc_result sc_ext_initialize(
     sc_char const * ext_dir_path,
     sc_char const ** enabled_list,
@@ -118,7 +133,7 @@ sc_result sc_ext_initialize(
     }
 
     sc_module_info * mi = sc_mem_new(sc_module_info, 1);
-    mi->path = g_module_build_path(ext_dir_path, file_name);
+    mi->path = _sc_module_build_path(ext_dir_path, file_name);
 
     // open module
     mi->ptr = g_module_open(mi->path, G_MODULE_BIND_LOCAL);
