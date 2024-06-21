@@ -41,6 +41,7 @@ macro(sc_codegen_ex Target SrcPath OutputPath)
             --flags      "${META_FLAGS}"
             --build_dir  "${CMAKE_CURRENT_BINARY_DIR}"
             --cache
+            --debug
         )
     else()
         file(GLOB_RECURSE HEADER_FILES "${SrcPath}/*.hpp")
@@ -55,6 +56,7 @@ macro(sc_codegen_ex Target SrcPath OutputPath)
             --build_dir  "${CMAKE_CURRENT_BINARY_DIR}"
             --flags      "'${META_FLAGS}'"
             --cache
+            --debug
             DEPENDS ${HEADER_FILES}
         )
 
