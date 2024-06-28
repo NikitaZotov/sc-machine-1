@@ -4,8 +4,6 @@
  * (See accompanying file COPYING.MIT or copy at http://opensource.org/licenses/MIT)
  */
 
-#include <algorithm>
-
 #include "sc-memory/sc_template.hpp"
 #include "sc-memory/sc_memory.hpp"
 

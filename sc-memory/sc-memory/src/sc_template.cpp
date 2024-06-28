@@ -14,6 +14,35 @@ extern "C"
 #include "sc-memory/sc_template.hpp"
 #include "sc-memory/sc_memory.hpp"
 
+ScTemplateTriple::ScTemplateTriple(
+    ScTemplateItem const & param1,
+    ScTemplateItem const & param2,
+    ScTemplateItem const & param3,
+    size_t index)
+  : m_index(index)
+{
+  m_values[0] = param1;
+  m_values[1] = param2;
+  m_values[2] = param3;
+}
+
+ScTemplateTriple::ScTemplateTripleItems const & ScTemplateTriple::GetValues() const
+{
+  return m_values;
+}
+
+ScTemplateItem const & ScTemplateTriple::operator[](size_t index) const
+{
+  if (index < m_values.size())
+  {
+    return m_values[index];
+  }
+
+  SC_THROW_EXCEPTION(
+      utils::ExceptionInvalidParams,
+      "Index=" + std::to_string(index) + " must be < size=" + std::to_string(m_values.size()));
+}
+
 SC_DEPRECATED(0.8.0, "Don't use alias for fixed sc-address")
 
 ScTemplateItem operator>>(ScAddr const & value, char const * replName)
@@ -40,12 +69,81 @@ ScTemplateItem operator>>(ScType const & value, std::string const & replName)
 
 // --------------------------------
 
+ScTemplateParams & ScTemplateParams::Add(std::string const & varIdtf, ScAddr const & value)
+{
+  if (m_templateItemsToParams.find(varIdtf) == m_templateItemsToParams.cend())
+  {
+    m_templateItemsToParams[varIdtf] = value;
+    return *this;
+  }
+
+  SC_THROW_EXCEPTION(utils::ExceptionInvalidParams, "Alias=" << varIdtf << " already has value");
+}
+
+ScTemplateParams & ScTemplateParams::Add(ScAddr const & varAddr, ScAddr const & value)
+{
+  std::string const & varAddrHashStr = std::to_string(varAddr.Hash());
+  if (m_templateItemsToParams.find(varAddrHashStr) == m_templateItemsToParams.cend())
+  {
+    m_templateItemsToParams[varAddrHashStr] = value;
+    return *this;
+  }
+
+  SC_THROW_EXCEPTION(utils::ExceptionInvalidParams, "Var=" << varAddrHashStr << " already has value");
+}
+
+bool ScTemplateParams::Get(std::string const & varIdtf, ScAddr & outAddr) const noexcept
+{
+  auto const it = m_templateItemsToParams.find(varIdtf);
+  if (it != m_templateItemsToParams.cend())
+  {
+    outAddr = it->second;
+    return true;
+  }
+
+  outAddr = ScAddr::Empty;
+  return false;
+}
+
+bool ScTemplateParams::Get(ScAddr const & varAddr, ScAddr & outAddr) const noexcept
+{
+  std::string const & varAddrHashStr = std::to_string(varAddr.Hash());
+  auto const it = m_templateItemsToParams.find(varAddrHashStr);
+  if (it != m_templateItemsToParams.cend())
+  {
+    outAddr = it->second;
+    return true;
+  }
+
+  outAddr = ScAddr::Empty;
+  return false;
+}
+
+ScTemplateParams::ScTemplateItemsToParams ScTemplateParams::GetAll() const noexcept
+{
+  return m_templateItemsToParams;
+}
+
+bool ScTemplateParams::IsEmpty() const noexcept
+{
+  return m_templateItemsToParams.empty();
+}
+
+// --------------------------------
+
 ScTemplate::ScTemplate()
 {
   m_templateTriples.reserve(16);
 
   auto const tripleTypeCount = (size_t)ScTemplateTripleType::ScConstr3TypeCount;
   m_priorityOrderedTemplateTriples.resize(tripleTypeCount);
+}
+
+ScTemplate::~ScTemplate()
+{
+  for (auto * triple : m_templateTriples)
+    delete triple;
+  m_templateTriples.clear();
 }
 
 ScTemplate & ScTemplate::operator()(
@@ -213,6 +311,180 @@ inline ScTemplateTripleType ScTemplate::GetPriority(ScTemplateTriple * triple)
   return ScTemplateTripleType::AAA;
 }
 
+ScTemplateResultItem::ScTemplateResultItem()
+  : m_context(nullptr)
+{
+}
+
+ScTemplateResultItem::ScTemplateResultItem(
+    sc_memory_context const * context,
+    ScAddrVector results,
+    ScTemplate::ScTemplateItemsToReplacementsItemsPositions replacements)
+  : m_context(context)
+  , m_replacementConstruction(std::move(results))
+  , m_templateItemsNamesToReplacementItemPositions(std::move(replacements))
+{
+}
+
+ScTemplateResultItem::ScTemplateResultItem(
+    sc_memory_context const * context,
+    ScTemplate::ScTemplateItemsToReplacementsItemsPositions replacements)
+  : m_context(context)
+  , m_templateItemsNamesToReplacementItemPositions(std::move(replacements))
+{
+}
+
+ScTemplateResultItem::ScTemplateResultItem(ScTemplateResultItem const & otherItem)
+  : ScTemplateResultItem(
+        otherItem.m_context,
+        otherItem.m_replacementConstruction,
+        otherItem.m_templateItemsNamesToReplacementItemPositions)
+{
+}
+
+ScTemplateResultItem & ScTemplateResultItem::operator=(ScTemplateResultItem const & otherItem)
+{
+  if (this == &otherItem)
+    return *this;
+
+  m_context = otherItem.m_context;
+  m_replacementConstruction.assign(
+      otherItem.m_replacementConstruction.cbegin(), otherItem.m_replacementConstruction.cend());
+  m_templateItemsNamesToReplacementItemPositions = otherItem.m_templateItemsNamesToReplacementItemPositions;
+
+  return *this;
+}
+
+bool ScTemplateResultItem::Get(ScAddr const & varAddr, ScAddr & outAddr) const noexcept
+{
+  ScAddr const & addr = GetAddrByVarAddr(varAddr);
+  if (addr.IsValid())
+  {
+    outAddr = addr;
+    return true;
+  }
+
+  outAddr = ScAddr::Empty;
+  return false;
+}
+
+ScAddr ScTemplateResultItem::operator[](ScAddr const & varAddr) const
+{
+  ScAddr const & addr = GetAddrByVarAddr(varAddr);
+  if (addr.IsValid())
+    return addr;
+
+  SC_THROW_EXCEPTION(utils::ExceptionInvalidParams, "Var=" << varAddr.Hash() << " not found in replacements");
+}
+
+bool ScTemplateResultItem::Get(std::string const & name, ScAddr & outAddr) const noexcept
+{
+  ScAddr const & addr = GetAddrByName(name);
+  if (addr.IsValid())
+  {
+    outAddr = addr;
+    return true;
+  }
+
+  outAddr = ScAddr::Empty;
+  return false;
+}
+
+ScAddr ScTemplateResultItem::operator[](std::string const & name) const
+{
+  ScAddr const & addr = GetAddrByName(name);
+  if (addr.IsValid())
+    return addr;
+
+  SC_THROW_EXCEPTION(utils::ExceptionInvalidParams, "Alias=`" << name << "` not found in replacements");
+}
+
+bool ScTemplateResultItem::Get(size_t index, ScAddr & outAddr) const noexcept
+{
+  if (index < Size())
+  {
+    outAddr = m_replacementConstruction[index];
+    return true;
+  }
+
+  outAddr = ScAddr::Empty;
+  return false;
+}
+
+ScAddr const & ScTemplateResultItem::operator[](size_t index) const
+{
+  if (index < Size())
+    return m_replacementConstruction[index];
+
+  SC_THROW_EXCEPTION(utils::ExceptionInvalidParams, "Index=" << index << " must be < size=" << Size());
+}
+
+bool ScTemplateResultItem::Has(std::string const & name) const noexcept
+{
+  ScAddr const & addr = GetAddrByName(name);
+  return addr.IsValid();
+}
+
+bool ScTemplateResultItem::Has(ScAddr const & varAddr) const noexcept
+{
+  ScAddr const & addr = GetAddrByVarAddr(varAddr);
+  return addr.IsValid();
+}
+
+size_t ScTemplateResultItem::Size() const noexcept
+{
+  return m_replacementConstruction.size();
+}
+
+ScAddrVector::const_iterator ScTemplateResultItem::begin() const noexcept
+{
+  return m_replacementConstruction.cbegin();
+}
+
+ScAddrVector::const_iterator ScTemplateResultItem::end() const noexcept
+{
+  return m_replacementConstruction.cend();
+}
+
+ScTemplate::ScTemplateItemsToReplacementsItemsPositions const & ScTemplateResultItem::GetReplacements() const noexcept
+{
+  return m_templateItemsNamesToReplacementItemPositions;
+}
+
+ScAddr ScTemplateResultItem::GetAddrByName(std::string const & name) const
+{
+  auto it = m_templateItemsNamesToReplacementItemPositions.find(name);
+  if (it != m_templateItemsNamesToReplacementItemPositions.cend())
+    return m_replacementConstruction[it->second];
+
+  ScAddr const & addr = GetAddrBySystemIdtf(name);
+  if (addr.IsValid())
+  {
+    it = m_templateItemsNamesToReplacementItemPositions.find(std::to_string(addr.Hash()));
+    if (it != m_templateItemsNamesToReplacementItemPositions.cend())
+      return m_replacementConstruction[it->second];
+  }
+
+  return ScAddr::Empty;
+}
+
+ScAddr ScTemplateResultItem::GetAddrByVarAddr(ScAddr const & varAddr) const
+{
+  if (!varAddr.IsValid())
+    return ScAddr::Empty;
+
+  auto it = m_templateItemsNamesToReplacementItemPositions.find(std::to_string(varAddr.Hash()));
+  if (it != m_templateItemsNamesToReplacementItemPositions.cend())
+    return m_replacementConstruction[it->second];
+
+  std::string const & varIdtf = GetSystemIdtfByAddr(varAddr);
+  it = m_templateItemsNamesToReplacementItemPositions.find(varIdtf);
+  if (it != m_templateItemsNamesToReplacementItemPositions.cend())
+    return m_replacementConstruction[it->second];
+
+  return ScAddr::Empty;
+}
+
 ScAddr ScTemplateResultItem::GetAddrBySystemIdtf(std::string const & name) const
 {
   sc_addr _addr;
@@ -235,6 +507,44 @@ std::string ScTemplateResultItem::GetSystemIdtfByAddr(ScAddr const & addr) const
   ScStreamConverter::StreamToString(std::make_shared<ScStream>(stream), idtf);
 
   return idtf;
+}
+
+size_t ScTemplateSearchResult::Size() const noexcept
+{
+  return m_replacementConstructions.size();
+}
+
+bool ScTemplateSearchResult::IsEmpty() const noexcept
+{
+  return Size() == 0;
+}
+
+bool ScTemplateSearchResult::Get(size_t index, ScTemplateResultItem & outItem) const noexcept
+{
+  if (index < Size())
+  {
+    outItem.m_context = m_context;
+    outItem.m_templateItemsNamesToReplacementItemPositions = m_templateItemsNamesToReplacementItemsPositions;
+    outItem.m_replacementConstruction.assign(
+        m_replacementConstructions[index].cbegin(), m_replacementConstructions[index].cend());
+    return true;
+  }
+
+  return false;
+}
+
+ScTemplateResultItem ScTemplateSearchResult::operator[](size_t index) const
+{
+  if (index < Size())
+    return {m_context, m_replacementConstructions[index], m_templateItemsNamesToReplacementItemsPositions};
+
+  SC_THROW_EXCEPTION(utils::ExceptionInvalidParams, "Index=" << index << " must be < size=" << Size());
+}
+
+void ScTemplateSearchResult::Clear() noexcept
+{
+  m_replacementConstructions.clear();
+  m_templateItemsNamesToReplacementItemsPositions.clear();
 }
 
 ScTemplate::ScTemplateItemsToReplacementsItemsPositions ScTemplateSearchResult::GetReplacements() const noexcept

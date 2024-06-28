@@ -13,8 +13,6 @@
 #include "sc_type.hpp"
 #include "sc_stream.hpp"
 
-#include "utils/sc_utils.hpp"
-
 struct ScTemplateItem
 {
   enum class Type : uint8_t
@@ -109,6 +107,18 @@ struct ScTemplateItem
 //! backward compatibility
 using ScTemplateItemValue = ScTemplateItem;
 
+enum class ScTemplateTripleType : uint8_t
+{
+  AFA = 0,  // _... -> _...
+  FAF = 1,  // ... _-> ...
+  AAF = 2,  // _... _-> ...
+  FAN = 3,  // ... _-> ...
+  FAE = 4,  // ... _-> _edge
+  AAA = 5,  // _... _-> _...
+
+  ScConstr3TypeCount
+};
+
 class ScTemplateTriple
 {
   friend class ScTemplate;
@@ -122,30 +132,11 @@ public:
       ScTemplateItem const & param1,
       ScTemplateItem const & param2,
       ScTemplateItem const & param3,
-      size_t index)
-    : m_index(index)
-  {
-    m_values[0] = param1;
-    m_values[1] = param2;
-    m_values[2] = param3;
-  }
+      size_t index);
 
-  ScTemplateTripleItems const & GetValues() const
-  {
-    return m_values;
-  }
+  ScTemplateTripleItems const & GetValues() const;
 
-  ScTemplateItem const & operator[](size_t index) const noexcept(false)
-  {
-    if (index < m_values.size())
-    {
-      return m_values[index];
-    }
-
-    SC_THROW_EXCEPTION(
-        utils::ExceptionInvalidParams,
-        "Index=" + std::to_string(index) + " must be < size=" + std::to_string(m_values.size()));
-  }
+  ScTemplateItem const & operator[](size_t index) const noexcept(false);
 
   /* Store original index in template. Because when perform search or generation
    * we sort triples in suitable for operation order.
@@ -184,84 +175,23 @@ public:
 
   ScTemplateParams() = default;
 
-  _SC_EXTERN ScTemplateParams & Add(std::string const & varIdtf, ScAddr const & value) noexcept(false)
-  {
-    if (m_templateItemsToParams.find(varIdtf) == m_templateItemsToParams.cend())
-    {
-      m_templateItemsToParams[varIdtf] = value;
-      return *this;
-    }
+  _SC_EXTERN ScTemplateParams & Add(std::string const & varIdtf, ScAddr const & value) noexcept(false);
 
-    SC_THROW_EXCEPTION(utils::ExceptionInvalidParams, "Alias=" << varIdtf << " already has value");
-  }
+  _SC_EXTERN ScTemplateParams & Add(ScAddr const & varAddr, ScAddr const & value) noexcept(false);
 
-  _SC_EXTERN ScTemplateParams & Add(ScAddr const & varAddr, ScAddr const & value) noexcept(false)
-  {
-    std::string const & varAddrHashStr = std::to_string(varAddr.Hash());
-    if (m_templateItemsToParams.find(varAddrHashStr) == m_templateItemsToParams.cend())
-    {
-      m_templateItemsToParams[varAddrHashStr] = value;
-      return *this;
-    }
+  _SC_EXTERN bool Get(std::string const & varIdtf, ScAddr & outAddr) const noexcept;
 
-    SC_THROW_EXCEPTION(utils::ExceptionInvalidParams, "Var=" << varAddrHashStr << " already has value");
-  }
-
-  _SC_EXTERN bool Get(std::string const & varIdtf, ScAddr & outAddr) const noexcept
-  {
-    auto const it = m_templateItemsToParams.find(varIdtf);
-    if (it != m_templateItemsToParams.cend())
-    {
-      outAddr = it->second;
-      return true;
-    }
-
-    outAddr = ScAddr::Empty;
-    return false;
-  }
-
-  _SC_EXTERN bool Get(ScAddr const & varAddr, ScAddr & outAddr) const noexcept
-  {
-    std::string const & varAddrHashStr = std::to_string(varAddr.Hash());
-    auto const it = m_templateItemsToParams.find(varAddrHashStr);
-    if (it != m_templateItemsToParams.cend())
-    {
-      outAddr = it->second;
-      return true;
-    }
-
-    outAddr = ScAddr::Empty;
-    return false;
-  }
+  _SC_EXTERN bool Get(ScAddr const & varAddr, ScAddr & outAddr) const noexcept;
 
   SC_DEPRECATED(0.9.0, "Don't use this method, it is dangerous. It will be removed in 0.10.0.")
+  _SC_EXTERN ScTemplateItemsToParams GetAll() const noexcept;
 
-  _SC_EXTERN ScTemplateItemsToParams GetAll() const
-  {
-    return m_templateItemsToParams;
-  }
-
-  _SC_EXTERN bool IsEmpty() const noexcept
-  {
-    return m_templateItemsToParams.empty();
-  }
+  _SC_EXTERN bool IsEmpty() const noexcept;
 
   _SC_EXTERN static const ScTemplateParams Empty;
 
 protected:
   ScTemplateItemsToParams m_templateItemsToParams;
-};
-
-enum class ScTemplateTripleType : uint8_t
-{
-  AFA = 0,  // _... -> _...
-  FAF = 1,  // ... _-> ...
-  AAF = 2,  // _... _-> ...
-  FAN = 3,  // ... _-> ...
-  FAE = 4,  // ... _-> _edge
-  AAA = 5,  // _... _-> _...
-
-  ScConstr3TypeCount
 };
 
 enum class ScTemplateSearchRequest : uint8_t
@@ -318,12 +248,7 @@ public:
 
   _SC_EXTERN explicit ScTemplate();
 
-  _SC_EXTERN ~ScTemplate()
-  {
-    for (auto * triple : m_templateTriples)
-      delete triple;
-    m_templateTriples.clear();
-  }
+  _SC_EXTERN ~ScTemplate();
 
   _SC_EXTERN ScTemplate & operator()(
       ScTemplateItem const & param1,
@@ -375,19 +300,19 @@ public:
 
 protected:
   // Begin: calls by memory context
-  Result Generate(
+  _SC_EXTERN Result Generate(
       ScMemoryContext & ctx,
       ScTemplateResultItem & result,
       ScTemplateParams const & params,
       ScTemplateResultCode * errorCode = nullptr) const noexcept(false);
 
-  Result Search(ScMemoryContext & ctx, ScTemplateSearchResult & result) const noexcept(false);
-  void Search(
+  _SC_EXTERN Result Search(ScMemoryContext & ctx, ScTemplateSearchResult & result) const noexcept(false);
+  _SC_EXTERN void Search(
       ScMemoryContext & ctx,
       ScTemplateSearchResultCallback const & callback,
       ScTemplateSearchResultFilterCallback const & filterCallback = {},
       ScTemplateSearchResultCheckCallback const & checkCallback = {}) const noexcept(false);
-  void Search(
+  _SC_EXTERN void Search(
       ScMemoryContext & ctx,
       ScTemplateSearchResultCallbackWithRequest const & callback,
       ScTemplateSearchResultFilterCallback const & filterCallback = {},
@@ -397,15 +322,15 @@ protected:
       0.8.0,
       "Use ScTemplate::Search(ScMemoryContext & ctx, ScTemplateSearchResultCallback const & callback, "
       "ScTemplateSearchResultCheckCallback const & checkCallback) instead.")
-  Result SearchInStruct(ScMemoryContext & ctx, ScAddr const & scStruct, ScTemplateSearchResult & result) const
-      noexcept(false);
+  _SC_EXTERN Result
+  SearchInStruct(ScMemoryContext & ctx, ScAddr const & scStruct, ScTemplateSearchResult & result) const noexcept(false);
 
   // Builds template based on template in sc-memory
-  Result FromScTemplate(
+  _SC_EXTERN Result FromScTemplate(
       ScMemoryContext & ctx,
       ScAddr const & scTemplateAddr,
       ScTemplateParams const & params = ScTemplateParams()) noexcept(false);
-  Result FromScs(ScMemoryContext & ctx, std::string const & scsText) noexcept(false);
+  _SC_EXTERN Result FromScs(ScMemoryContext & ctx, std::string const & scsText) noexcept(false);
   // End: calls by memory context
 
 protected:
@@ -430,226 +355,94 @@ class ScTemplateResultItem
   friend class ScTemplateSearchResult;
 
 public:
-  ScTemplateResultItem()
-    : m_context(nullptr)
-  {
-  }
+  _SC_EXTERN ScTemplateResultItem();
 
-  ScTemplateResultItem(
+  _SC_EXTERN ScTemplateResultItem(
       sc_memory_context const * context,
       ScAddrVector results,
-      ScTemplate::ScTemplateItemsToReplacementsItemsPositions replacements)
-    : m_context(context)
-    , m_replacementConstruction(std::move(results))
-    , m_templateItemsNamesToReplacementItemPositions(std::move(replacements))
-  {
-  }
+      ScTemplate::ScTemplateItemsToReplacementsItemsPositions replacements);
 
-  ScTemplateResultItem(
+  _SC_EXTERN ScTemplateResultItem(
       sc_memory_context const * context,
-      ScTemplate::ScTemplateItemsToReplacementsItemsPositions replacements)
-    : m_context(context)
-    , m_templateItemsNamesToReplacementItemPositions(std::move(replacements))
-  {
-  }
+      ScTemplate::ScTemplateItemsToReplacementsItemsPositions replacements);
 
-  ScTemplateResultItem(ScTemplateResultItem const & otherItem)
-    : ScTemplateResultItem(
-          otherItem.m_context,
-          otherItem.m_replacementConstruction,
-          otherItem.m_templateItemsNamesToReplacementItemPositions)
-  {
-  }
+  _SC_EXTERN ScTemplateResultItem(ScTemplateResultItem const & otherItem);
 
-  ScTemplateResultItem & operator=(ScTemplateResultItem const & otherItem)
-  {
-    if (this == &otherItem)
-      return *this;
-
-    m_context = otherItem.m_context;
-    m_replacementConstruction.assign(
-        otherItem.m_replacementConstruction.cbegin(), otherItem.m_replacementConstruction.cend());
-    m_templateItemsNamesToReplacementItemPositions = otherItem.m_templateItemsNamesToReplacementItemPositions;
-
-    return *this;
-  }
+  _SC_EXTERN ScTemplateResultItem & operator=(ScTemplateResultItem const & otherItem);
 
   /* Gets found sc-element address by `varAddr`.
    * @param varAddr A template var sc-element address
    * @param outAddr[out] A found sc-element address by `varAddr`
    * @returns true, if sc-element address found by `varAddr`, otherwise false
    */
-  inline bool Get(ScAddr const & varAddr, ScAddr & outAddr) const noexcept
-  {
-    ScAddr const & addr = GetAddrByVarAddr(varAddr);
-    if (addr.IsValid())
-    {
-      outAddr = addr;
-      return true;
-    }
-
-    outAddr = ScAddr::Empty;
-    return false;
-  }
+  _SC_EXTERN bool Get(ScAddr const & varAddr, ScAddr & outAddr) const noexcept;
 
   /* Gets found sc-element address by `varAddr`.
    * @param varAddr A template var sc-element address
    * @returns Found sc-element address.
    * @throws utils::ExceptionInvalidParams if `varAddr` is invalid or not found in replacements.
    */
-  inline ScAddr operator[](ScAddr const & varAddr) const noexcept(false)
-  {
-    ScAddr const & addr = GetAddrByVarAddr(varAddr);
-    if (addr.IsValid())
-      return addr;
-
-    SC_THROW_EXCEPTION(utils::ExceptionInvalidParams, "Var=" << varAddr.Hash() << " not found in replacements");
-  }
+  _SC_EXTERN ScAddr operator[](ScAddr const & varAddr) const noexcept(false);
 
   /* Gets found sc-element address by replacement `name`.
    * @param name A replacement name of sc-element address
    * @param outAddr[out] A found sc-element address by replacement `name`
    * @returns true, if sc-element address found by replacement `name`, otherwise false
    */
-  inline bool Get(std::string const & name, ScAddr & outAddr) const noexcept
-  {
-    ScAddr const & addr = GetAddrByName(name);
-    if (addr.IsValid())
-    {
-      outAddr = addr;
-      return true;
-    }
-
-    outAddr = ScAddr::Empty;
-    return false;
-  }
+  _SC_EXTERN bool Get(std::string const & name, ScAddr & outAddr) const noexcept;
 
   /* Gets found sc-element address by replacement `name`.
    * @param name A replacement name of sc-element address
    * @returns Found sc-element address.
    * @throws utils::ExceptionInvalidParams if `name` is invalid or not found in replacements.
    */
-  inline ScAddr operator[](std::string const & name) const noexcept(false)
-  {
-    ScAddr const & addr = GetAddrByName(name);
-    if (addr.IsValid())
-      return addr;
-
-    SC_THROW_EXCEPTION(utils::ExceptionInvalidParams, "Alias=`" << name << "` not found in replacements");
-  }
+  _SC_EXTERN ScAddr operator[](std::string const & name) const noexcept(false);
 
   /* Gets found sc-element address by `index` in triple.
    * @param name A replacement name of sc-element address
    * @param outAddr[out] A found sc-element address by `index` in triple
    * @returns true, if sc-element address found by `index` in triple, otherwise false
    */
-  inline bool Get(size_t index, ScAddr & outAddr) const noexcept
-  {
-    if (index < Size())
-    {
-      outAddr = m_replacementConstruction[index];
-      return true;
-    }
-
-    outAddr = ScAddr::Empty;
-    return false;
-  }
+  _SC_EXTERN bool Get(size_t index, ScAddr & outAddr) const noexcept;
 
   /* Gets found sc-element address by `index` in triple.
    * @param name A replacement name of sc-element address
    * @returns Found sc-element address.
    * @throws utils::ExceptionInvalidParams if `index` < found construction size.
    */
-  inline ScAddr const & operator[](size_t index) const noexcept(false)
-  {
-    if (index < Size())
-      return m_replacementConstruction[index];
-
-    SC_THROW_EXCEPTION(utils::ExceptionInvalidParams, "Index=" << index << " must be < size=" << Size());
-  }
+  _SC_EXTERN ScAddr const & operator[](size_t index) const noexcept(false);
 
   //! Checks if replacement `name` exists in replacements
-  inline bool Has(std::string const & name) const noexcept
-  {
-    ScAddr const & addr = GetAddrByName(name);
-    return addr.IsValid();
-  }
+  _SC_EXTERN bool Has(std::string const & name) const noexcept;
 
   //! Checks if `varAddr` exists in replacements
-  inline bool Has(ScAddr const & varAddr) const noexcept
-  {
-    ScAddr const & addr = GetAddrByVarAddr(varAddr);
-    return addr.IsValid();
-  }
+  _SC_EXTERN bool Has(ScAddr const & varAddr) const noexcept;
 
   //! Gets found construction size
-  inline size_t Size() const noexcept
-  {
-    return m_replacementConstruction.size();
-  }
+  _SC_EXTERN size_t Size() const noexcept;
 
-  ScAddrVector::const_iterator begin() const
-  {
-    return m_replacementConstruction.cbegin();
-  }
+  _SC_EXTERN ScAddrVector::const_iterator begin() const noexcept;
 
-  ScAddrVector::const_iterator end() const
-  {
-    return m_replacementConstruction.cend();
-  }
+  _SC_EXTERN ScAddrVector::const_iterator end() const noexcept;
 
   SC_DEPRECATED(0.9.0, "Don't use this method, it is dangerous. It will be removed in 0.10.0.")
+  _SC_EXTERN ScTemplate::ScTemplateItemsToReplacementsItemsPositions const & GetReplacements() const noexcept;
 
-  inline ScTemplate::ScTemplateItemsToReplacementsItemsPositions const & GetReplacements() const noexcept
-  {
-    return m_templateItemsNamesToReplacementItemPositions;
-  }
-
-  ~ScTemplateResultItem() = default;
+  _SC_EXTERN ~ScTemplateResultItem() = default;
 
 protected:
-  ScAddr GetAddrByName(std::string const & name) const
-  {
-    auto it = m_templateItemsNamesToReplacementItemPositions.find(name);
-    if (it != m_templateItemsNamesToReplacementItemPositions.cend())
-      return m_replacementConstruction[it->second];
-
-    ScAddr const & addr = GetAddrBySystemIdtf(name);
-    if (addr.IsValid())
-    {
-      it = m_templateItemsNamesToReplacementItemPositions.find(std::to_string(addr.Hash()));
-      if (it != m_templateItemsNamesToReplacementItemPositions.cend())
-        return m_replacementConstruction[it->second];
-    }
-
-    return ScAddr::Empty;
-  }
-
-  ScAddr GetAddrByVarAddr(ScAddr const & varAddr) const
-  {
-    if (!varAddr.IsValid())
-      return ScAddr::Empty;
-
-    auto it = m_templateItemsNamesToReplacementItemPositions.find(std::to_string(varAddr.Hash()));
-    if (it != m_templateItemsNamesToReplacementItemPositions.cend())
-      return m_replacementConstruction[it->second];
-
-    std::string const & varIdtf = GetSystemIdtfByAddr(varAddr);
-    it = m_templateItemsNamesToReplacementItemPositions.find(varIdtf);
-    if (it != m_templateItemsNamesToReplacementItemPositions.cend())
-      return m_replacementConstruction[it->second];
-
-    return ScAddr::Empty;
-  }
-
-  ScAddr GetAddrBySystemIdtf(std::string const & name) const;
-
-  std::string GetSystemIdtfByAddr(ScAddr const & addr) const;
-
   sc_memory_context const * m_context;
 
   ScAddrVector m_replacementConstruction;
   ScTemplate::ScTemplateItemsToReplacementsItemsPositions m_templateItemsNamesToReplacementItemPositions;
+
+  _SC_EXTERN ScAddr GetAddrByName(std::string const & name) const;
+
+  _SC_EXTERN ScAddr GetAddrByVarAddr(ScAddr const & varAddr) const;
+
+  _SC_EXTERN ScAddr GetAddrBySystemIdtf(std::string const & name) const;
+
+  _SC_EXTERN std::string GetSystemIdtfByAddr(ScAddr const & addr) const;
 };
 
 using ScTemplateGenResult = ScTemplateResultItem;
@@ -660,51 +453,23 @@ class ScTemplateSearchResult
   friend class ScTemplateSearch;
 
 public:
-  ScTemplateSearchResult() = default;
+  _SC_EXTERN ScTemplateSearchResult() = default;
 
-  inline size_t Size() const
-  {
-    return m_replacementConstructions.size();
-  }
+  _SC_EXTERN size_t Size() const noexcept;
 
-  inline bool IsEmpty() const
-  {
-    return Size() == 0;
-  }
+  _SC_EXTERN bool IsEmpty() const noexcept;
 
-  inline bool Get(size_t index, ScTemplateResultItem & outItem) const noexcept
-  {
-    if (index < Size())
-    {
-      outItem.m_context = m_context;
-      outItem.m_templateItemsNamesToReplacementItemPositions = m_templateItemsNamesToReplacementItemsPositions;
-      outItem.m_replacementConstruction.assign(
-          m_replacementConstructions[index].cbegin(), m_replacementConstructions[index].cend());
-      return true;
-    }
+  _SC_EXTERN bool Get(size_t index, ScTemplateResultItem & outItem) const noexcept;
 
-    return false;
-  }
+  _SC_EXTERN ScTemplateResultItem operator[](size_t index) const noexcept(false);
 
-  inline ScTemplateResultItem operator[](size_t index) const noexcept(false)
-  {
-    if (index < Size())
-      return {m_context, m_replacementConstructions[index], m_templateItemsNamesToReplacementItemsPositions};
-
-    SC_THROW_EXCEPTION(utils::ExceptionInvalidParams, "Index=" << index << " must be < size=" << Size());
-  }
-
-  inline void Clear() noexcept
-  {
-    m_replacementConstructions.clear();
-    m_templateItemsNamesToReplacementItemsPositions.clear();
-  }
+  _SC_EXTERN void Clear() noexcept;
 
   SC_DEPRECATED(0.9.0, "Don't use this method, it is dangerous. It will be removed in 0.10.0.")
-  ScTemplate::ScTemplateItemsToReplacementsItemsPositions GetReplacements() const noexcept;
+  _SC_EXTERN ScTemplate::ScTemplateItemsToReplacementsItemsPositions GetReplacements() const noexcept;
 
   template <typename FnT>
-  void ForEach(FnT && f) noexcept
+  _SC_EXTERN void ForEach(FnT && f) noexcept
   {
     for (auto & res : m_replacementConstructions)
       f(ScTemplateResultItem{m_context, res, m_templateItemsNamesToReplacementItemsPositions});
