@@ -9,8 +9,6 @@
 #include "utils_erase_elements.h"
 #include "../sc-search/search_keynodes.h"
 
-#include "sc-core/sc_memory_context_manager.h"
-
 sc_memory_context * s_erase_elements_ctx = 0;
 
 sc_event * event_erase_elements;

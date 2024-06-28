@@ -16,7 +16,7 @@
 
 extern "C"
 {
-#include "sc-core/sc-store/sc-event/sc_event_types.h"
+#include "sc-core/sc_event_types.h"
 }
 
 /* Base class for sc-events

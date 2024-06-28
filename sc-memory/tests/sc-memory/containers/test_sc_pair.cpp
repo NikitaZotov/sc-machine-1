@@ -8,8 +8,8 @@
 
 extern "C"
 {
-#include "sc-core/sc-store/sc-base/sc_allocator.h"
-#include "sc-core/sc-store/sc-container/sc-pair/sc_pair.h"
+#include "sc-core/sc-base/sc_allocator.h"
+#include "sc-store/sc-container/sc_pair.h"
 }
 
 TEST(ScPairTest, sc_pair)

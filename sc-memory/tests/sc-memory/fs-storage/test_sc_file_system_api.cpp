@@ -5,13 +5,13 @@
  */
 
 #include <gtest/gtest.h>
-#include "sc-core/sc-store/sc-fs-memory/sc_io.h"
 
 extern "C"
 {
-#include "sc-core/sc-store/sc-fs-memory/sc_file_system.h"
-#include "sc-core/sc-store/sc-base/sc_allocator.h"
-#include "sc-core/sc-store/sc-container/sc-string/sc_string.h"
+#include "sc-store/sc-fs-memory/sc_io.h"
+#include "sc-store/sc-fs-memory/sc_file_system.h"
+#include "sc-core/sc-base/sc_allocator.h"
+#include "sc-core/sc-container/sc_string.h"
 }
 
 TEST(ScFileSystemTest, sc_file_system_create_remove_directory)

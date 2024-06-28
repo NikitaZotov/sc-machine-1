@@ -9,7 +9,6 @@
 #include "uiTranslators.h"
 #include "uiCommands.h"
 #include "uiKeynodes.h"
-#include "sc-core/sc_memory_context_manager.h"
 
 extern "C"
 {

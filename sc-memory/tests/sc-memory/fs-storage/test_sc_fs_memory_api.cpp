@@ -10,12 +10,12 @@
 
 extern "C"
 {
-#include "sc-core/sc-store/sc-fs-memory/sc_file_system.h"
-#include "sc-core/sc-store/sc-fs-memory/sc_fs_memory.h"
-#include "sc-core/sc-store/sc-fs-memory/sc_io.h"
-#include "sc-core/sc-store/sc-container/sc-string/sc_string.h"
-#include "sc-core/sc-store/sc_segment.h"
-#include "sc-core/sc-store/sc_storage_private.h"
+#include "sc-core/sc-container/sc_string.h"
+#include "sc-store/sc-fs-memory/sc_file_system.h"
+#include "sc-store/sc-fs-memory/sc_fs_memory.h"
+#include "sc-store/sc-fs-memory/sc_io.h"
+#include "sc-store/sc_segment.h"
+#include "sc-store/sc_storage_private.h"
 }
 
 #define SC_FS_MEMORY_PATH "fs-memory"

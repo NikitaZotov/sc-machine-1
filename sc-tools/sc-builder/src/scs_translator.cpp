@@ -9,7 +9,7 @@
 #include "sc-memory/sc_memory.hpp"
 #include "sc-memory/sc_scs_helper.hpp"
 
-#include "sc-core/sc-store/sc-container/sc-string/sc_string.h"
+#include "sc-core/sc-container/sc_string.h"
 
 #include <regex>
 #include <utility>

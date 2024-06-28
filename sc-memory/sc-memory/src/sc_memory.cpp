@@ -14,10 +14,8 @@
 
 extern "C"
 {
+#include <glib.h>
 #include "sc-core/sc_keynodes.h"
-#include "sc-core/sc_memory_private.h"
-#include "sc-core/sc_memory_context_private.h"
-#include "sc-core/sc_memory_context_permissions.h"
 }
 
 SC_PRAGMA_DISABLE_DEPRECATION_WARNINGS_BEGIN
@@ -656,9 +654,7 @@ void _PushLinkAddr(void * _data, sc_addr const link_addr)
   void ** data = ((void **)_data);
   auto * ctx = (sc_memory_context *)data[0];
 
-  if (_sc_memory_context_check_local_and_global_permissions(
-          (sc_memory_context_manager *)sc_memory_get_context_manager(), ctx, SC_CONTEXT_PERMISSIONS_READ, link_addr)
-      == SC_FALSE)
+  if (sc_memory_check_read_local_and_global_permissions(ctx, link_addr) == SC_FALSE)
     return;
 
   auto * linkAddrList = (ScAddrVector *)data[1];

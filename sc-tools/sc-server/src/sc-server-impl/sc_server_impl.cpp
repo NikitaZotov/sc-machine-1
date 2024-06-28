@@ -10,9 +10,7 @@
 
 extern "C"
 {
-#include "sc-core/sc-store/sc_storage.h"
-#include "sc-core/sc-store/sc_storage_private.h"
-#include "sc-core/sc-store/sc-base/sc_thread.h"
+#include "sc-core/sc-base/sc_thread.h"
 }
 
 ScServerImpl::ScServerImpl(std::string const & host, ScServerPort port, sc_bool parallelActions)
@@ -118,12 +116,12 @@ void ScServerImpl::OnMessage(ScServerSessionId const & sessionId, ScServerMessag
   }
   else
   {
-    sc_storage_start_new_process();
+    // sc_storage_start_new_process();
 
     action->Emit();
     delete action;
 
-    sc_storage_end_new_process();
+    // sc_storage_end_new_process();
   }
 }
 

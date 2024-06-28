@@ -9,7 +9,8 @@
 extern "C"
 {
 #include "sc-core/sc_memory.h"
-#include "sc-core/sc-store/sc-container/sc-string/sc_string.h"
+#include "sc-core/sc-container/sc_string.h"
+#include "sc-core/sc-container/sc_container_iterator.h"
 }
 
 #include "sc_test.hpp"

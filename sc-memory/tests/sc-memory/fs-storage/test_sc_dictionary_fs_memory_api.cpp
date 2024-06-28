@@ -10,14 +10,14 @@
 
 extern "C"
 {
-#include "sc-core/sc-store/sc-fs-memory/sc_dictionary_fs_memory.h"
-#include "sc-core/sc-store/sc-fs-memory/sc_dictionary_fs_memory_private.h"
-#include "sc-core/sc-store/sc-fs-memory/sc_file_system.h"
-#include "sc-core/sc-store/sc-base/sc_allocator.h"
-#include "sc-core/sc-store/sc-container/sc-pair/sc_pair.h"
-#include "sc-core/sc-store/sc-container/sc-list/sc_list.h"
-#include "sc-core/sc-store/sc-container/sc-string/sc_string.h"
-#include "sc-core/sc-store/sc-fs-memory/sc_io.h"
+#include "sc-core/sc-base/sc_allocator.h"
+#include "sc-core/sc-container/sc_list.h"
+#include "sc-core/sc-container/sc_string.h"
+#include "sc-store/sc-container/sc_struct_node.h"
+#include "sc-store/sc-fs-memory/sc_dictionary_fs_memory.h"
+#include "sc-store/sc-fs-memory/sc_dictionary_fs_memory_private.h"
+#include "sc-store/sc-fs-memory/sc_file_system.h"
+#include "sc-store/sc-fs-memory/sc_io.h"
 }
 
 #define TEXT_ABOUT_CAT_EXAMPLE_1 \

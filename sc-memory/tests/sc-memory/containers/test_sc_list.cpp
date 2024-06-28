@@ -8,10 +8,10 @@
 
 extern "C"
 {
-#include "sc-core/sc-store/sc-base/sc_allocator.h"
-#include "sc-core/sc-store/sc-container/sc_struct_node.h"
-#include "sc-core/sc-store/sc-container/sc-list/sc_list.h"
-#include "sc-core/sc-store/sc-container/sc-iterator/sc_container_iterator.h"
+#include "sc-core/sc-base/sc_allocator.h"
+#include "sc-store/sc-container/sc_struct_node.h"
+#include "sc-core/sc-container/sc_list.h"
+#include "sc-core/sc-container/sc_container_iterator.h"
 }
 
 sc_bool scalar_compare(void * value, void * other)
