@@ -5,6 +5,7 @@
  */
 
 #include "uiTranslatorFromSc.h"
+
 #include "uiKeynodes.h"
 
 constexpr size_t MAX_TRIPLES_COUNT = 1000;

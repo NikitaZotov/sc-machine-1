@@ -7,7 +7,7 @@
 #ifndef _search_identification_h_
 #define _search_identification_h_
 
-#include "sc-core/sc_memory.h"
+#include <sc-core/sc_types.h>
 
 /*!
  * Function that implement sc-agent to search all identifiers of specified sc-elements

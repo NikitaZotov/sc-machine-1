@@ -5,11 +5,16 @@
  */
 
 #include "utils.h"
+
+#include <sc-core/sc_helper.h>
+
 #include "utils_erase_elements.h"
-#include "../sc-common/sc_keynodes.h"
 #include "utils_keynodes.h"
-#include "../sc-search/search_keynodes.h"
-#include "../sc-search/search_utils.h"
+
+#include "sc-common/sc_keynodes.h"
+
+#include "sc-search/search_keynodes.h"
+#include "sc-search/search_utils.h"
 
 /*!
  *  Erase sc-elements from memory if they dont belong to init memory structure

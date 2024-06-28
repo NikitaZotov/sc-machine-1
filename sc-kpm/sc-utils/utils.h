@@ -7,7 +7,7 @@
 #ifndef _utils_h_
 #define _utils_h_
 
-#include "sc-core/sc_memory.h"
+#include <sc-core/sc_memory.h>
 
 extern sc_memory_context * s_erase_elements_ctx;
 

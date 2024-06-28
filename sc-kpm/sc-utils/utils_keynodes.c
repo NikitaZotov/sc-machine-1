@@ -6,8 +6,8 @@
 
 #include "utils.h"
 #include "utils_keynodes.h"
-#include "../sc-common/sc_keynodes.h"
-#include <glib.h>
+
+#include "sc-common/sc_keynodes.h"
 
 sc_addr keynode_question_erase_elements;
 sc_addr keynode_init_memory_generated_structure;

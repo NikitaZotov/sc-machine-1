@@ -4,8 +4,9 @@
  * (See accompanying file COPYING.MIT or copy at http://opensource.org/licenses/MIT)
  */
 
-#include "uiPrecompiled.h"
 #include "uiCommands.h"
+
+#include "uiPrecompiled.h"
 #include "uiKeynodes.h"
 #include "uiDefines.h"
 

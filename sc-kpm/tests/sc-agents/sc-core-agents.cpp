@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "sc_test.hpp"
+#include <sc_test.hpp>
 
 extern "C"
 {

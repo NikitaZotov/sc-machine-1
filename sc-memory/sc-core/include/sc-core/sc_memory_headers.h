@@ -8,6 +8,7 @@
 #define _sc_memory_headers_h_
 
 #include "sc-core/sc_memory.h"
+#include "sc-core/sc_helper.h"
 #include "sc-core/sc_memory_version.h"
 #include "sc-core/sc_event.h"
 #include "sc-core/sc_iterator.h"

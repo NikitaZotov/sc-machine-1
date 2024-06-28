@@ -7,7 +7,8 @@
 #include "utils.h"
 #include "utils_keynodes.h"
 #include "utils_erase_elements.h"
-#include "../sc-search/search_keynodes.h"
+
+#include "sc-search/search_keynodes.h"
 
 sc_memory_context * s_erase_elements_ctx = 0;
 

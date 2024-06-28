@@ -4,54 +4,54 @@
  * (See accompanying file COPYING.MIT or copy at http://opensource.org/licenses/MIT)
  */
 
-#include "uiPrecompiled.h"
 #include "uiKeynodes.h"
+
+#include "uiPrecompiled.h"
 
 extern "C"
 {
-#include "../sc-common/sc_keynodes.h"
-#include <glib.h>
+#include "sc-common/sc_keynodes.h"
 }
 
 // ------------- Keynodes ----------------------
-char const keynode_user_str[] = "ui_user";
-char const keynode_command_translate_from_sc_str[] = "ui_command_translate_from_sc";
-char const keynode_nrel_user_answer_formats_str[] = "ui_nrel_user_answer_formats";
-char const keynode_rrel_source_sc_construction_str[] = "ui_rrel_source_sc_construction";
-char const keynode_rrel_output_format_str[] = "ui_rrel_output_format";
-char const keynode_rrel_user_lang_str[] = "ui_rrel_user_lang";
-char const keynode_rrel_filter_list_str[] = "ui_rrel_filter_list";
+sc_char const keynode_user_str[] = "ui_user";
+sc_char const keynode_command_translate_from_sc_str[] = "ui_command_translate_from_sc";
+sc_char const keynode_nrel_user_answer_formats_str[] = "ui_nrel_user_answer_formats";
+sc_char const keynode_rrel_source_sc_construction_str[] = "ui_rrel_source_sc_construction";
+sc_char const keynode_rrel_output_format_str[] = "ui_rrel_output_format";
+sc_char const keynode_rrel_user_lang_str[] = "ui_rrel_user_lang";
+sc_char const keynode_rrel_filter_list_str[] = "ui_rrel_filter_list";
 
-char const keynode_question_nrel_answer_str[] = "nrel_answer";
-char const keynode_question_finished_str[] = "question_finished";
-char const keynode_nrel_authors_str[] = "nrel_authors";
-char const keynode_nrel_translation_str[] = "nrel_translation";
-char const keynode_nrel_format_str[] = "nrel_format";
-char const keynode_nrel_system_identifier_str[] = "nrel_system_identifier";
-char const keynode_nrel_main_idtf_str[] = "nrel_main_idtf";
-char const keynode_nrel_idtf_str[] = "nrel_idtf";
-char const keynode_rrel_key_sc_element_str[] = "rrel_key_sc_element";
-char const keynode_nrel_sc_text_translation_str[] = "nrel_sc_text_translation";
+sc_char const keynode_question_nrel_answer_str[] = "nrel_answer";
+sc_char const keynode_question_finished_str[] = "question_finished";
+sc_char const keynode_nrel_authors_str[] = "nrel_authors";
+sc_char const keynode_nrel_translation_str[] = "nrel_translation";
+sc_char const keynode_nrel_format_str[] = "nrel_format";
+sc_char const keynode_nrel_system_identifier_str[] = "nrel_system_identifier";
+sc_char const keynode_nrel_main_idtf_str[] = "nrel_main_idtf";
+sc_char const keynode_nrel_idtf_str[] = "nrel_idtf";
+sc_char const keynode_rrel_key_sc_element_str[] = "rrel_key_sc_element";
+sc_char const keynode_nrel_sc_text_translation_str[] = "nrel_sc_text_translation";
 
-char const keynode_command_generate_instance_str[] = "ui_command_generate_instance";
-char const keynode_command_initiated_str[] = "ui_command_initiated";
-char const keynode_command_finished_str[] = "ui_command_finished";
-char const keynode_command_failed_str[] = "ui_command_failed";
-char const keynode_rrel_command_arguments_str[] = "ui_rrel_command_arguments";
-char const keynode_rrel_command_str[] = "ui_rrel_command";
-char const keynode_nrel_command_template_str[] = "ui_nrel_command_template";
-char const keynode_nrel_command_result_str[] = "ui_nrel_command_result";
-char const keynode_displayed_answer_str[] = "ui_displayed_answer";
+sc_char const keynode_command_generate_instance_str[] = "ui_command_generate_instance";
+sc_char const keynode_command_initiated_str[] = "ui_command_initiated";
+sc_char const keynode_command_finished_str[] = "ui_command_finished";
+sc_char const keynode_command_failed_str[] = "ui_command_failed";
+sc_char const keynode_rrel_command_arguments_str[] = "ui_rrel_command_arguments";
+sc_char const keynode_rrel_command_str[] = "ui_rrel_command";
+sc_char const keynode_nrel_command_template_str[] = "ui_nrel_command_template";
+sc_char const keynode_nrel_command_result_str[] = "ui_nrel_command_result";
+sc_char const keynode_displayed_answer_str[] = "ui_displayed_answer";
 
-char const keynode_format_scs_json_str[] = "format_scs_json";
-char const keynode_format_scg_json_str[] = "format_scg_json";
-char const keynode_format_scn_json_str[] = "format_scn_json";
+sc_char const keynode_format_scs_json_str[] = "format_scs_json";
+sc_char const keynode_format_scg_json_str[] = "format_scg_json";
+sc_char const keynode_format_scn_json_str[] = "format_scn_json";
 
-char const keynode_system_element_str[] = "system_element";
+sc_char const keynode_system_element_str[] = "system_element";
 
-char const keynode_concept_scn_json_elements_order_set_str[] = "concept_scn_json_elements_order_set";
-char const keynode_concept_scn_json_elements_filter_set_str[] = "concept_scn_json_elements_filter_set";
-char const keynode_nrel_scn_json_elements_base_order_str[] = "nrel_scn_json_elements_base_order";
+sc_char const keynode_concept_scn_json_elements_order_set_str[] = "concept_scn_json_elements_order_set";
+sc_char const keynode_concept_scn_json_elements_filter_set_str[] = "concept_scn_json_elements_filter_set";
+sc_char const keynode_nrel_scn_json_elements_base_order_str[] = "nrel_scn_json_elements_base_order";
 
 sc_addr keynode_user;
 sc_addr keynode_command_translate_from_sc;

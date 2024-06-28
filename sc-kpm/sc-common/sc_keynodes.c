@@ -4,11 +4,11 @@
  * (See accompanying file COPYING.MIT or copy at http://opensource.org/licenses/MIT)
  */
 
-#include "sc-core/sc_keynodes.h"
+#include <sc-core/sc_keynodes.h>
 
-#include "sc-core/sc_iterator3.h"
+#include <sc-core/sc_iterator3.h>
 
-#include "sc-core/sc_helper.h"
+#include <sc-core/sc_helper.h>
 
 sc_result sc_common_resolve_keynode(
     sc_memory_context * ctx,

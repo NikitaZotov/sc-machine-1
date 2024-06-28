@@ -5,11 +5,12 @@
  */
 
 #include "search_utils.h"
+
+#include <sc-core/sc_helper.h>
+
 #include "search_keynodes.h"
 #include "search_defines.h"
 #include "search.h"
-
-#include "sc-core/sc_helper.h"
 
 sc_addr create_answer_node()
 {

@@ -5,12 +5,12 @@
  */
 
 #include "search_identifiers.h"
+
+#include <sc-core/sc_memory_headers.h>
+
 #include "search_keynodes.h"
 #include "search_utils.h"
 #include "search.h"
-
-#include "sc-core/sc_helper.h"
-#include "sc-core/sc_memory_headers.h"
 
 sc_result agent_search_all_identifiers(sc_event const * event, sc_addr arg)
 {

@@ -7,8 +7,7 @@
 #ifndef _sc_keynodes_h_
 #define _sc_keynodes_h_
 
-#include "sc-core/sc_helper.h"
-#include "sc-core/sc_memory.h"
+#include <sc-core/sc_types.h>
 
 #include "sc_common_types.h"
 
