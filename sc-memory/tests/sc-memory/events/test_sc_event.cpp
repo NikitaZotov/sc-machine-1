@@ -1,14 +1,14 @@
 #include <gtest/gtest.h>
 
-#include "sc-memory/sc_event.hpp"
-#include "sc-memory/sc_memory.hpp"
-#include "sc-memory/sc_timer.hpp"
-
-#include "event_test_utils.hpp"
-
 #include <atomic>
 #include <thread>
 #include <mutex>
+
+#include "sc-memory/sc_event.hpp"
+#include "sc-memory/sc_memory.hpp"
+#include "sc-memory/utils/sc_timer.hpp"
+
+#include "event_test_utils.hpp"
 
 TEST(ScEventQueueTest, EventsQueueDestroy)
 {

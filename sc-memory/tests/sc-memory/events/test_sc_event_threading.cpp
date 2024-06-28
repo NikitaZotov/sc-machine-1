@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "sc-memory/sc_event.hpp"
-#include "sc-memory/sc_timer.hpp"
+#include "sc-memory/utils/sc_timer.hpp"
 
 #include "event_test_utils.hpp"
 

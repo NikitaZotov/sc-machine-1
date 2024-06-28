@@ -8,7 +8,7 @@
 
 #include "builder_test.hpp"
 
-#include "sc-memory/sc_utils.hpp"
+#include "sc-memory/utils/sc_utils.hpp"
 #include "../../src/gwf_translator.hpp"
 
 #define TEST_CORRECT_GWF SC_BUILDER_KB "/test-templates/test_template_1.gwf"

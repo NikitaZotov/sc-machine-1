@@ -8,7 +8,6 @@
 
 #include "test_scs_utils.hpp"
 
-
 TEST(scs_common, ElementHandle)
 {
   scs::ElementHandle handle_err;

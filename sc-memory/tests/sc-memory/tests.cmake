@@ -1,6 +1,6 @@
 make_tests_from_folder(${CMAKE_CURRENT_LIST_DIR}/common
     NAME sc-memory-common-tests
-    DEPENDS sc-memory sc-core
+    DEPENDS sc-memory
     INCLUDES ${CMAKE_CURRENT_LIST_DIR}/_test
 )
 
@@ -10,7 +10,7 @@ endif()
 
 make_tests_from_folder(${CMAKE_CURRENT_LIST_DIR}/containers
     NAME sc-memory-containers-tests
-    DEPENDS sc-memory sc-core
+    DEPENDS sc-memory
     INCLUDES ${CMAKE_CURRENT_LIST_DIR}/_test
 )
 
@@ -20,7 +20,7 @@ endif()
 
 make_tests_from_folder(${CMAKE_CURRENT_LIST_DIR}/fs-storage
     NAME sc-fs-storage-tests
-    DEPENDS sc-memory sc-core
+    DEPENDS sc-memory
     INCLUDES ${CMAKE_CURRENT_LIST_DIR}/_test
 )
 
