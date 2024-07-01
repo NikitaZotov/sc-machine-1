@@ -4,8 +4,9 @@
  * (See accompanying file COPYING.MIT or copy at http://opensource.org/licenses/MIT)
  */
 
-#include "SetOperationsUtils.hpp"
-#include "CommonUtils.hpp"
+#include "sc-agents-common/utils/SetOperationsUtils.hpp"
+
+#include "sc-agents-common/utils/CommonUtils.hpp"
 
 namespace utils
 {

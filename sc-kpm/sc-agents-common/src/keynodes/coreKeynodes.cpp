@@ -4,7 +4,7 @@
  * (See accompanying file COPYING.MIT or copy at http://opensource.org/licenses/MIT)
  */
 
-#include "coreKeynodes.hpp"
+#include "sc-agents-common/keynodes/coreKeynodes.hpp"
 
 namespace scAgentsCommon
 {

@@ -4,10 +4,10 @@
  * (See accompanying file COPYING.MIT or copy at http://opensource.org/licenses/MIT)
  */
 
-#include "CommonUtils.hpp"
+#include "sc-agents-common/utils/CommonUtils.hpp"
 
-#include "IteratorUtils.hpp"
-#include "GenerationUtils.hpp"
+#include "sc-agents-common/utils/IteratorUtils.hpp"
+#include "sc-agents-common/utils/GenerationUtils.hpp"
 
 using namespace scAgentsCommon;
 

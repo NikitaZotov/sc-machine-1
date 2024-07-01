@@ -4,12 +4,12 @@
  * (See accompanying file COPYING.MIT or copy at http://opensource.org/licenses/MIT)
  */
 
-#include "AgentUtils.hpp"
+#include "sc-agents-common/utils/AgentUtils.hpp"
 
 #include <sc-memory/sc_wait.hpp>
 
-#include "IteratorUtils.hpp"
-#include "GenerationUtils.hpp"
+#include "sc-agents-common/utils/IteratorUtils.hpp"
+#include "sc-agents-common/utils/GenerationUtils.hpp"
 
 using namespace scAgentsCommon;
 
