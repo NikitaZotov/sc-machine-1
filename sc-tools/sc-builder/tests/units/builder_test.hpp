@@ -2,12 +2,12 @@
 
 #include <gtest/gtest.h>
 
-#include "sc-memory/sc_memory.hpp"
-#include "sc-memory/sc_keynodes.hpp"
+#include <memory>
+
+#include <sc-memory/sc_memory.hpp>
+#include <sc-memory/sc_keynodes.hpp>
 
 #include "test_defines.hpp"
-
-#include <memory>
 
 class ScBuilderTest : public testing::Test
 {

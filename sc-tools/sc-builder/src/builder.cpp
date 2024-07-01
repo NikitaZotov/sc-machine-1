@@ -4,15 +4,25 @@
  * (See accompanying file COPYING.MIT or copy at http://opensource.org/licenses/MIT)
  */
 
-#include "builder.hpp"
+#include "sc-builder/builder.hpp"
+
+#include <memory>
+#include <fstream>
+
 #include "scs_translator.hpp"
 #include "gwf_translator.hpp"
 
-#include <memory>
+#include "sc_repo_path_collector.hpp"
 
-#include <fstream>
+Builder::Builder()
+{
+  m_collector = new ScRepoPathCollector();
+}
 
-Builder::Builder() = default;
+Builder::~Builder()
+{
+  delete m_collector;
+}
 
 bool Builder::Run(BuilderParams const & params, sc_memory_params const & memoryParams)
 {
@@ -23,14 +33,14 @@ bool Builder::Run(BuilderParams const & params, sc_memory_params const & memoryP
 
   ScRepoPathCollector::Sources excludedSources;
   ScRepoPathCollector::Sources checkSources;
-  if (m_collector.IsRepoPathFile(m_params.m_inputPath))
+  if (m_collector->IsRepoPathFile(m_params.m_inputPath))
   {
     ScConsole::PrintLine() << ScConsole::Color::Blue << "Parse repo path file... ";
-    m_collector.ParseRepoPath(m_params.m_inputPath, excludedSources, checkSources);
+    m_collector->ParseRepoPath(m_params.m_inputPath, excludedSources, checkSources);
   }
   ScRepoPathCollector::Sources buildSources;
   ScConsole::PrintLine() << ScConsole::Color::Blue << "Collect all sources... ";
-  m_collector.CollectBuildSources(m_params.m_inputPath, excludedSources, checkSources, buildSources);
+  m_collector->CollectBuildSources(m_params.m_inputPath, excludedSources, checkSources, buildSources);
 
   m_ctx = std::make_unique<ScMemoryContext>();
   ScAddr const & outputStructure = m_params.m_resultStructureUpload ? ResolveOutputStructure() : ScAddr::Empty;
@@ -111,7 +121,7 @@ bool Builder::ProcessFile(std::string const & fileName, ScAddr const & outputStr
   translateParams.m_autoFormatInfo = m_params.m_autoFormatInfo;
   translateParams.m_outputStructure = outputStructure;
 
-  std::string const & fileExt = m_collector.GetFileExtension(fileName);
+  std::string const & fileExt = m_collector->GetFileExtension(fileName);
   auto const & it = m_translators.find(fileExt);
   if (it == m_translators.cend())
     SC_THROW_EXCEPTION(

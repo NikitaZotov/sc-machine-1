@@ -6,11 +6,11 @@
 
 #include <gtest/gtest.h>
 
+#include <sc-config-utils/sc_options.hpp>
+
 #include "../test_defines.hpp"
 
-#include "../../src/sc_machine_setup.hpp"
-
-#include "sc_options.hpp"
+#include "sc_machine_setup.hpp"
 
 TEST(ScMachine, RunMain)
 {

@@ -5,6 +5,7 @@
  */
 
 #include "sc_server_factory.hpp"
+
 #include "sc-server-impl/sc_server_logger_impl.hpp"
 
 std::shared_ptr<ScServer> ScServerFactory::ConfigureScServer(ScParams const & serverParams)

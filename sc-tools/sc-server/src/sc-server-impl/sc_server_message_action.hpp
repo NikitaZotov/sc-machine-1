@@ -8,7 +8,7 @@
 
 #include <utility>
 
-#include "sc-memory/sc_keynodes.hpp"
+#include <sc-memory/sc_keynodes.hpp>
 
 #include "sc_server_action.hpp"
 #include "sc_server.hpp"

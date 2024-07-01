@@ -8,14 +8,14 @@
 
 #include <gtest/gtest.h>
 
-#include "sc-memory/sc_memory.hpp"
-#include "sc-memory/sc_keynodes.hpp"
+#include <memory>
+
+#include <sc-memory/sc_memory.hpp>
+#include <sc-memory/sc_keynodes.hpp>
+
+#include "sc-server-impl/sc_server_impl.hpp"
 
 #include "../../test_defines.hpp"
-
-#include "../../../src/sc-server-impl/sc_server_impl.hpp"
-
-#include <memory>
 
 class ScServerTest : public testing::Test
 {

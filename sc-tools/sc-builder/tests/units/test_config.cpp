@@ -6,13 +6,14 @@
 
 #include <gtest/gtest.h>
 
+#include <sc-config-utils/sc_options.hpp>
+#include <sc-config-utils/sc_memory_config.hpp>
+
 #include "builder_test.hpp"
 
-#include "../../src/builder.hpp"
-#include "../../src/sc_builder_setup.hpp"
+#include "sc-builder/builder.hpp"
 
-#include "sc_options.hpp"
-#include "sc_memory_config.hpp"
+#include "sc_builder_setup.hpp"
 
 TEST(ScBuilder, RunMain)
 {

@@ -6,10 +6,10 @@
 
 #include "sc_server_test.hpp"
 
-#include "sc-core/sc_types.h"
-#include "sc-memory/sc_type.hpp"
-#include "../../sc_client.hpp"
+#include <sc-core/sc_types.h>
+#include <sc-memory/sc_type.hpp>
 
+#include "../../sc_client.hpp"
 #include "../../sc_memory_json_converter.hpp"
 
 TEST_F(ScServerTest, CreateElements)

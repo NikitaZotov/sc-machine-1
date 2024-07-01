@@ -6,7 +6,8 @@
 
 #include <gtest/gtest.h>
 
-#include "sc-memory/utils/sc_utils.hpp"
+#include <sc-memory/utils/sc_utils.hpp>
+
 #include "repo_path_collector_test_api.hpp"
 
 #define TEST_SIMPLE_REPO SC_BUILDER_TEST_REPOS "/simple_repo.path"

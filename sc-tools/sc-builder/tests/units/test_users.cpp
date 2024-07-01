@@ -8,7 +8,7 @@
 
 #include <thread>
 
-#include "sc-core/sc_keynodes.h"
+#include <sc-core/sc_keynodes.h>
 
 #include "builder_test.hpp"
 

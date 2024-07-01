@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../../src/sc_repo_path_collector.hpp"
+#include "sc_repo_path_collector.hpp"
 
 #include "test_defines.hpp"
 

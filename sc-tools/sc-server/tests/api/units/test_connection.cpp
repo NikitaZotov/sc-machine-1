@@ -6,13 +6,14 @@
 
 #include <gtest/gtest.h>
 
-#include "sc_server_test.hpp"
-#include "../../sc_client.hpp"
-#include "../../../src/sc_server_setup.hpp"
+#include <sc-config-utils/sc_options.hpp>
+#include <sc-config-utils/sc_config.hpp>
+#include <sc-config-utils/sc_memory_config.hpp>
 
-#include "sc_options.hpp"
-#include "sc-config/sc_config.hpp"
-#include "sc_memory_config.hpp"
+#include "sc_server_test.hpp"
+#include "sc_server_setup.hpp"
+
+#include "../../sc_client.hpp"
 
 TEST(ScServer, RunMain)
 {

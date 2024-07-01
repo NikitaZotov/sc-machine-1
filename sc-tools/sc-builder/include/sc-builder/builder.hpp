@@ -6,11 +6,13 @@
 
 #pragma once
 
-#include "sc-memory/sc_memory.hpp"
-#include "translator.hpp"
-#include "sc_repo_path_collector.hpp"
+#include <sc-memory/sc_memory.hpp>
 
 #include <string>
+
+#include "translator.hpp"
+
+class ScRepoPathCollector;
 
 struct BuilderParams
 {
@@ -33,17 +35,19 @@ class Builder
 public:
   Builder();
 
+  ~Builder();
+
   bool Run(BuilderParams const & params, sc_memory_params const & memoryParams);
 
 protected:
   BuilderParams m_params;
   std::unique_ptr<ScMemoryContext> m_ctx;
-  ScRepoPathCollector m_collector;
+  class ScRepoPathCollector * m_collector;
   std::unordered_map<std::string, std::shared_ptr<Translator>> m_translators;
 
   ScAddr ResolveOutputStructure();
 
-  bool BuildSources(ScRepoPathCollector::Sources const & buildSources, ScAddr const & outputStructure);
+  bool BuildSources(std::unordered_set<std::string> const & buildSources, ScAddr const & outputStructure);
 
   bool ProcessFile(std::string const & filename, ScAddr const & outputStructure);
 

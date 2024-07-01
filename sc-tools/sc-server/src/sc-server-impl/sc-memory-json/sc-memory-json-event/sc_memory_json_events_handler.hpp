@@ -15,8 +15,8 @@
 
 #include "sc_memory_json_events_manager.hpp"
 
-#include "../../sc_server_defines.hpp"
-#include "../../sc_server.hpp"
+#include "sc-server-impl/sc_server_defines.hpp"
+#include "sc-server-impl/sc_server.hpp"
 
 class ScMemoryJsonEventsHandler : public ScMemoryJsonHandler
 {

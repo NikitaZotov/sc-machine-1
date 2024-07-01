@@ -8,8 +8,8 @@
 
 #include <filesystem>
 
-#include "sc-memory/utils/sc_exec.hpp"
-#include "sc-memory/sc_debug.hpp"
+#include <sc-memory/utils/sc_exec.hpp>
+#include <sc-memory/sc_debug.hpp>
 
 #define PYTHON_INTERPRETER "python3"
 #define GWF_TRANSLATOR_SCRIPT SC_PREPARE_BUILD_SCRIPTS_PATH "/kb-scripts/gwf_to_scs.py"

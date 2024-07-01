@@ -13,10 +13,10 @@
 #include <unordered_set>
 
 #include <sc-memory/sc_debug.hpp>
+#include <sc-core/sc_memory_params.h>
 
 #include "sc_options.hpp"
-#include "sc-core/sc_memory_params.h"
-#include "sc-config/sc_config.hpp"
+#include "sc-config-utils/sc_config.hpp"
 
 class ScMemoryConfig;
 
