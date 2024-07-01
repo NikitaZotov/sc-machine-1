@@ -30,5 +30,5 @@ if(${SC_CLANG_FORMAT_CODE})
 endif()
 
 if(${SC_BUILD_TESTS})
-    include(tests/tests.cmake)
+    add_subdirectory(tests)
 endif()

@@ -1,6 +1,4 @@
-#include <gtest/gtest.h>
-
-#include <sc_test.hpp>
+#include <sc-memory/tests/sc_test.hpp>
 
 extern "C"
 {

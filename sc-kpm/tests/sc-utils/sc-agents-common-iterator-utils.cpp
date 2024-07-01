@@ -4,10 +4,8 @@
  * (See accompanying file COPYING.MIT or copy at http://opensource.org/licenses/MIT)
  */
 
-#include <gtest/gtest.h>
-
-#include <sc_test.hpp>
-#include <dummy_file_interface.hpp>
+#include <sc-memory/tests/sc_test.hpp>
+#include <sc-memory/tests/dummy_file_interface.hpp>
 
 #include <sc-memory/sc_scs_helper.hpp>
 

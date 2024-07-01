@@ -1,6 +1,0 @@
-base 
-    <- test_element;
-    => nrel_main_idtf:
-        [base]
-        (* <- lang_en;; *);;
-

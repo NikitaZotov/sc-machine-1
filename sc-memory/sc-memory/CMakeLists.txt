@@ -48,3 +48,7 @@ add_dependencies(sc-memory
 if(${SC_CLANG_FORMAT_CODE})
     target_clangformat_setup(sc-memory)
 endif()
+
+if(${SC_BUILD_TESTS})
+    add_subdirectory(tests)
+endif()

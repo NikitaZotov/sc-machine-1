@@ -25,9 +25,5 @@ if(${SC_CLANG_FORMAT_CODE})
 endif()
 
 if(${SC_BUILD_TESTS})
-    include(tests/tests.cmake)
-endif()
-
-if(${SC_BUILD_BENCH})
-    add_subdirectory(tests/performance)
+    add_subdirectory(tests)
 endif()
