@@ -6,7 +6,6 @@
 
 #include "sc_segment.h"
 
-#include "sc-core/sc-base/sc_atomic.h"
 #include "sc-core/sc-base/sc_allocator.h"
 
 #include "sc_element.h"

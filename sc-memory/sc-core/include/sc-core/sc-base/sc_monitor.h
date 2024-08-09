@@ -11,28 +11,12 @@
 
 #include "sc-core/sc-base/sc_mutex.h"
 #include "sc-core/sc-base/sc_condition.h"
-#include "sc-core/sc-base/sc_thread.h"
 
-#include "sc-core/sc-container/sc_hash_table.h"
 #include "sc-core/sc-container/sc_queue.h"
 
-typedef struct
-{
-  sc_mutex rw_mutex;         // Mutex for data protection
-  sc_queue * queue;          // Queue of writers and readers
-  sc_uint32 active_readers;  // Number of readers currently accessing the data
-  sc_uint32 active_writer;   // Flag to indicate if a writer is writing
-  sc_uint32 id;              // Unique identifier of monitor
-} sc_monitor;
-
-typedef struct
-{
-  sc_hash_table * monitors;             // Hash table storing addr_monitors_table for each identifier;
-  sc_uint32 global_monitor_id_counter;  // Monitors count
-  sc_mutex rw_mutex;                    // Mutex for data protection
-} sc_monitor_table;
-
 typedef struct _sc_request sc_request;
+typedef struct _sc_monitor sc_monitor;
+typedef struct _sc_monitor_table sc_monitor_table;
 
 /*! Initializes the global monitor table
  * @param table Pointer to the sc_monitor_table to be initialized

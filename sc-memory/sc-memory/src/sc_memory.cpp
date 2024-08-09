@@ -15,7 +15,6 @@
 extern "C"
 {
 #include <glib.h>
-#include "sc-core/sc_keynodes.h"
 }
 
 SC_PRAGMA_DISABLE_DEPRECATION_WARNINGS_BEGIN
@@ -25,20 +24,13 @@ namespace
 
 bool isLogMuted = false;
 
-void _logPrintHandler(
-    sc_char const * log_domain,
-    GLogLevelFlags log_level,
-    sc_char const * message,
-    sc_pointer user_data)
+void _logPrintHandler(sc_char const *, GLogLevelFlags logLevel, sc_char const * message, sc_pointer)
 {
-  SC_UNUSED(log_domain);
-  SC_UNUSED(user_data);
-
   if (isLogMuted)
     return;
 
   std::string stype;
-  switch (log_level)
+  switch (logLevel)
   {
   case G_LOG_LEVEL_CRITICAL:
   case G_LOG_LEVEL_ERROR:

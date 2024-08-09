@@ -15,6 +15,9 @@
 
 #  define sc_unused(object) (void)object
 
+typedef void * sc_pointer;
+typedef void const * sc_const_pointer;
+
 // base types
 typedef signed char sc_int8;
 typedef unsigned char sc_uint8;

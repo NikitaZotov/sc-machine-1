@@ -1,7 +1,7 @@
 make_tests_from_folder(${CMAKE_CURRENT_LIST_DIR}/units/common
     NAME sc-memory-common-tests
-    DEPENDS sc-memory
-    INCLUDES ${SC_CORE_SRC}
+    DEPENDS ${GLIB2_LIBRARIES} sc-memory
+    INCLUDES ${GLIB2_INCLUDE_DIRS} ${SC_CORE_SRC}
 )
 
 if(${SC_CLANG_FORMAT_CODE})

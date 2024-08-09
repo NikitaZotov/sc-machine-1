@@ -6,6 +6,8 @@
 
 #include "sc-core/sc_memory_version.h"
 
+#include <glib.h>
+
 #include "sc-core/sc-base/sc_allocator.h"
 
 sc_int32 sc_version_compare(sc_version const * a, sc_version const * b)

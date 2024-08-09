@@ -14,6 +14,8 @@
 
 #  include "sc-store/sc-container/sc_struct_node.h"
 
+#  include "../sc-base/sc_message.h"
+
 #  include "sc_file_system.h"
 #  include "sc_io.h"
 

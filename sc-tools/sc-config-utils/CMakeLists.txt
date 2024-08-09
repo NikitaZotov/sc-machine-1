@@ -6,8 +6,12 @@ file(GLOB SOURCES CONFIGURE_DEPENDS
 )
 
 add_library(sc-config-utils SHARED ${SOURCES})
-target_link_libraries(sc-config-utils LINK_PUBLIC sc-memory)
+target_link_libraries(sc-config-utils
+    LINK_PRIVATE ${GLIB2_LIBRARIES}
+    LINK_PUBLIC sc-memory
+)
 target_include_directories(sc-config-utils
+    PRIVATE ${GLIB2_INCLUDE_DIRS}
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
 )

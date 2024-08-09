@@ -10,10 +10,10 @@
 #include "sc-core/sc_memory_params.h"
 #include "sc-core/sc_types.h"
 
-#include "../sc-base/sc_message.h"
+#include "../sc-base/sc_monitor_private.h"
 
 #include "sc-core/sc-container/sc_list.h"
-#include "sc-core/sc-container/sc_dictionary.h"
+#include "../sc-container/sc_dictionary_private.h"
 
 #define SC_FS_EXT ".scdb"
 #define INVALID_STRING_OFFSET LONG_MAX

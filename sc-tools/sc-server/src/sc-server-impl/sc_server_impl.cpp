@@ -8,11 +8,6 @@
 
 #include "sc_server_action_defines.hpp"
 
-extern "C"
-{
-#include "sc-core/sc-base/sc_thread.h"
-}
-
 ScServerImpl::ScServerImpl(std::string const & host, ScServerPort port, sc_bool parallelActions)
   : ScServer(host, port)
   , m_parallelActions(parallelActions)

@@ -13,6 +13,7 @@
 
 extern "C"
 {
+#include <glib.h>
 #include <sc-core/sc-container/sc_string.h>
 #include "sc-config-utils/sc_config.h"
 }

@@ -6,9 +6,9 @@ file(GLOB SOURCES CONFIGURE_DEPENDS
 )
 
 add_library(sc-core SHARED ${SOURCES})
-target_link_libraries(sc-core LINK_PUBLIC ${GLIB2_LIBRARIES})
+target_link_libraries(sc-core LINK_PRIVATE ${GLIB2_LIBRARIES})
 target_include_directories(sc-core
-    PUBLIC ${GLIB2_INCLUDE_DIRS}
+    PRIVATE ${GLIB2_INCLUDE_DIRS}
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
 )

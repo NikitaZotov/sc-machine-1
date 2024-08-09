@@ -11,8 +11,8 @@
 
 #include "sc-core/sc_types.h"
 
-#include "sc-core/sc-base/sc_monitor.h"
-#include "sc-core/sc-container/sc_hash_table.h"
+#include "../sc-base/sc_monitor_private.h"
+#include "../sc-container/sc_hash_table.h"
 
 /*! Structure representing an sc-event emission manager.
  * @note This structure manages the asynchronous processing of sc-events using a thread pool.

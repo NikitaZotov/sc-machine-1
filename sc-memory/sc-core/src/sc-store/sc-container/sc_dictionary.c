@@ -4,12 +4,12 @@
  * (See accompanying file COPYING.MIT or copy at http://opensource.org/licenses/MIT)
  */
 
-#include "sc-core/sc-container/sc_dictionary.h"
+#include "sc_dictionary_private.h"
+
 #include "sc-core/sc-container/sc_string.h"
 
 #include "sc-core/sc-base/sc_allocator.h"
-
-#include "sc_dictionary_private.h"
+#include "../sc-base/sc_monitor_private.h"
 
 #define SC_DICTIONARY_NODE_BUCKET_SIZE 16
 #define SC_DICTIONARY_GET_BUCKET_NUM(num) ((num) / SC_DICTIONARY_NODE_BUCKET_SIZE)

@@ -6,9 +6,12 @@
 
 #include "sc_fs_memory_header.h"
 
-#include "sc_dictionary_fs_memory_private.h"
+#include "../sc-base/sc_message.h"
 
-sc_fs_memory_status sc_fs_memory_header_read(sc_io_channel * channel, sc_fs_memory_header * header)
+#include "sc_dictionary_fs_memory_private.h"
+#include "sc_io.h"
+
+sc_fs_memory_status sc_fs_memory_header_read(void * channel, sc_fs_memory_header * header)
 {
   sc_uint64 read_bytes = 0;
   sc_uint32 header_size = 0;
@@ -37,7 +40,7 @@ sc_fs_memory_status sc_fs_memory_header_read(sc_io_channel * channel, sc_fs_memo
   return SC_FS_MEMORY_OK;
 }
 
-sc_fs_memory_status sc_fs_memory_header_write(sc_io_channel * channel, sc_fs_memory_header const header)
+sc_fs_memory_status sc_fs_memory_header_write(void * channel, sc_fs_memory_header const header)
 {
   sc_uint64 write_bytes = 0;
   sc_uint32 header_size = sizeof(sc_fs_memory_header);

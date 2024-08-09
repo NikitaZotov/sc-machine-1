@@ -10,11 +10,6 @@
 #include "uiCommands.h"
 #include "uiKeynodes.h"
 
-extern "C"
-{
-#include <glib.h>
-}
-
 sc_memory_context * s_default_ctx = nullptr;
 
 // ------------------- Module ------------------------------

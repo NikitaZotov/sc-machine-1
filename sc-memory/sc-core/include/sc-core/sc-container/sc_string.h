@@ -7,6 +7,7 @@
 #ifndef _sc_string_h_
 #define _sc_string_h_
 
+#include <string.h>
 #include <stdio.h>
 
 #include "sc-core/sc_types.h"
@@ -15,7 +16,7 @@
 
 #define sc_string_empty(string) string = sc_mem_new(sc_char, 1)
 
-#define sc_str_printf(out, size, format, ...) g_snprintf(out, size, format, __VA_ARGS__)
+#define sc_str_printf(out, size, format, ...) snprintf(out, size, format, __VA_ARGS__)
 
 #define sc_str_cpy(copy, string, size) \
   ({ \
@@ -28,7 +29,7 @@
   out_string = sc_mem_new(sc_char, size + 1); \
   sc_str_printf(out_string, size, "%s%s", string1, string2)
 
-#define sc_str_has_prefix(str, prefix) g_str_has_prefix(str, prefix)
+sc_bool sc_str_has_prefix(sc_char const * str, sc_char const * prefix);
 
 #define sc_str_len(string) strlen(string)
 

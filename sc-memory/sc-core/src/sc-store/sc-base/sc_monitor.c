@@ -4,9 +4,8 @@
  * (See accompanying file COPYING.MIT or copy at http://opensource.org/licenses/MIT)
  */
 
-#include "sc-core/sc-base/sc_monitor.h"
-
-#include "sc-core/sc-base/sc_allocator.h"
+#include "sc_monitor_private.h"
+#include "sc_condition_private.h"
 
 typedef enum
 {

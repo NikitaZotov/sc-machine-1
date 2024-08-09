@@ -13,6 +13,8 @@
 #include "../sc_segment.h"
 #include "../sc_storage_private.h"
 
+#include "../sc-base/sc_message.h"
+
 #include "sc_io.h"
 
 sc_fs_memory_manager * manager;

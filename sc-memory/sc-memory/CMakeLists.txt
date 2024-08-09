@@ -30,10 +30,12 @@ file(GLOB SOURCES CONFIGURE_DEPENDS
 
 add_library(sc-memory SHARED ${SOURCES} ${SOURCES_PARSER})
 target_link_libraries(sc-memory
+    LINK_PRIVATE ${GLIB2_LIBRARIES}
     LINK_PUBLIC sc-core
     LINK_PRIVATE antlr4_static
 )
 target_include_directories(sc-memory
+    PRIVATE ${GLIB2_INCLUDE_DIRS}
     PRIVATE ${SC_MACHINE_ANTRL_DIR}/runtime/src
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include

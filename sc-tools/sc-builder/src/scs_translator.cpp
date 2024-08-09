@@ -13,7 +13,10 @@
 #include <sc-memory/sc_memory.hpp>
 #include <sc-memory/sc_scs_helper.hpp>
 
+extern "C"
+{
 #include <sc-core/sc-container/sc_string.h>
+}
 
 namespace impl
 {
