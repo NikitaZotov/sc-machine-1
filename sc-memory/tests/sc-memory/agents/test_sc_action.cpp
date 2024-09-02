@@ -224,8 +224,8 @@ TEST_F(ScActionTest, CreateActionAndSetFormUpdateGetResult)
   ScStructure const & result = action.GetResult();
   EXPECT_FALSE(result.IsEmpty());
 
-  EXPECT_TRUE(result.HasElement(elementAddr1));
-  EXPECT_TRUE(result.HasElement(elementAddr2));
+  EXPECT_TRUE(result.Has(elementAddr1));
+  EXPECT_TRUE(result.Has(elementAddr2));
 }
 
 TEST_F(ScActionTest, CreateActionAndUpdateGetResult)
@@ -247,7 +247,7 @@ TEST_F(ScActionTest, CreateActionAndUpdateGetResult)
   ScStructure const & result = action.GetResult();
   EXPECT_FALSE(result.IsEmpty());
 
-  EXPECT_TRUE(result.HasElement(elementAddr1));
+  EXPECT_TRUE(result.Has(elementAddr1));
 }
 
 TEST_F(ScActionTest, CreateActionAndSetGetArgument)
