@@ -356,7 +356,7 @@ sc_result sc_storage_get_element_type(sc_memory_context const * ctx, sc_addr add
  * checks for compatibility in actuality, permanency, and positivity subtypes if specified connector is membership
  * sc-arc.
  */
-sc_bool sc_storage_is_type_expendable_to(sc_type type, sc_type new_type);
+sc_bool sc_storage_is_type_extendable_to(sc_type type, sc_type new_type);
 
 /*!
  * @brief Changes the subtype of the specified sc-element.

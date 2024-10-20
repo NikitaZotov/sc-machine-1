@@ -522,7 +522,7 @@ _SC_EXTERN sc_result sc_memory_get_element_type(sc_memory_context const * ctx, s
  * checks for compatibility in actuality, permanency, and positivity subtypes if specified connector is membership
  * sc-arc.
  */
-_SC_EXTERN sc_bool sc_memory_is_type_expendable_to(sc_type type, sc_type new_type);
+_SC_EXTERN sc_bool sc_memory_is_type_extendable_to(sc_type type, sc_type new_type);
 
 /*!
  * @brief Changes the subtype of the specified sc-element.
