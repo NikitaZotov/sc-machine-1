@@ -18,21 +18,23 @@ TEST(ScBuilder, Run)
 {
   sc_uint32 const argsNumber = 8;
   sc_char const * args[argsNumber] = {
-      "sc-builder", "-c", SC_BUILDER_INI, "-i", SC_BUILDER_REPO_PATH, "-o", SC_BUILDER_KB_BIN, "--clear"};
+      "sc-builder", "-c", ScBuilderTest::SC_BUILDER_INI.c_str(), "-i", ScBuilderTest::SC_BUILDER_REPO_PATH.c_str(), "-o", ScBuilderTest::SC_BUILDER_KB_BIN.c_str(), "--clear"};
   EXPECT_EQ(RunBuilder(argsNumber, (sc_char **)args), EXIT_SUCCESS);
 }
 
 TEST(ScBuilder, RunWithConfigWithRemovedBuilderGroup)
 {
+  std::string const & configPath = ScBuilderTest::SC_BUILDER_CONFIGS + "/removed-builder-group.ini";
+
   sc_uint32 const argsNumber = 8;
   sc_char const * args[argsNumber] = {
       "sc-builder",
       "-c",
-      SC_BUILDER_CONFIGS "/removed-builder-group.ini",
+      configPath.c_str(),
       "-i",
-      SC_BUILDER_REPO_PATH,
+      ScBuilderTest::SC_BUILDER_REPO_PATH.c_str(),
       "-o",
-      SC_BUILDER_KB_BIN,
+      ScBuilderTest::SC_BUILDER_KB_BIN.c_str(),
       "--clear"};
   EXPECT_EQ(RunBuilder(argsNumber, (sc_char **)args), EXIT_FAILURE);
 }
@@ -40,21 +42,21 @@ TEST(ScBuilder, RunWithConfigWithRemovedBuilderGroup)
 TEST(ScBuilder, RunWithoutConfig)
 {
   sc_uint32 const argsNumber = 6;
-  sc_char const * args[argsNumber] = {"sc-builder", "-i", SC_BUILDER_REPO_PATH, "-o", SC_BUILDER_KB_BIN, "--clear"};
+  sc_char const * args[argsNumber] = {"sc-builder", "-i", ScBuilderTest::SC_BUILDER_REPO_PATH.c_str(), "-o", ScBuilderTest::SC_BUILDER_KB_BIN.c_str(), "--clear"};
   EXPECT_EQ(RunBuilder(argsNumber, (sc_char **)args), EXIT_SUCCESS);
 }
 
 TEST(ScBuilder, RunWithoutInput)
 {
   sc_uint32 const argsNumber = 4;
-  sc_char const * args[argsNumber] = {"sc-builder", "-o", SC_BUILDER_KB_BIN, "--clear"};
+  sc_char const * args[argsNumber] = {"sc-builder", "-o", ScBuilderTest::SC_BUILDER_KB_BIN.c_str(), "--clear"};
   EXPECT_EQ(RunBuilder(argsNumber, (sc_char **)args), EXIT_FAILURE);
 }
 
 TEST(ScBuilder, RunWithoutOutput)
 {
   sc_uint32 const argsNumber = 4;
-  sc_char const * args[argsNumber] = {"sc-builder", "-i", SC_BUILDER_REPO_PATH, "--clear"};
+  sc_char const * args[argsNumber] = {"sc-builder", "-i", ScBuilderTest::SC_BUILDER_REPO_PATH.c_str(), "--clear"};
   EXPECT_EQ(RunBuilder(argsNumber, (sc_char **)args), EXIT_FAILURE);
 }
 
@@ -84,13 +86,13 @@ TEST(ScBuilder, RunStopBuilder)
   ScOptions options{1, nullptr};
 
   BuilderParams params;
-  params.m_inputPath = SC_BUILDER_REPO_PATH;
-  params.m_outputPath = SC_BUILDER_KB_BIN;
+  params.m_inputPath = ScBuilderTest::SC_BUILDER_REPO_PATH;
+  params.m_outputPath = ScBuilderTest::SC_BUILDER_KB_BIN;
 
-  std::string config = SC_BUILDER_INI;
+  std::string config = ScBuilderTest::SC_BUILDER_INI;
 
   ScParams memoryParams{options, {}};
-  memoryParams.Insert({"storage", SC_BUILDER_KB_BIN});
+  memoryParams.Insert({"storage", ScBuilderTest::SC_BUILDER_KB_BIN});
 
   ScConfig configFile{config, {"storage"}};
   std::string memoryGroupName = "sc-memory";
@@ -142,14 +144,14 @@ TEST(ScBuilder, BuilderConfig)
   ScOptions options{1, nullptr};
 
   BuilderParams builderParams;
-  builderParams.m_inputPath = SC_BUILDER_REPO_PATH;
-  builderParams.m_outputPath = SC_BUILDER_KB_BIN;
+  builderParams.m_inputPath = ScBuilderTest::SC_BUILDER_REPO_PATH;
+  builderParams.m_outputPath = ScBuilderTest::SC_BUILDER_KB_BIN;
 
-  std::string config = SC_BUILDER_INI;
+  std::string config = ScBuilderTest::SC_BUILDER_INI;
   ScConfig configFile{config, {"storage"}};
 
   ScParams memoryParams{options, {}};
-  memoryParams.Insert({"storage", SC_BUILDER_KB_BIN});
+  memoryParams.Insert({"storage", ScBuilderTest::SC_BUILDER_KB_BIN});
   memoryParams.Insert({"clear", {}});
   ScMemoryConfig memoryConfig{configFile, memoryParams};
 
