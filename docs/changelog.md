@@ -91,7 +91,7 @@ encapsulated this logic;
   | ScType::NodeConstTuple         | ScType::ConstNodeTuple     |
   | ScType::NodeConstStruct        | ScType::ConstNodeStructure |
   | ScType::NodeConstRole          | ScType::ConstNodeRole      |
-  | ScType::NodeConstNoRole        | ScType::ConstNodeNoRole    |
+  | ScType::NodeConstNoRole        | ScType::ConstNodeNonRole   |
   | ScType::NodeConstClass         | ScType::ConstNodeClass     |
   | ScType::NodeConstMaterial      | ScType::ConstNodeMaterial  |
   | ScType::LinkVar                | ScType::VarNodeLink        |
@@ -99,7 +99,7 @@ encapsulated this logic;
   | ScType::NodeVarStruct          | ScType::VarNodeStructure   |
   | ScType::NodeVarTuple           | ScType::VarNodeTuple       |
   | ScType::NodeVarRole            | ScType::VarNodeRole        |
-  | ScType::NodeVarNoRole          | ScType::VarNodeNoRole      |
+  | ScType::NodeVarNoRole          | ScType::VarNodeNonRole     |
   | ScType::NodeVarClass           | ScType::VarNodeClass       |
   | ScType::NodeVarMaterial        | ScType::VarNodeMaterial    |
 

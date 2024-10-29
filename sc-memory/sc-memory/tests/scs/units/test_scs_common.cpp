@@ -180,7 +180,7 @@ TEST(scs_common, SCsNodeKeynodes)
     ScType::NodeRole,
     ScType::Node,
     ScType::NodeClass,
-    ScType::NodeNoRole,
+    ScType::NodeNonRole,
     ScType::NodeTuple,
     ScType::NodeStructure,
     ScType::NodeSuperclass,
