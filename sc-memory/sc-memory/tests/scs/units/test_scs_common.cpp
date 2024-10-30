@@ -290,7 +290,7 @@ TEST(scs_common, LinkAssigns)
 
 TEST(scs_common, DeprecatedSCsKeynodes)
 {
-  std::string const data = "a <- c;; a <- sc_node_not_relation;; b <- c;; b <- sc_node_not_binary_tuple;; c <- sc_node_struct;;";
+  std::string const data = "a <- c;; a <- sc_node_not_relation;; b <- c;; b <- sc_node_not_binary_tuple;; c <- sc_node_struct;; a <- d;; d <- sc_node_norole_relation;;";
   scs::Parser parser;
 
   EXPECT_TRUE(parser.Parse(data));
@@ -302,6 +302,7 @@ TEST(scs_common, DeprecatedSCsKeynodes)
   EXPECT_EQ(parser.GetParsedElement(triples[0].m_target).GetType(), ScType::ConstNodeClass);
   EXPECT_EQ(parser.GetParsedElement(triples[1].m_source).GetType(), ScType::ConstNodeStructure);
   EXPECT_EQ(parser.GetParsedElement(triples[1].m_target).GetType(), ScType::ConstNodeTuple);
+  EXPECT_EQ(parser.GetParsedElement(triples[2].m_source).GetType(), ScType::ConstNodeNonRole);
 }
 
 TEST(scs_common, DirectConnectors)
