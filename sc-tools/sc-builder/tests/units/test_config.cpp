@@ -18,7 +18,14 @@ TEST(ScBuilder, Run)
 {
   sc_uint32 const argsNumber = 8;
   sc_char const * args[argsNumber] = {
-      "sc-builder", "-c", ScBuilderTest::SC_BUILDER_INI.c_str(), "-i", ScBuilderTest::SC_BUILDER_REPO_PATH.c_str(), "-o", ScBuilderTest::SC_BUILDER_KB_BIN.c_str(), "--clear"};
+      "sc-builder",
+      "-c",
+      ScBuilderTest::SC_BUILDER_INI.c_str(),
+      "-i",
+      ScBuilderTest::SC_BUILDER_REPO_PATH.c_str(),
+      "-o",
+      ScBuilderTest::SC_BUILDER_KB_BIN.c_str(),
+      "--clear"};
   EXPECT_EQ(RunBuilder(argsNumber, (sc_char **)args), EXIT_SUCCESS);
 }
 
@@ -42,7 +49,13 @@ TEST(ScBuilder, RunWithConfigWithRemovedBuilderGroup)
 TEST(ScBuilder, RunWithoutConfig)
 {
   sc_uint32 const argsNumber = 6;
-  sc_char const * args[argsNumber] = {"sc-builder", "-i", ScBuilderTest::SC_BUILDER_REPO_PATH.c_str(), "-o", ScBuilderTest::SC_BUILDER_KB_BIN.c_str(), "--clear"};
+  sc_char const * args[argsNumber] = {
+      "sc-builder",
+      "-i",
+      ScBuilderTest::SC_BUILDER_REPO_PATH.c_str(),
+      "-o",
+      ScBuilderTest::SC_BUILDER_KB_BIN.c_str(),
+      "--clear"};
   EXPECT_EQ(RunBuilder(argsNumber, (sc_char **)args), EXIT_SUCCESS);
 }
 
