@@ -411,7 +411,7 @@ TEST_F(SCsHelperTest, GenerateBySCs_VarPermPosArcBelongsToMembershipArcsType)
   ScIterator3Ptr it3 = m_ctx->CreateIterator3(node1Addr, ScType::VarPermPosArc, node2Addr);
   EXPECT_TRUE(it3->Next());
   ScAddr const arcAddr = it3->Get(1);
-  it3 = m_ctx->CreateIterator3(membershipArcAddr, ScType::ConstPermNegArc, arcAddr);
+  it3 = m_ctx->CreateIterator3(membershipArcAddr, ScType::ConstPermPosArc, arcAddr);
   EXPECT_FALSE(it3->Next());
 
   ScAddr const & structureAddr = m_ctx->SearchElementBySystemIdentifier("structure");
